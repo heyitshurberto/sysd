@@ -1,0 +1,27 @@
+[Unit]
+Description=SEC Filing Monitor - Runs 24/7 on Raspberry Pi
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/user/Documents/sysd
+ExecStart=/usr/bin/node app.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sysd
+
+# Resource limits for Pi Zero 2 W
+MemoryLimit=256M
+CPUQuota=80%
+Nice=10
+
+# Service hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

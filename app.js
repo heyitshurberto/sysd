@@ -1,0 +1,1188 @@
+import fs from 'fs';
+import fetch from 'node-fetch';
+import { createRequire } from 'module';
+import { execSync } from 'child_process';
+import crypto from 'crypto';
+import express from 'express';
+
+// Load environment variables from .env file
+if (fs.existsSync('.env')) {
+  const envContent = fs.readFileSync('.env', 'utf8');
+  envContent.split('\n').forEach(line => {
+    const [key, value] = line.split('=');
+    if (key && value) {
+      process.env[key.trim()] = value.trim();
+    }
+  });
+}
+
+const originalLog = console.log;
+const originalWarn = console.warn;
+const originalError = console.error;
+const originalWrite = process.stdout.write;
+const suppressPatterns = [
+  'Fetching crumb', 'We expected', "We'll try", 'Success. Cookie', 'New crumb',
+  'guce.yahoo.com', 'consent.yahoo.com', 'query1.finance.yahoo.com', 'collectConsent', 'copyConsent',
+  'redirect to guce', 'getcrumb', '/quote/AAPL',
+  'yahoo-finance2', 'v2 is no longer maintained nor supported', 'Please migrate to v3',
+  'Circuit open', 'returning cached quote', 'Opening circuit', 'attempt', 'Unexpected token',
+  'Using cached quote', 'Quote fetch failed', 'Failed to fetch quote'
+];
+const isSuppressed = (msg) => {
+  if (!msg) return false;
+  const str = msg.toString ? msg.toString() : String(msg);
+  if (str.startsWith('fetch ')) return true;
+  return suppressPatterns.some(pattern => str.includes(pattern));
+};
+console.log = (...args) => {
+  const msg = args[0]?.toString() || '';
+  if (!isSuppressed(msg)) originalLog(...args);
+};
+console.warn = (...args) => {
+  const msg = args[0]?.toString() || '';
+  if (!isSuppressed(msg)) originalWarn(...args);
+};
+console.error = (...args) => {
+  const msg = args[0]?.toString() || '';
+  if (!isSuppressed(msg)) originalError(...args);
+};
+process.stdout.write = function(str) {
+  if (!isSuppressed(str)) return originalWrite.call(process.stdout, str);
+  return true;
+};
+
+const require = createRequire(import.meta.url);
+const yahooFinance = require('yahoo-finance2').default;
+
+process.env.DEBUG = '';
+yahooFinance.suppressNotices(['ripHistorical', 'yahooSurvey']);
+yahooFinance.setGlobalConfig({ validation: { logErrors: false } });
+
+const CONFIG = {
+  GITHUB_REPO_PATH: process.env.GITHUB_REPO_PATH || '/home/user/Documents/sysd',
+  GITHUB_USERNAME: process.env.GITHUB_USERNAME || 'your-github-username',
+  GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name',
+  GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com',
+  PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '',
+  FILE_TIME: 1000,
+  MIN_ALERT_VOLUME: 25000,
+  MAX_FLOAT: 25000000,
+  MAX_SO_RATIO: 25.0,
+  ALERTS_FILE: 'logs/alert.json',
+  STOCKS_FILE: 'logs/stocks.json',
+  PERFORMANCE_FILE: 'logs/quote.json',
+  ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'delaware'],
+  // Power conservation for Pi Zero 2 W
+  PI_MODE: true,
+  REFRESH_PEAK: 30000,       // 30s during trading hours (7am-10am ET)
+  REFRESH_NORMAL: 120000,    // 2m during trading hours (3:30am-6pm ET)
+  REFRESH_NIGHT: 600000,     // 10m outside trading hours (conserve power)
+  REFRESH_WEEKEND: 900000,   // 15m on weekends (very low activity)
+  YAHOO_TIMEOUT: 6000,       // Reduced from 8s for Pi performance
+  SEC_RATE_LIMIT: 3000,      // Increased from 2s to respect SEC limits on Pi
+  SEC_FETCH_TIMEOUT: 5000,   // Reduced for Pi memory constraints
+  MAX_COMBINED_SIZE: 100000, // Reduced from 150k for Pi RAM
+  MAX_RETRY_ATTEMPTS: 3      // Reduced from 5 for Pi resources
+};
+
+const rateLimit = {
+  lastRequest: 0,
+  minInterval: CONFIG.SEC_RATE_LIMIT,
+  async wait() {
+    const now = Date.now();
+    const waitTime = this.minInterval - (now - this.lastRequest);
+    if (waitTime > 0) await wait(waitTime);
+    this.lastRequest = Date.now();
+  }
+};
+
+const log = (level, message) => {
+  let titleColor = '\x1b[90m';
+  let messageColor = '\x1b[32m';
+
+  if (level === 'ERROR') {
+    titleColor = '\x1b[31m';
+    messageColor = '\x1b[31m';
+  } else if (level === 'WARN') {
+    titleColor = '\x1b[33m';
+    messageColor = '\x1b[33m';
+  } else if (level === 'ALERT') {
+    titleColor = '\x1b[91m';
+    messageColor = '\x1b[91m';
+  } else if (level === 'INFO') {
+    titleColor = '\x1b[92m';
+    messageColor = '\x1b[92m';
+  }
+
+  console.log(`\x1b[90m[${new Date().toISOString()}] ${titleColor}${level}: ${messageColor}${message}\x1b[0m`);
+};
+
+const FORM_TYPES = ['6-K', '6-K/A', '8-K', '8-K/A', 'S-1', 'S-3', 'S-4', 'S-8', 'F-1', 'F-3', 'F-4', '424B1', '424B2', '424B3', '424B4', '424B5', '424H8', '20-F', '20-F/A', '13G', '13G/A', '13D', '13D/A', 'Form D', 'EX-99.1', 'EX-99.2', 'EX-10.1', 'EX-10.2', 'EX-3.1', 'EX-3.2', 'EX-4.1', 'EX-4.2', 'EX-10.3', 'EX-1.1', 'Item 1.01', 'Item 1.02', 'Item 1.03', 'Item 1.04', 'Item 1.05', 'Item 2.01', 'Item 2.02', 'Item 2.03', 'Item 2.04', 'Item 2.05', 'Item 2.06', 'Item 3.01', 'Item 3.02', 'Item 3.03', 'Item 4.01', 'Item 5.01', 'Item 5.02', 'Item 5.03', 'Item 5.04', 'Item 5.05', 'Item 5.06', 'Item 5.07', 'Item 5.08', 'Item 5.09', 'Item 5.10', 'Item 5.11', 'Item 5.12', 'Item 5.13', 'Item 5.14', 'Item 5.15', 'Item 6.01', 'Item 7.01', 'Item 8.01', 'Item 9.01'];
+
+const SEMANTIC_KEYWORDS = {
+  'Merger/Acquisition': ['Merger Agreement', 'Acquisition Agreement', 'Agreed To Acquire', 'Merger Consideration', 'Premium Valuation', 'Going Private', 'Take Private'],
+  'FDA Approval': ['FDA Approval', 'FDA Clearance', 'EMA Approval', 'Breakthrough Therapy', 'Fast Track Designation', 'Priority Review'],
+  'Clinical Success': ['Positive Trial Results', 'Phase 3 Success', 'Topline Results Beat', 'Efficacy Demonstrated', 'Safety Profile Met'],
+  'Capital Raise': ['Oversubscribed', 'Institutional Participation', 'Lead Investor', 'Top-Tier Investor', 'Strategic Investor'],
+  'Earnings Beat': ['Earnings Beat', 'Beat Expectations', 'Beat Consensus', 'Exceeded Guidance', 'Record Revenue'],
+  'Major Contract': ['Contract Award', 'Major Customer Win', 'Strategic Partnership', '$100 Million Contract', 'Exclusive License'],
+  'Regulatory Approval': ['Regulatory Approval Granted', 'Patent Approved', 'License Granted', 'Permit Issued'],
+  'Revenue Growth': ['Revenue Growth Acceleration', 'Record Quarterly Revenue', 'Guidance Raise', 'Organic Growth'],
+  'Insider Buying': ['Director Purchase', 'Executive Purchase', 'CEO Buying', 'CFO Buying', 'Meaningful Accumulation'],
+  
+  'Reverse Split': ['Reverse Stock Split', 'Reverse Split', 'Reversed Split', 'Reverse Split Announced', 'Announced Reverse Split', '1-for-', 'Consolidation Of Shares', 'Share Consolidation', 'Combine Shares', 'Combined Shares', 'Restructuring Of Capital', 'Stock Consolidation', 'Share Combination'],
+  'Bankruptcy Filing': ['Bankruptcy Protection', 'Chapter 11 Filing', 'Chapter 7 Filing', 'Insolvency Proceedings', 'Creditor Protection'],
+  'Going Concern': ['Going Concern Warning', 'Substantial Doubt Going Concern', 'Auditor Going Concern Note', 'Continued Losses'],
+  'Public Offering': ['Public Offering Announced', 'Secondary Offering', 'Follow-On Offering', 'Shelf Offering', 'At-The-Market Offering'],
+  'Dilution': ['Dilutive Securities', 'New Shares Issued', 'Convertible Notes', 'Warrant Issuance', 'Option Grants Excessive'],
+  'Delisting Risk': ['Nasdaq Deficiency', 'Listing Standards Warning', 'Nasdaq Notification', 'Minimum Bid Price Warning', 'Delisting Threat'],
+  'Warrant Redemption': ['Warrant Redemption Notice', 'Forced Exercise', 'Warrant Call Notice', 'Final Expiration Notice'],
+  'Insider Selling': ['Director Sale', 'Officer Sale', 'CEO Selling', 'CFO Selling', 'Massive Liquidation'],
+  'Accounting Restatement': ['Financial Restatement', 'Audit Non-Reliance', 'Material Weakness', 'Control Deficiency', 'Audit Adjustment'],
+  'Credit Default': ['Loan Default', 'Debt Covenant Breach', 'Event Of Default', 'Credit Agreement Violation'],
+  'Debt Issuance': ['Debt Issuance', 'Senior Debt Issued', 'Convertible Bonds', 'Junk Bond Offering', 'High Leverage'],
+  'Material Lawsuit': ['Material Litigation', 'Lawsuit Filed', 'Major Lawsuit', 'SEC Investigation', 'DOJ Investigation'],
+  'Supply Chain Crisis': ['Supply Chain Disruption', 'Production Halt', 'Factory Closure', 'Supplier Bankruptcy', 'Shipping Delays'],
+  
+  'Executive Departure': ['CEO Departed', 'CFO Departed', 'CEO Resigned', 'Board Resignation', 'Chief Officer Left'],
+  'Asset Impairment': ['Goodwill Impairment', 'Asset Write-Down', 'Impairment Charge', 'Valuation Adjustment'],
+  'Restructuring': ['Organizational Restructure', 'Cost Reduction Program', 'Efficiency Initiative', 'Division Realignment'],
+  'Stock Buyback': ['Share Repurchase', 'Buyback Authorization', 'Accelerated Buyback', 'Repurchase Program'],
+  'Licensing Deal': ['Exclusive License', 'License Agreement', 'Technology License', 'IP Licensing'],
+  'Partnership': ['Strategic Partnership', 'Joint Venture', 'Partnership Agreement', 'Strategic Alliance'],
+  'Facility Expansion': ['New Facility Opening', 'Capacity Expansion', 'Manufacturing Expansion', 'Facility Upgrade']
+};
+
+
+const SEC_CODE_TO_COUNTRY = {'C2':'Shanghai, China','F4':'Shadong, China','6A':'Shanghai, China','D8':'Hong Kong','H0':'Hong Kong','K3':'Kowloon Bay, Hong Kong','S4':'Singapore','U0':'Singapore','C0':'Grand Cayman, Cayman Islands','K2':'Grand Cayman, Cayman Islands','E9':'Grand Cayman, Cayman Islands','1E':'Charlotte Amalie, U.S. Virgin Islands','VI':'Road Town, British Virgin Islands','A1':'Toronto, Canada','A6':'Ottawa, Canada','A9':'Vancouver, Canada','A0':'Calgary, Canada','CA':'Toronto, Canada','C4':'Toronto, Canada','D0':'Hamilton, Canada','D9':'Toronto, Canada','Q0':'Toronto, Canada','L3':'Tel Aviv, Israel','J1':'Tokyo, Japan','M0':'Tokyo, Japan','E5':'Dublin, Ireland','I0':'Dublin, Ireland','L2':'Dublin, Ireland','DE':'Wilmington, Delaware','1T':'Athens, Greece','B2':'Bridgetown, Barbados','B6':'Nassau, Bahamas','B9':'Hamilton, Bermuda','C1':'Buenos Aires, Argentina','C3':'Brisbane, Australia','C7':'St. Helier, Channel Islands','D2':'Hamilton, Bermuda','D4':'Hamilton, Bermuda','D5':'Sao Paulo, Brazil','D6':'Bridgetown, Barbados','E4':'Hamilton, Bermuda','F2':'Frankfurt, Germany','F3':'Paris, France','F5':'Johannesburg, South Africa','G0':'St. Helier, Jersey','G1':'St. Peter Port, Guernsey','G4':'New York, United States','G7':'Copenhagen, Denmark','H1':'St. Helier, Jersey','I1':'Douglas, Isle of Man','J0':'St. Helier, Jersey','J2':'St. Helier, Jersey','J3':'St. Helier, Jersey','K1':'Seoul, South Korea','K7':'New York, United States','L0':'Hamilton, Bermuda','L6':'Milan, Italy','M1':'Majuro, Marshall Islands','N0':'Amsterdam, Netherlands','N2':'Amsterdam, Netherlands','N4':'Amsterdam, Netherlands','O5':'Mexico City, Mexico','P0':'Lisbon, Portugal','P3':'Manila, Philippines','P7':'Madrid, Spain','P8':'Warsaw, Poland','R0':'Milan, Italy','S0':'Madrid, Spain','T0':'Lisbon, Portugal','T3':'Johannesburg, South Africa','U1':'London, United Kingdom','U5':'London, United Kingdom','V0':'Zurich, Switzerland','V8':'Geneva, Switzerland','W0':'Frankfurt, Germany','X0':'London, UK','X1':'Luxembourg City, Luxembourg','Y0':'Nicosia, Cyprus','Y1':'Nicosia, Cyprus','Z0':'Johannesburg, South Africa','Z1':'Johannesburg, South Africa','1A':'Pago Pago, American Samoa','1B':'Saipan, Northern Mariana Islands','1C':'Hagatna, Guam','1D':'San Juan, Puerto Rico','3A':'Sydney, Australia','4A':'Auckland, New Zealand','5A':'Apia, Samoa','7A':'Moscow, Russia','8A':'Mumbai, India','9A':'Jakarta, Indonesia','2M':'Frankfurt, Germany','U3':'Madrid, Spain','Y9':'Nicosia, Cyprus','AL':'Birmingham, UK','Q8':'Oslo, Norway','R1':'Panama City, Panama','V7':'Stockholm, Sweden','K8':'Jakarta, Indonesia','O9':'Monaco','W8':'Istanbul, Turkey','R5':'Lima, Peru','N8':'Kuala Lumpur, Malaysia'};
+
+const parseSemanticSignals = (text) => {
+  if (!text) return {};
+  const lowerText = text.toLowerCase();
+  const signals = {};
+  
+  for (const [category, keywords] of Object.entries(SEMANTIC_KEYWORDS)) {
+    const matches = keywords.filter(kw => {
+      const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+      return regex.test(lowerText);
+    });
+    if (matches.length > 0) {
+      signals[category] = matches;
+    }
+  }
+  
+  return signals;
+};
+
+const extractReverseSplitRatio = (text) => {
+  if (!text) return null;
+  // Match patterns like "1-for-10", "1-for-20", "1 for 10", etc.
+  const ratioMatch = text.match(/1\s*(?:-|for)\s*(\d+)/i);
+  if (ratioMatch && ratioMatch[1]) {
+    return `1-for-${ratioMatch[1]}`;
+  }
+  return null;
+};
+
+const getExchangePrefix = (ticker) => {
+  // Map tickers to their exchanges for TradingView
+  // Default to NASDAQ for most US stocks
+  // OTC stocks typically have 4-5 letters with some patterns
+  // NYSE has different listing requirements
+  
+  if (!ticker || ticker === 'Unknown') return 'NASDAQ';
+  
+  // OTC indicators - typically longer tickers or specific patterns
+  if (ticker.length > 4 || ticker.includes('OTC') || /[A-Z]{5}/.test(ticker)) {
+    return 'OTC';
+  }
+  
+  // For now, default to NASDAQ for 1-4 letter tickers
+  // You can add specific NYSE mappings if needed
+  return 'NASDAQ';
+};
+
+const truncateAtSentence = (text, maxLength) => {
+  if (!text || text.length <= maxLength) return text;
+  
+  // Truncate to max length first
+  let truncated = text.substring(0, maxLength);
+  
+  // Find last sentence boundary (. ! ?)
+  const lastPeriod = Math.max(
+    truncated.lastIndexOf('.'),
+    truncated.lastIndexOf('!'),
+    truncated.lastIndexOf('?')
+  );
+  
+  // If we found punctuation, cut there and add it back
+  if (lastPeriod > 0) {
+    return truncated.substring(0, lastPeriod + 1);
+  }
+  
+  // If no punctuation found, cut at last space to avoid mid-word cuts
+  const lastSpace = truncated.lastIndexOf(' ');
+  if (lastSpace > maxLength * 0.7) {
+    return truncated.substring(0, lastSpace);
+  }
+  
+  // Fallback to max length
+  return truncated;
+};
+
+const saveAlert = (alertData) => {
+  try {
+    let alerts = [];
+    if (fs.existsSync(CONFIG.ALERTS_FILE)) {
+      const content = fs.readFileSync(CONFIG.ALERTS_FILE, 'utf8').trim();
+      if (content) {
+        try {
+          alerts = JSON.parse(content);
+          if (!Array.isArray(alerts)) alerts = [];
+        } catch (e) {
+          alerts = [];
+        }
+      }
+    }
+    
+    const enrichedData = {
+      ...alertData,
+      recordedAt: new Date().toISOString(),
+      recordId: `${alertData.ticker}-${Date.now()}`,
+      expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString()
+    };
+    
+    alerts.push(enrichedData);
+    if (alerts.length > 1000) alerts = alerts.slice(-1000);
+    
+    fs.writeFileSync(CONFIG.ALERTS_FILE, JSON.stringify(alerts, null, 2));
+    
+    if (Object.keys(alertData.semanticSignals || {}).length > 0) {
+      let stocks = [];
+      if (fs.existsSync(CONFIG.STOCKS_FILE)) {
+        const content = fs.readFileSync(CONFIG.STOCKS_FILE, 'utf8').trim();
+        if (content) {
+          try {
+            stocks = JSON.parse(content);
+            if (!Array.isArray(stocks)) stocks = [];
+          } catch (e) {
+            stocks = [];
+          }
+        }
+      }
+      stocks.push(enrichedData);
+      if (stocks.length > 5000) stocks = stocks.slice(-5000);
+      fs.writeFileSync(CONFIG.STOCKS_FILE, JSON.stringify(stocks, null, 2));
+    }
+    
+    sendPersonalWebhook(alertData);
+    
+    const volDisplay = alertData.volume && alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'n/a';
+    const avgVolDisplay = alertData.averageVolume && alertData.averageVolume !== 'N/A' ? (alertData.averageVolume / 1000000).toFixed(2) + 'm' : 'n/a';
+    const floatDisplay = alertData.float && alertData.float !== 'N/A' && !isNaN(alertData.float) ? (alertData.float / 1000000).toFixed(2) + 'm' : 'n/a';
+    const soDisplay = alertData.soRatio || 'n/a';
+    
+    const priceDisplay = alertData.price && alertData.price !== 'N/A' ? `$${alertData.price.toFixed(2)}` : 'N/A';
+    const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${alertData.cik}&type=${alertData.formType}&dateb=&owner=exclude&count=100`;
+    const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(alertData.ticker)}:${alertData.ticker}`;
+    console.log(`\x1b[90m[${new Date().toISOString()}] ${secLink} ${tvLink}\x1b[0m`);
+    console.log('');
+    
+    try {
+      if (fs.existsSync(CONFIG.ALERTS_FILE)) {
+        const savedAlerts = JSON.parse(fs.readFileSync(CONFIG.ALERTS_FILE, 'utf8'));
+        const lastAlert = savedAlerts[savedAlerts.length - 1];
+        if (lastAlert && lastAlert.recordId === enrichedData.recordId) {
+          log('INFO', `Log: Alert saved ${alertData.ticker}, record: ${enrichedData.recordId}`);
+        } else {
+          log('WARN', `Alert save verification failed for ${alertData.ticker}`);
+        }
+      }
+    } catch (verifyErr) {
+      log('WARN', `Could not verify alert save: ${verifyErr.message}`);
+    }
+  } catch (err) {
+    log('ERROR', `Failed to save alert: ${err.message}`);
+  }
+  
+  pushToGitHub();
+};
+
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function fetchFilings() {
+  const allFilings = [];
+  
+  try {
+    await wait(200);
+    const res = await fetch('https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=6-K&count=100&owner=exclude&output=atom', {
+      headers: {
+        'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive'
+      }
+    });
+    if (res.ok) {
+      const xml = await res.text();
+      const entries = xml.split('<entry>').slice(1);
+      for (const entry of entries) {
+        const title = entry.match(/<title[^>]*>(.*?)<\/title>/s)?.[1];
+        const link = entry.match(/<link[^>]*href="([^"]+)"/)?.[1];
+        const updated = entry.match(/<updated[^>]*>(.*?)<\/updated>/)?.[1];
+        if (!title || !link || !updated) continue;
+        const ageMin = (Date.now() - new Date(updated).getTime()) / (1000 * 60);
+        if (ageMin > CONFIG.FILE_TIME) continue; // Only recent filings (1 minute)
+        const cik = link.match(/\/data\/(\d+)\//)?.[1];
+        allFilings.push({ txtLink: link, title, cik, updated, source: 'SEC', formType: '6-K' });
+      }
+    }
+    await rateLimit.wait();
+  } catch (err) {
+    log('WARN', `SEC 6-K fetch failed: ${err.message}`);
+  }
+
+  allFilings.sort((a, b) => new Date(b.updated) - new Date(a.updated));
+  return allFilings.slice(0, 100);
+}
+
+const isValidTicker = ticker => {
+  if (!ticker || ticker.length < 1 || ticker.length > 5) return false;
+  return /^[A-Z]+$/.test(ticker);
+};
+
+async function getCountryAndTicker(cik) {
+  const stateCountryFallback = {
+    'DE': 'Delaware', 'CA': 'California', 'NY': 'New York', 'TX': 'Texas', 'FL': 'Florida',
+    'WA': 'Washington', 'IL': 'Illinois', 'PA': 'Pennsylvania', 'OH': 'Ohio', 'GA': 'Georgia',
+    'MI': 'Michigan', 'NC': 'North Carolina', 'NJ': 'New Jersey', 'VA': 'Virginia', 'MA': 'Massachusetts',
+    'AZ': 'Arizona', 'TN': 'Tennessee', 'IN': 'Indiana', 'MD': 'Maryland', 'CO': 'Colorado',
+    'MN': 'Minnesota', 'MO': 'Missouri', 'WI': 'Wisconsin', 'UT': 'Utah', 'NV': 'Nevada',
+    'NM': 'New Mexico', 'CT': 'Connecticut', 'OK': 'Oklahoma', 'IA': 'Iowa', 'OR': 'Oregon',
+    'KS': 'Kansas', 'AR': 'Arkansas', 'MS': 'Mississippi', 'LA': 'Louisiana', 'KY': 'Kentucky',
+    'SC': 'South Carolina', 'AL': 'Alabama', 'WV': 'West Virginia', 'NE': 'Nebraska', 'ID': 'Idaho',
+    'HI': 'Hawaii', 'AK': 'Alaska', 'VT': 'Vermont', 'ME': 'Maine', 'MT': 'Montana',
+    'RI': 'Rhode Island', 'NH': 'New Hampshire', 'WY': 'Wyoming', 'ND': 'North Dakota', 'SD': 'South Dakota',
+    'DC': 'District of Columbia', 'PR': 'Puerto Rico', 'VI': 'U.S. Virgin Islands', 'GU': 'Guam',
+    'AS': 'American Samoa', 'MP': 'Northern Mariana Islands',
+    'CN': 'China', 'HK': 'Hong Kong', 'SG': 'Singapore', 'IL': 'Israel', 'JP': 'Japan',
+    'IE': 'Ireland', 'KY': 'Cayman Islands', 'VG': 'British Virgin Islands', 'CA': 'Canada',
+    'GB': 'United Kingdom', 'CH': 'Switzerland', 'DE': 'Germany', 'FR': 'France', 'BR': 'Brazil'
+  };
+  
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const padded = cik.toString().padStart(10, '0');
+      await wait(500);
+      const res = await fetch(`https://data.sec.gov/submissions/CIK${padded}.json`, {
+        headers: {
+          'User-Agent': 'SEC-Bot/1.0 (your-email@domain.com)',
+          'Accept': 'application/json'
+        },
+        timeout: CONFIG.SEC_FETCH_TIMEOUT
+      });
+      if (res.status === 403) {
+        await wait(2000);
+        continue;
+      }
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+
+      let incorporated = '';
+      let located = '';
+
+      if (data.stateOfIncorporation) {
+        incorporated = data.stateOfIncorporation;
+      } else if (data.incorporated && data.incorporated.stateOrCountry) {
+        incorporated = data.incorporated.stateOrCountry;
+      } else if (data.incorporated && data.incorporated.country) {
+        incorporated = data.incorporated.country;
+      }
+
+      if (data.addresses && data.addresses.business && data.addresses.business.stateOrCountry) {
+        located = data.addresses.business.stateOrCountry;
+      } else if (data.addresses && data.addresses.business && data.addresses.business.country) {
+        located = data.addresses.business.country;
+      } else if (data.addresses && data.addresses.mailing && data.addresses.mailing.stateOrCountry) {
+        located = data.addresses.mailing.stateOrCountry;
+      } else if (data.addresses && data.addresses.mailing && data.addresses.mailing.country) {
+        located = data.addresses.mailing.country;
+      }
+
+      if (!incorporated && data.entityType && /^[A-Z]{2}$/.test(data.entityType)) {
+        incorporated = data.entityType;
+      }
+
+      let incorporatedDisplay = 'Unknown';
+      let locatedDisplay = 'Unknown';
+      
+      if (incorporated) {
+        incorporatedDisplay = SEC_CODE_TO_COUNTRY[incorporated] || stateCountryFallback[incorporated] || incorporated;
+      }
+      if (located) {
+        locatedDisplay = SEC_CODE_TO_COUNTRY[located] || stateCountryFallback[located] || located;
+      }
+
+      return {
+        incorporated: incorporatedDisplay,
+        located: locatedDisplay,
+        ticker: data.tickers?.[0] || 'Unknown'
+      };
+    } catch (err) {
+      log('WARN', `SEC lookup attempt ${attempt} failed for CIK ${cik}: ${err.message}`);
+      if (attempt < 3) await wait(5000);
+    }
+  }
+  return { incorporated: 'Unknown', located: 'Unknown', ticker: 'Unknown' };
+}
+
+async function fetch8Ks() {
+  const filings8K = [];
+  try {
+    await wait(200);
+    const res = await fetch('https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&count=100&owner=exclude&output=atom', {
+      headers: {
+        'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      }
+    });
+    if (res.ok) {
+      const xml = await res.text();
+      const entries = xml.split('<entry>').slice(1);
+      for (const entry of entries) {
+        const title = entry.match(/<title[^>]*>(.*?)<\/title>/s)?.[1];
+        const link = entry.match(/<link[^>]*href="([^"]+)"/)?.[1];
+        const updated = entry.match(/<updated[^>]*>(.*?)<\/updated>/)?.[1];
+        if (!title || !link || !updated) continue;
+        const ageMin = (Date.now() - new Date(updated).getTime()) / (1000 * 60);
+        if (ageMin > CONFIG.FILE_TIME) continue;
+        const cik = link.match(/\/data\/(\d+)\//)?.[1];
+        filings8K.push({ txtLink: link, title, cik, updated, source: 'SEC', formType: '8-K' });
+      }
+    }
+    await rateLimit.wait();
+  } catch (err) {
+    log('WARN', `SEC 8-K fetch failed: ${err.message}`);
+  }
+  return filings8K;
+}
+
+async function getFilingText(indexUrl) {
+  for (let attempt = 1; attempt <= CONFIG.MAX_RETRY_ATTEMPTS; attempt++) {
+    try {
+      await wait(1000); // 1 second delay before SEC request
+      const res = await fetch(indexUrl, {
+        headers: {
+          'User-Agent': 'SEC-Bot/1.0 (your-email@domain.com)',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive'
+        }
+      });
+
+      if (res.status === 403) {
+        log('WARN', `SEC blocked request (403), waiting 5 seconds`);
+        await wait(5000);
+        continue;
+      }
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      
+      const html = await res.text();
+      
+      const docHrefs = [];
+      
+      const exhibitRegex = /href="([^"]*(?:ex|form|document)[^"]*\.(?:htm|html|txt))"/gi;
+      let match;
+      while ((match = exhibitRegex.exec(html)) !== null) {
+        if (!match[1].toLowerCase().includes('index')) {
+          docHrefs.push(match[1]);
+        }
+      }
+      
+      if (docHrefs.length === 0) {
+        const fallbackRegex = /href="([^"]+\.(?:htm|html|txt))"/gi;
+        while ((match = fallbackRegex.exec(html)) !== null) {
+          if (!match[1].toLowerCase().includes('index') && !match[1].toLowerCase().includes('style')) {
+            docHrefs.push(match[1]);
+          }
+        }
+      }
+      
+      const txtFiles = docHrefs.filter(href => href.toLowerCase().endsWith('.txt'));
+      const htmlFiles = docHrefs.filter(href => !href.toLowerCase().endsWith('.txt'));
+      
+      const prioritizedHrefs = txtFiles.length > 0 ? txtFiles : htmlFiles;
+      if (prioritizedHrefs.length === 0) throw new Error(`No filing documents found at ${indexUrl}`);
+      
+      let combinedText = '';
+      const MAX_COMBINED_SIZE = CONFIG.MAX_COMBINED_SIZE;
+      
+      for (const href of prioritizedHrefs) {
+        const fullUrl = href.startsWith('http') ? href : `https://www.sec.gov${href}`;        
+        
+        try {
+          const docRes = await fetch(fullUrl, {
+            headers: {
+              'User-Agent': 'SEC-Bot/1.0 (your-email@domain.com)',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.5',
+              'Accept-Encoding': 'gzip, deflate, br',
+              'Connection': 'keep-alive'
+            }
+          });
+
+          let docText = await docRes.text();
+          
+          const lowerText = docText.toLowerCase();
+          if ((lowerText.includes('sec.gov') && lowerText.includes('search filings')) ||
+              lowerText.includes('sec home') || 
+              lowerText.includes('filing detail') ||
+              lowerText.includes('edgar latest filings') ||
+              (lowerText.includes('<table') && lowerText.includes('column heading') && lowerText.length < 5000)) {
+            continue; // Skip navigation/index pages
+          }
+          
+          if (docText.length > 500000) {
+            docText = docText.slice(0, 500000);
+          }
+          
+          let cleanText = docText
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+            .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+            .replace(/<!--[\s\S]*?-->/g, '')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#(\d+);/g, (match, code) => String.fromCharCode(parseInt(code)))
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          
+          combinedText += cleanText + ' ';
+          
+          docText = null;
+          cleanText = null;
+          
+          await rateLimit.wait();
+          
+          if (combinedText.length > MAX_COMBINED_SIZE) break;
+        } catch (docErr) {
+          log('DEBUG', `Document fetch error for ${fullUrl}: ${docErr.message}`);
+          continue;
+        }
+      }
+      
+      combinedText = combinedText
+        .trim()
+        .replace(/\s+/g, ' ')
+        .slice(0, MAX_COMBINED_SIZE);
+      
+      return combinedText;
+    } catch (err) {
+      log('ERROR', `Filing text fetch attempt ${attempt}/5 failed: ${err.message}`);
+      if (attempt < 5) await wait(10000); // 10 seconds wait between retries
+    }
+  }
+  log('ERROR', `Failed to fetch filing text after 5 attempts from ${indexUrl}`);
+  return '';
+}
+
+const sendPersonalWebhook = (alertData) => {
+  try {
+    const { ticker, price, intent, incorporated, located } = alertData;
+    
+    const combinedLocation = (incorporated || '').toLowerCase() + ' ' + (located || '').toLowerCase();
+    
+    const allowed = CONFIG.ALLOWED_COUNTRIES.some(country => combinedLocation.includes(country));
+    if (!allowed) {
+      console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, country not whitelisted (${incorporated}, ${located})\x1b[0m`);
+      return;
+    }
+    
+    const countryCodeMap = {
+      'israel': 'IL', 'china': 'CN', 'hong kong': 'HK', 'cayman': 'KY', 'japan': 'JP', 'california': 'US',
+      'virgin islands': 'VG', 'singapore': 'SG', 'canada': 'CA', 'ireland': 'IE', 'delaware': 'US',
+      'alabama': 'US', 'alaska': 'US', 'arizona': 'US', 'arkansas': 'US', 'colorado': 'US',
+      'connecticut': 'US', 'delaware': 'US', 'florida': 'US', 'georgia': 'US', 'hawaii': 'US',
+      'idaho': 'US', 'illinois': 'US', 'indiana': 'US', 'iowa': 'US', 'kansas': 'US',
+      'kentucky': 'US', 'louisiana': 'US', 'maine': 'US', 'maryland': 'US', 'massachusetts': 'US',
+      'michigan': 'US', 'minnesota': 'US', 'mississippi': 'US', 'missouri': 'US', 'montana': 'US',
+      'nebraska': 'US', 'nevada': 'US', 'new hampshire': 'US', 'new jersey': 'US', 'new mexico': 'US',
+      'new york': 'US', 'north carolina': 'US', 'north dakota': 'US', 'ohio': 'US', 'oklahoma': 'US',
+      'oregon': 'US', 'pennsylvania': 'US', 'rhode island': 'US', 'south carolina': 'US', 'south dakota': 'US',
+      'tennessee': 'US', 'texas': 'US', 'utah': 'US', 'vermont': 'US', 'virginia': 'US',
+      'washington': 'US', 'west virginia': 'US', 'wisconsin': 'US', 'wyoming': 'US', 'district of columbia': 'US'
+    };
+    
+    const countryLower = (located || incorporated || 'Unknown').toLowerCase();
+    let countryCode = 'XX';
+    for (const [country, code] of Object.entries(countryCodeMap)) {
+      if (countryLower.includes(country)) {
+        countryCode = code;
+        break;
+      }
+    }
+    
+    const incLower = (incorporated || '').toLowerCase();
+    const locLower = (located || '').toLowerCase();
+    let incorporatedCode = 'XX';
+    let locatedCode = 'XX';
+    
+    for (const [country, code] of Object.entries(countryCodeMap)) {
+      if (incLower.includes(country) && incorporatedCode === 'XX') {
+        incorporatedCode = code;
+      }
+      if (locLower.includes(country) && locatedCode === 'XX') {
+        locatedCode = code;
+      }
+    }
+    
+    const countryDisplay = incorporatedCode === locatedCode ? incorporatedCode : `${incorporatedCode}/${locatedCode}`;
+    
+    const direction = intent?.toLowerCase().includes('short') || intent?.toLowerCase().includes('bankruptcy') || intent?.toLowerCase().includes('dilution') ? 'Short' : 'Long';
+    const reason = (intent || 'Filing').substring(0, 50).toLowerCase();
+    const priceDisplay = price && price !== 'N/A' ? `$${parseFloat(price).toFixed(2)}` : 'N/A';
+    const volDisplay = alertData.volume && alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A';
+    const floatDisplay = alertData.float && alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A';
+    const insiderDisplay = alertData.insiderPercent && alertData.insiderPercent !== 'N/A' ? (alertData.insiderPercent * 100).toFixed(2) + '%' : 'N/A';
+    
+    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), price: ${priceDisplay}, vol: ${volDisplay}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, ownership: ${insiderDisplay}, ${reason}, ${alertData.shortOpportunity || alertData.longOpportunity || ''} https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+    const personalMsg = { content: personalAlertContent };
+    
+    log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Float: ${alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A'}, Vol: ${alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A'}, S/O: ${alertData.soRatio}, Ownership: ${alertData.insiderPercent !== 'N/A' ? (alertData.insiderPercent * 100).toFixed(2) + '%' : 'N/A'}`);
+    
+    fetch(CONFIG.PERSONAL_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(personalMsg)
+    }).catch(err => log('WARN', `Webhook send failed: ${err.message}`));
+  } catch (err) {
+    log('WARN', `Error sending personal webhook: ${err.message}`);
+  }
+};
+
+const pushToGitHub = () => {
+  try {
+    const projectRoot = CONFIG.GITHUB_REPO_PATH;
+    execSync(`cd ${projectRoot} && git add alert.json quote.json 2>/dev/null && git commit -m "Auto: Alert update $(date '+%Y-%m-%d %H:%M:%S')" 2>/dev/null && git push origin main 2>/dev/null`, { 
+      stdio: 'ignore' 
+    });
+    log('INFO', `Pushed to GitHub (${CONFIG.GITHUB_USERNAME}/${CONFIG.GITHUB_REPO_NAME})`);
+  } catch (err) {
+  }
+};
+
+const app = express();
+
+app.get('/logs/alert.json', (req, res) => {
+  try {
+    if (fs.existsSync(CONFIG.ALERTS_FILE)) {
+      const data = fs.readFileSync(CONFIG.ALERTS_FILE, 'utf8');
+      res.setHeader('Content-Type', 'application/json');
+      res.send(data);
+    } else {
+      res.json([]);
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/logs/stocks.json', (req, res) => {
+  try {
+    if (fs.existsSync(CONFIG.STOCKS_FILE)) {
+      const data = fs.readFileSync(CONFIG.STOCKS_FILE, 'utf8');
+      res.setHeader('Content-Type', 'application/json');
+      res.send(data);
+    } else {
+      res.json([]);
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/logs/quote.json', (req, res) => {
+  try {
+    if (fs.existsSync(CONFIG.PERFORMANCE_FILE)) {
+      const data = fs.readFileSync(CONFIG.PERFORMANCE_FILE, 'utf8');
+      res.setHeader('Content-Type', 'application/json');
+      res.send(data);
+    } else {
+      res.json({});
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/git-status', (req, res) => {
+  try {
+    const projectRoot = '/home/user/Documents/sysd';
+    const status = execSync(`cd ${projectRoot} && git status --porcelain 2>/dev/null`, { encoding: 'utf8' }).trim();
+    const lastCommit = execSync(`cd ${projectRoot} && git log -1 --pretty=format:"%h - %s (%ai)" 2>/dev/null`, { encoding: 'utf8' }).trim();
+    const branch = execSync(`cd ${projectRoot} && git rev-parse --abbrev-ref HEAD 2>/dev/null`, { encoding: 'utf8' }).trim();
+    
+    log('INFO', `Git: Branch ${branch || 'main'}, Last commit: ${lastCommit || 'No commits'}`);
+    
+    res.json({
+      status: 'online',
+      branch: branch || 'main',
+      lastCommit: lastCommit || 'No commits',
+      workingTree: status || 'Clean',
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      status: 'error', 
+      message: err.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+app.get('/', (req, res) => {
+  res.sendFile('./ui/run.html', { root: '.' });
+});
+
+app.use(express.static('./ui'));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  log('INFO', `Server online on port http://localhost:${PORT}`);
+});
+
+(async () => {
+  let cycleCount = 0, alertsSent = 0, startTime = Date.now();
+  let processedHashes = new Map(); // Pure in-memory, session-based (100 max)
+  let loggedFetch = false;
+  
+  try {
+    const projectRoot = '/home/user/Documents/sysd';
+    const branch = execSync(`cd ${projectRoot} && git rev-parse --abbrev-ref HEAD`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim() || 'main';
+    const lastCommit = execSync(`cd ${projectRoot} && git log -1 --pretty=format:"%h - %s (%ai)"`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim() || 'No commits';
+    log('INFO', `Git: Branch ${branch}, Last commit: ${lastCommit}`);
+  } catch (err) {
+  }
+    
+  while (true) {
+    try {
+      cycleCount++;
+      const filings6K = await fetchFilings();
+      const filings8K = await fetch8Ks();
+      const allFilings = [...filings6K, ...filings8K];
+      
+      if (allFilings.length > 0 && !loggedFetch) {
+        const form6KCount = allFilings.filter(f => f.formType === '6-K').length;
+        const form8KCount = allFilings.filter(f => f.formType === '8-K').length;
+        log('INFO', `Fetched ${allFilings.length} filings: 6-K: ${form6KCount} / 8-K: ${form8KCount}`);
+        console.log('');
+        loggedFetch = true;
+      } else if (allFilings.length === 0) {
+        loggedFetch = false;
+      }
+      
+      const filingsToProcess = allFilings.slice(0, 100);
+      for (const filing of filingsToProcess) {
+        try {
+          const hash = crypto.createHash('md5').update(filing.title + filing.updated).digest('hex');
+          
+          if (processedHashes.has(hash)) {
+            continue;
+          }
+          
+          processedHashes.set(hash, Date.now());
+          
+          const filingTime = new Date(filing.updated);
+          const filingDate = filingTime.toLocaleString('en-US', { timeZone: 'America/New_York' });
+          const text = await getFilingText(filing.txtLink);
+          let semanticSignals = parseSemanticSignals(text);
+          
+          let source = 'SEC';
+          let intent = Object.keys(semanticSignals).join(', ') || null;
+          
+          if (!intent && text) {
+            let summary = '';
+            
+            const anchors = [
+              /\b(announced|acquired|entered|issued|approved|appointed|received|granted|signed|completed|launched|began|commenced)\b[^.]*\./i,
+              /INFORMATION CONTAINED IN THIS (?:FORM )?6-?K REPORT[^.]*\./i,
+              /SUBMITTED HEREWITH|^EXHIBITS/im,
+            ];
+            
+            for (const anchor of anchors) {
+              const match = text.match(anchor);
+              if (match && match.index !== undefined) {
+                summary = match[0];
+                break;
+              }
+            }
+            
+            if (!summary) {
+              const searchStart = Math.min(1500, text.length - 500);
+              const remainder = text.slice(searchStart);
+              const sentenceMatch = remainder.match(/[A-Z][^.,;:\-—]*?[.,;:\-—]/);
+              if (sentenceMatch) {
+                summary = sentenceMatch[0];
+              } else {
+                summary = text.slice(searchStart, searchStart + 200);
+              }
+            }
+            
+            let cleaned = summary
+              .replace(/&[a-z]+;/gi, ' ')
+              .replace(/&#\d+;/gi, ' ')
+              .replace(/&#x[0-9a-f]+;/gi, ' ')
+              .replace(/form\s*\d+|form\s*6-?k|commission|washington|pursuant|exchange act|rule \d+|duly authorized|thereunto|registrant|securities exchange|edgar inline|viewer|exhibit|signature|officer|director|title|issuer|report/gi, '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .substring(0, 120);
+            
+            if (cleaned && cleaned.length > 50 && /[A-Z]/.test(cleaned)) {
+              intent = cleaned;
+            }
+          }
+          
+          console.log(`\x1b[90m[${new Date().toISOString()}] % (${filing.title.slice(0,60)}...) - Filed @ ${filingDate} ET\x1b[0m`);
+          
+          const periodOfReport = filing.updated.split('T')[0];
+          
+          let ticker = 'Unknown';
+          let normalizedIncorporated = 'Unknown';
+          let normalizedLocated = 'Unknown';
+          
+          if (filing.cik) {
+            const secData = await getCountryAndTicker(filing.cik);
+            ticker = secData.ticker || 'Unknown';
+            normalizedIncorporated = secData.incorporated || 'Unknown';
+            normalizedLocated = secData.located || 'Unknown';
+          }
+          
+          if (normalizedIncorporated !== normalizedLocated) {
+            log('INFO', `Incorporated: ${normalizedIncorporated}, Located: ${normalizedLocated}`);
+          } else {
+            log('INFO', `Incorporated: ${normalizedIncorporated}`);
+          }
+
+          
+          if (Object.keys(semanticSignals).length > 0) {
+            const allKeywords = [];
+            for (const [category, keywords] of Object.entries(semanticSignals)) {
+              allKeywords.push(...keywords);
+            }
+            let newsDisplay = allKeywords.join(', ');
+            
+            // If "Reverse Split" is detected, try to extract the ratio
+            if (Object.keys(semanticSignals).includes('Reverse Split')) {
+              const ratio = extractReverseSplitRatio(text);
+              if (ratio) {
+                newsDisplay = newsDisplay.replace(/1-for-/i, ratio + ' ');
+              }
+            }
+            
+            log('INFO', `News: ${newsDisplay}`);
+          } else if (intent) {
+            let displayIntent = intent
+              .replace(/&[a-z]+;/gi, ' ')
+              .replace(/&#\d+;/gi, ' ')
+              .replace(/&#x[0-9a-f]+;/gi, ' ')
+              .replace(/\/s\//gi, '')
+              .replace(/^\d+(\.\d)?\s+/g, '')
+              .replace(/form\s*\d+|form\s*6-?k/gi, '')
+              .replace(/exhibit|description|certification|interim|report|filing|securities|exchange|commission|washington|d\.c\.|pursuant|rule|duly|authorized|thereunto|registrant|officer|director/gi, '')
+              .replace(/\s+/g, ' ')
+              .trim();
+            
+            // Truncate original text at sentence boundary before fallback
+            displayIntent = truncateAtSentence(text, 200);
+            
+            if (displayIntent && displayIntent.length > 20) {
+              log('INFO', `News: ${displayIntent}`);
+            } else {
+              log('INFO', `News: Regulatory Update`);
+            }
+          } else {
+            log('INFO', `News: Regulatory Update`);
+          }
+          
+          const foundForms = new Set();
+          const foundItems = new Set();
+          const titleAndText = (filing.title + ' ' + text).toLowerCase();
+          
+          for (const form of FORM_TYPES) {
+            if (titleAndText.includes(form.toLowerCase())) {
+              foundForms.add(form);
+            }
+          }
+          
+          const itemMatches = text.match(/\bItem\s+([1-9]\.\d{2})/gi);
+          if (itemMatches) {
+            itemMatches.forEach(match => {
+              const itemCode = match.match(/[1-9]\.\d{2}/)[0];
+              foundItems.add(itemCode);
+            });
+          }
+          
+          const mainForms = ['S-1', 'S-3', 'S-4', 'S-8', 'F-1', 'F-3', 'F-4', '20-F', '13G', '13D', 'Form D'];
+          const mainItems = ['1.01', '1.02', '1.03', '1.04', '1.05', '2.01', '2.02', '2.03', '2.04', '2.05', '2.06', '3.01', '3.02', '3.03', '4.01', '5.01', '5.02', '5.03', '5.04', '5.05', '5.06', '5.07', '5.08', '5.09', '5.10', '5.11', '5.12', '5.13', '5.14', '5.15', '6.01', '7.01', '8.01', '9.01'];
+          const otherForms = Array.from(foundForms).filter(f => mainForms.includes(f));
+          const otherItems = Array.from(foundItems).filter(i => mainItems.includes(i));
+          const formsDisplay = otherForms.length > 0 ? otherForms.join(', ') : '';
+          const itemsDisplay = otherItems.length > 0 ? otherItems.sort((a, b) => parseFloat(a) - parseFloat(b)).map(item => `Item ${item}`).join(', ') : '';
+          
+          const bearishCategories = ['Reverse Split', 'Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Dilution', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis'];
+          const signalKeys = Object.keys(semanticSignals);
+          const hasBearish = signalKeys.some(cat => bearishCategories.includes(cat));
+          const direction = hasBearish ? 'Short' : 'Long';
+          
+          let formLogMessage = formsDisplay && formsDisplay !== '' ? formsDisplay : 'None';
+          if (itemsDisplay && itemsDisplay !== '') {
+            formLogMessage += ', ' + itemsDisplay;
+          }
+          log('INFO', `Form: ${formLogMessage}`);
+          
+          if (signalKeys.length > 0) {
+            log('INFO', `${direction}: ${signalKeys.join(', ')}`);
+          }
+          
+          let price = 'N/A', volume = 'N/A', marketCap = 'N/A', averageVolume = 'N/A', float = 'N/A', sharesOutstanding = 'N/A', insiderPercent = 'N/A';
+          let debtToEquity = 'N/A', totalCash = 'N/A', totalCashPerShare = 'N/A', profitMargins = 'N/A', quickRatio = 'N/A';
+          
+          if (ticker !== 'UNKNOWN' && isValidTicker(ticker)) {
+            try {
+              const quoteData = await Promise.race([
+                yahooFinance.quoteSummary(ticker, { modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'majorHoldersBreakdown', 'financialData'] }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), CONFIG.YAHOO_TIMEOUT))
+              ]);
+              
+              const priceModule = quoteData.price || {};
+              const summaryDetail = quoteData.summaryDetail || {};
+              const keyStats = quoteData.defaultKeyStatistics || {};
+              const holders = quoteData.majorHoldersBreakdown || {};
+              const finData = quoteData.financialData || {};
+              
+              price = priceModule?.regularMarketPrice || summaryDetail?.regularMarketPrice || 'N/A';
+              marketCap = summaryDetail?.marketCap || 'N/A';
+              volume = priceModule?.regularMarketVolume || summaryDetail?.regularMarketVolume || 'N/A';
+              averageVolume = summaryDetail?.averageVolume || summaryDetail?.averageDailyVolume10Day || 'N/A';
+              float = keyStats?.floatShares || 'N/A';
+              sharesOutstanding = keyStats?.sharesOutstanding || 'N/A';
+              insiderPercent = holders?.insidersPercentHeld || 'N/A';
+              
+              debtToEquity = keyStats?.debtToEquity || 'N/A';
+              totalCash = finData?.totalCash || 'N/A';
+              totalCashPerShare = finData?.totalCashPerShare || 'N/A';
+              profitMargins = keyStats?.profitMargins || 'N/A';
+              quickRatio = finData?.quickRatio || 'N/A';
+            } catch (err) {
+            }
+          }
+          
+          const priceDisplay = price !== 'N/A' ? `$${price.toFixed(2)}` : 'N/A';
+          const volDisplay = volume !== 'N/A' ? volume.toLocaleString('en-US', { maximumFractionDigits: 0 }) : 'N/A';
+          const avgDisplay = averageVolume !== 'N/A' ? averageVolume.toLocaleString('en-US', { maximumFractionDigits: 0 }) : 'N/A';
+          const mcDisplay = marketCap !== 'N/A' && marketCap > 0 ? '$' + Math.round(marketCap).toLocaleString('en-US') : 'N/A';
+          const floatDisplay = float !== 'N/A' ? float.toLocaleString('en-US', { maximumFractionDigits: 0 }) : 'N/A';
+          const insiderDisplay = insiderPercent !== 'N/A' ? (insiderPercent * 100).toFixed(2) + '%' : 'N/A';
+          let soRatio = 'N/A';
+          if (sharesOutstanding !== 'N/A' && float !== 'N/A' && sharesOutstanding > 0 && !isNaN(float) && !isNaN(sharesOutstanding)) {
+            const ratio = (float / sharesOutstanding) * 100;
+            soRatio = ratio < 100 ? ratio.toFixed(2) + '%' : ratio.toFixed(1) + '%';
+          }
+          
+          let shortOpportunity = null;
+          let longOpportunity = null;
+          
+          if ((normalizedIncorporated.includes('Cayman') || normalizedIncorporated.includes('Virgin') || normalizedIncorporated.includes('Hong Kong')) 
+              && insiderPercent !== 'N/A' && insiderPercent < 0.01 
+              && Object.keys(semanticSignals).includes('Reverse Split')) {
+            shortOpportunity = 'Intent: Artificial Inflation (Foreign Issuer + Low Insider + Reverse Split)';
+          }
+          
+          if (profitMargins !== 'N/A' && profitMargins < -0.5 
+              && totalCashPerShare !== 'N/A' && totalCashPerShare < 0.05 
+              && Object.keys(semanticSignals).includes('Dilution')) {
+            shortOpportunity = 'Intent: Desperation Play (Negative Margins + Low Cash + Dilution)';
+          }
+          
+          if (debtToEquity !== 'N/A' && debtToEquity > 5000 
+              && insiderPercent !== 'N/A' && insiderPercent < 0.01) {
+            shortOpportunity = 'Intent: Bankruptcy Play (High Debt + No Insider Support)';
+          }
+          
+          if (Object.keys(semanticSignals).includes('Going Concern') 
+              && quickRatio !== 'N/A' && quickRatio < 0.5) {
+            shortOpportunity = 'Intent: Imminent Collapse (Going Concern + Insolvency)';
+          }
+          
+          if (insiderPercent !== 'N/A' && insiderPercent < 0.01 
+              && totalCashPerShare !== 'N/A' && totalCashPerShare < 0.05 
+              && profitMargins !== 'N/A' && profitMargins < 0) {
+            shortOpportunity = 'Intent: Dilution Incoming (Insider Exit + Cash Burn)';
+          }
+          
+          if (insiderPercent !== 'N/A' && insiderPercent > 0.15 
+              && profitMargins !== 'N/A' && profitMargins > 0.1 
+              && (Object.keys(semanticSignals).includes('Merger/Acquisition') || Object.keys(semanticSignals).includes('FDA Approval'))) {
+            longOpportunity = 'Intent: Insider Support + Strong Fundamentals';
+          }
+          
+          const now = new Date();
+          const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+          const etHour = etTime.getHours();
+          const etMin = etTime.getMinutes();
+          const etTotalMin = etHour * 60 + etMin;
+          const startMin = 3.5 * 60; // 3:30am = 210 minutes
+          const endMin = 18 * 60; // 6:00pm = 1080 minutes
+          
+          if (shortOpportunity || longOpportunity) {
+            log('INFO', `Stock: $${ticker}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}, ${shortOpportunity || longOpportunity}`);
+          } else {
+            log('INFO', `Stock: $${ticker}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}`);
+          }
+          
+          if (etTotalMin < startMin || etTotalMin > endMin) {
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+            log('INFO', `Links: ${secLink} ${tvLink}`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, filing received at ${etHour.toString().padStart(2, '0')}:${etMin.toString().padStart(2, '0')} ET (outside 3:30am-6:00pm window)\x1b[0m`);
+            console.log('');
+            continue;
+          }
+          if (normalizedLocated === 'Unknown') {
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+            log('INFO', `Links: ${secLink} ${tvLink}`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, no valid country\x1b[0m`);
+            console.log('');
+            continue;
+          }
+          
+          const floatValue = float !== 'N/A' ? parseFloat(float) : null;
+          if (floatValue !== null && floatValue > 25000000) {
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+            log('INFO', `Links: ${secLink} ${tvLink}`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, Float ${floatValue.toLocaleString('en-US')} exceeds 25m limit\x1b[0m`);
+            console.log('');
+            continue;
+          }
+          
+          const volumeValue = volume !== 'N/A' ? parseFloat(volume) : null;
+          if (volumeValue !== null && volumeValue < 25000) {
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+            log('INFO', `Links: ${secLink} ${tvLink}`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, volume ${volumeValue.toLocaleString('en-US')} below 25k minimum\x1b[0m`);
+            console.log('');
+            continue;
+          }
+          
+          let soRatioValue = null;
+          if (sharesOutstanding !== 'N/A' && float !== 'N/A' && sharesOutstanding > 0) {
+            const so = parseFloat(sharesOutstanding);
+            const fl = parseFloat(float);
+            if (!isNaN(fl) && !isNaN(so)) {
+              soRatioValue = (fl / so) * 100;
+            }
+          }
+          
+          if (soRatioValue !== null && soRatioValue >= 25) {
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+            log('INFO', `Links: ${secLink} ${tvLink}`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, S/O ${soRatioValue.toFixed(2)}% exceeds 25% limit\x1b[0m`);
+            console.log('');
+            continue;
+          }
+          
+          const neutralCategories = ['Executive Departure', 'Asset Impairment', 'Restructuring', 'Stock Buyback', 'Licensing Deal', 'Partnership', 'Facility Expansion'];
+          const signalCategories = Object.keys(semanticSignals);
+          const neutralSignals = signalCategories.filter(cat => neutralCategories.includes(cat));
+          const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
+          
+          let validSignals = false;
+          if (neutralSignals.length > 0 && signalCategories.length >= 2) {
+            validSignals = true; // Has neutral signal + at least 1 other signal
+          } else if (nonNeutralSignals.length >= 2) {
+            validSignals = true; // Has 2+ non-neutral signals from different categories
+          }
+          
+          if (!validSignals) {
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+            log('INFO', `Links: ${secLink} ${tvLink}`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, insufficient signals (need 2+ or neutral + 1 other)\x1b[0m`);
+            console.log('');
+            continue;
+          }
+
+          const alertData = {
+            ticker: ticker || filing.cik || 'Unknown',
+            price: price,
+            volume: volume,
+            averageVolume: averageVolume,
+            float: float,
+            sharesOutstanding: sharesOutstanding,
+            soRatio: soRatio,
+            insiderPercent: insiderPercent,
+            marketCap: marketCap,
+            shortOpportunity: shortOpportunity,
+            floatFilter: floatValue !== null ? (floatValue <= 25000000 ? 'Pass' : 'Fail') : 'N/A',
+            volumeFilter: volumeValue !== null ? (volumeValue >= 50000 ? 'Pass' : 'Fail') : 'N/A',
+            soFilter: soRatioValue !== null ? (soRatioValue < 25 ? 'Pass' : 'Fail') : 'N/A',
+            intent: intent || 'Regulatory Filing',
+            incorporated: normalizedIncorporated,
+            located: normalizedLocated,
+            semanticSignals: semanticSignals,
+            filingDate: periodOfReport,
+            source: source,
+            formType: foundForms,
+            cik: filing.cik
+          };
+          saveAlert(alertData);
+        } catch (err) {
+          log('WARN', `Filing processing error: ${err.message}`);
+        }
+      }
+      
+      if (processedHashes.size > 100) {
+        const arr = Array.from(processedHashes.entries())
+          .sort((a, b) => b[1] - a[1]) // Sort by time desc
+          .slice(0, 80);
+        
+        processedHashes.clear();
+        arr.forEach(([hash, time]) => processedHashes.set(hash, time));
+      }
+      
+      const now = new Date();
+      const etTime = now.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
+      const etHour = parseInt(etTime.split(', ')[1].split(':')[0]);
+      const isPeak = etHour >= 7 && etHour <= 10;
+      const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+      const isTradingHours = etHour >= 3 && etHour < 18 && !isWeekend;
+      
+      let refreshInterval;
+      if (isWeekend) {
+        refreshInterval = CONFIG.REFRESH_WEEKEND;  // 15m on weekends
+      } else if (!isTradingHours) {
+        refreshInterval = CONFIG.REFRESH_NIGHT;    // 10m outside trading hours
+      } else if (isPeak) {
+        refreshInterval = CONFIG.REFRESH_PEAK;     // 30s during peak (7am-10am)
+      } else {
+        refreshInterval = CONFIG.REFRESH_NORMAL;   // 2m during trading hours
+      }
+      
+      await wait(refreshInterval);
+    } catch (err) {
+      log('ERROR', `Filing loop error: ${err.message}`);
+      await wait(60000);
+    }
+  }
+
+})();

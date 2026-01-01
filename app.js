@@ -747,10 +747,10 @@ app.get('/git-status', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile('./ui/run.html', { root: '.' });
+  res.sendFile('./docs/run.html', { root: '.' });
 });
 
-app.use(express.static('./ui'));
+app.use(express.static('./docs'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

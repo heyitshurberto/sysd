@@ -858,7 +858,7 @@ app.get('/git-status', (req, res) => {
     const lastCommit = execSync(`cd ${projectRoot} && git log -1 --pretty=format:"%h - %s (%ai)" 2>/dev/null`, { encoding: 'utf8' }).trim();
     const branch = execSync(`cd ${projectRoot} && git rev-parse --abbrev-ref HEAD 2>/dev/null`, { encoding: 'utf8' }).trim();
     
-    log('INFO', `Last commit: ${lastCommit || 'No commits'}`);
+    log('INFO', `Git: Last commit: ${lastCommit || 'No commits'}`);
     
     res.json({
       status: 'online',
@@ -982,7 +982,7 @@ app.listen(PORT, () => {
     const projectRoot = '/home/user/Documents/sysd';
     const branch = execSync(`cd ${projectRoot} && git rev-parse --abbrev-ref HEAD`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim() || 'main';
     const lastCommit = execSync(`cd ${projectRoot} && git log -1 --pretty=format:"%h - %s (%ai)"`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim() || 'No commits';
-    log('INFO', `Last commit: ${lastCommit}`);
+    log('INFO', `Git: Last commit: ${lastCommit}`);
   } catch (err) {
   }
     

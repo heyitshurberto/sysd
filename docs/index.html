@@ -2552,7 +2552,7 @@ table {
                     if (alerts.length === 0) {
                         const emptyState = document.createElement('div');
                         emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
-                        emptyState.textContent = 'No alerts available';
+                        emptyState.textContent = 'No recent alerts';
                         list.appendChild(emptyState);
                         return;
                     }
@@ -2601,7 +2601,7 @@ table {
                     if (stocks.length === 0) {
                         const emptyState = document.createElement('div');
                         emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
-                        emptyState.textContent = 'No alerts available';
+                        emptyState.textContent = 'No history available';
                         list.appendChild(emptyState);
                         return;
                     }
@@ -2644,7 +2644,7 @@ table {
             if (messages.length === 0) {
                 const emptyState = document.createElement('div');
                 emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
-                emptyState.textContent = 'No messages available';
+                emptyState.textContent = 'No messages';
                 list.appendChild(emptyState);
                 return;
             }

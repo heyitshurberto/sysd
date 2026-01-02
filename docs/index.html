@@ -3154,10 +3154,10 @@ table {
                     }
                 }
 
-                // Check for new tickers in alert.json every 10 seconds
+                // Check for new tickers in alert.json every 2 seconds
                 setInterval(() => {
                     this.checkForNewAlerts();
-                }, 10000); // Check for new alerts every 10 seconds
+                }, 2000); // Check for new alerts every 2 seconds
 
                 // Then start the monitoring interval for price updates
                 setInterval(() => {

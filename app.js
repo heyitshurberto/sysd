@@ -75,11 +75,11 @@ const CONFIG = {
   PERFORMANCE_FILE: 'logs/quote.json', // File to store performance data
   ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware'], // Allowed incorporation/located countries
   PI_MODE: true,             // Enable optimizations for Raspberry Pi 
-  REFRESH_PEAK: 10000,       // 10s during trading hours (7am-10am ET)
-  REFRESH_NORMAL: 30000,     // 30s during trading hours (3:30am-6pm ET)
-  REFRESH_NIGHT: 300000,     // 5m outside trading hours (conserve power)
-  REFRESH_WEEKEND: 600000,   // 10m on weekends (very low activity)
-  YAHOO_TIMEOUT: 6000,       // Reduced from 8s for Pi performance
+  REFRESH_PEAK: 2000,        // 2s during trading hours (7am-10am ET)
+  REFRESH_NORMAL: 5000,      // 5s during trading hours (3:30am-6pm ET)
+  REFRESH_NIGHT: 60000,      // 1m outside trading hours (conserve power)
+  REFRESH_WEEKEND: 120000,   // 2m on weekends (very low activity)
+  YAHOO_TIMEOUT: 10000,       // Reduced to 10s for Pi
   SEC_RATE_LIMIT: 3000,      // Increased from 2s to respect SEC limits on Pi
   SEC_FETCH_TIMEOUT: 5000,   // Reduced for Pi memory constraints
   MAX_COMBINED_SIZE: 100000, // Reduced from 150k for Pi RAM
@@ -971,7 +971,6 @@ app.get('/api/quote/:ticker', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  log('INFO', `State: Dashboard online at http://localhost:${PORT} & https://eugenesnonprofit.com/`);
 });
 
 (async () => {
@@ -979,11 +978,13 @@ app.listen(PORT, () => {
   let processedHashes = new Map(); // Pure in-memory, session-based (100 max)
   let loggedFetch = false;
   
+  log('INFO', `App: System online at http://localhost:${PORT} & https://eugenesnonprofit.com/`);
+  
   try {
     const projectRoot = '/home/user/Documents/sysd';
     const branch = execSync(`cd ${projectRoot} && git rev-parse --abbrev-ref HEAD`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim() || 'main';
     const lastCommit = execSync(`cd ${projectRoot} && git log -1 --pretty=format:"%h - %s (%ai)"`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim() || 'No commits';
-    log('INFO', `Git: Branch ${branch}, Last commit: ${lastCommit}`);
+    log('INFO', `Git: Last commit: ${lastCommit}`);
   } catch (err) {
   }
     

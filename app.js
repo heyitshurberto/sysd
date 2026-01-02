@@ -66,7 +66,7 @@ const CONFIG = {
   GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name',
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com',
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '',
-  FILE_TIME: 1, // Minutes to consider a filing "new"
+  FILE_TIME: 1, // Minutes refresh interval for filings
   MIN_ALERT_VOLUME: 50000, // Min volume threshold
   MAX_FLOAT: 50000000, // Max float size
   MAX_SO_RATIO: 40.0,  // Max short interest ratio
@@ -1176,8 +1176,10 @@ app.listen(PORT, () => {
               averageVolume = summaryDetail?.averageVolume || summaryDetail?.averageDailyVolume10Day || 'N/A';
               float = keyStats?.floatShares || 'N/A';
               sharesOutstanding = keyStats?.sharesOutstanding || 'N/A';
-              insiderPercent = holders?.insidersPercentHeld || 'N/A';
-              institutionalPercent = holders?.institutionsPercentHeld || 'N/A';
+              
+              // Yahoo returns insider/institutional as decimals (0-1), convert to percentages
+              insiderPercent = holders?.insidersPercentHeld ? (holders.insidersPercentHeld * 100) : 'N/A';
+              institutionalPercent = holders?.institutionsPercentHeld ? (holders.institutionsPercentHeld * 100) : 'N/A';
               
               debtToEquity = keyStats?.debtToEquity || 'N/A';
               totalCash = finData?.totalCash || 'N/A';
@@ -1377,7 +1379,7 @@ app.listen(PORT, () => {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (needs 2 plus or 1 neutral and another bearish/bullish)\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (needs 2 plus or 1 neutral and a bearish/bullish)\x1b[0m`);
             console.log('');
             continue;
           }
@@ -1427,11 +1429,11 @@ app.listen(PORT, () => {
           // Log the signal score
           log('INFO', `Score: ${signalScoreData.score} (F: ${signalScoreData.floatScore}, O: ${signalScoreData.ownershipScore}, S/F: ${signalScoreData.sfScore}, V: ${signalScoreData.volumeScore})`);
           
-          // Only save alert if we got price, float, and S/O data
-          if (price !== 'N/A' && float !== 'N/A' && soRatio !== 'N/A') {
+          // Only save alert if we got price, float, S/O, and ownership data
+          if (price !== 'N/A' && float !== 'N/A' && soRatio !== 'N/A' && insiderPercent !== 'N/A' && institutionalPercent !== 'N/A') {
             saveAlert(alertData);
           } else {
-            log('INFO', `Quote: Incomplete data for ${ticker} (price: ${price}, float: ${float}, S/O: ${soRatio})`);
+            log('INFO', `Quote: Incomplete data for ${ticker} (price: ${price}, float: ${float}, s/o: ${soRatio}, ownership: ${insiderPercent === 'N/A' ? institutionalPercent : insiderPercent})`);
           }
         } catch (err) {
           log('WARN', `Filing processing error: ${err.message}`);

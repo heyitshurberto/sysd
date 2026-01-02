@@ -3968,7 +3968,7 @@ table {
                     <div class="ticker ticker-clickable" tabindex="0" style="cursor:pointer;display:inline-block;user-select:none;transition:background 0.15s,border 0.15s; border-radius:4px; padding:2px 6px; margin-bottom:2px; font-size: 8px;">
                     <div class="ticker"><i>$${alert.ticker}</i> <span style="color: ${alert.isShort ? '#aa0000' : '#0ee50e'};">[${alert.isShort ? 'SHORT' : 'LONG'}]</span></div>
                     </div>
-                    <div style="font-weight: bold; color: ${alert.pumpScore >= 0.6 ? '#00dd00' : alert.pumpScore >= 0.3 ? '#ffdd00' : '#ff6666'}; margin-bottom: 6px;">Score: ${(alert.pumpScore || 0).toFixed(2)}</div>
+                    <div style="font-weight: bold; color: ${alert.signalScore >= 0.6 ? '#00dd00' : alert.signalScore >= 0.3 ? '#ffdd00' : '#ff6666'}; margin-bottom: 6px;">Score: ${(alert.signalScore || 0).toFixed(2)}</div>
                     <div>Price: $${alert.alertPrice.toFixed(4)}</div>
                     <div>Current: $${alert.currentPrice.toFixed(4)} (H/L: $${Math.max(alert.peakPrice, alert.lowPrice).toFixed(4)}/$${Math.min(alert.peakPrice, alert.lowPrice).toFixed(4)})</div>
                     <div class="price-change ${parseFloat(percentChange) > 0 ? 'positive' : (parseFloat(percentChange) === 0 ? 'neutral' : 'negative')}">

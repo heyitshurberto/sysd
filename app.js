@@ -66,17 +66,15 @@ const CONFIG = {
   GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name',
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com',
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '',
-  FILE_TIME: 1, // Minutes
+  FILE_TIME: 1, // Minutes to consider a filing "new"
   MIN_ALERT_VOLUME: 30000, // Min volume threshold
   MAX_FLOAT: 30000000, // Max float size
   MAX_SO_RATIO: 30.0,  // Max short interest ratio
-  ALERTS_FILE: 'logs/alert.json',
-  STOCKS_FILE: 'logs/stocks.json',
-  PERFORMANCE_FILE: 'logs/quote.json',
-  ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'delaware'],
-
-  // Power conservation for Pi Zero 2 W
-  PI_MODE: true,
+  ALERTS_FILE: 'logs/alert.json', // File to store recent alerts
+  STOCKS_FILE: 'logs/stocks.json', // File to store all alerts
+  PERFORMANCE_FILE: 'logs/quote.json', // File to store performance data
+  ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware'], // Allowed incorporation/located countries
+  PI_MODE: true,             // Enable optimizations for Raspberry Pi 
   REFRESH_PEAK: 30000,       // 30s during trading hours (7am-10am ET)
   REFRESH_NORMAL: 120000,    // 2m during trading hours (3:30am-6pm ET)
   REFRESH_NIGHT: 600000,     // 10m outside trading hours (conserve power)

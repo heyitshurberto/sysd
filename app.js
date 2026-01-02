@@ -66,7 +66,7 @@ const CONFIG = {
   GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name',
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com',
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '',
-  FILE_TIME: 1, // Minutes to consider a filing "new"
+  FILE_TIME: 1, // Minutes retro to fetch filings
   MIN_ALERT_VOLUME: 50000, // Min volume threshold
   MAX_FLOAT: 50000000, // Max float size
   MAX_SO_RATIO: 40.0,  // Max short interest ratio
@@ -80,7 +80,7 @@ const CONFIG = {
   REFRESH_NIGHT: 300000,     // 5m outside trading hours (conserve power)
   REFRESH_WEEKEND: 600000,   // 10m on weekends (very low activity)
   YAHOO_TIMEOUT: 6000,       // Reduced from 8s for Pi performance
-  SEC_RATE_LIMIT: 500,       // Reduced to 500ms for batch processing (still respects SEC)
+  SEC_RATE_LIMIT: 2000,      // Reduced to 2s for batch processing (still respects SEC)
   SEC_FETCH_TIMEOUT: 5000,   // Reduced for Pi memory constraints
   MAX_COMBINED_SIZE: 100000, // Reduced from 150k for Pi RAM
   MAX_RETRY_ATTEMPTS: 3      // Reduced from 5 for Pi resources
@@ -1314,9 +1314,9 @@ app.listen(PORT, () => {
           const endMin = 18 * 60; // 6:00pm = 1080 minutes
           
           if (shortOpportunity || longOpportunity) {
-            log('INFO', `Stock: $${ticker}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}, ${shortOpportunity || longOpportunity}`);
+            log('INFO', `Stock: $${ticker}, Price: ${priceDisplay}, Score: ${signalScoreData.score}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}, ${shortOpportunity || longOpportunity}`);
           } else {
-            log('INFO', `Stock: $${ticker}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}`);
+            log('INFO', `Stock: $${ticker}, Price: ${priceDisplay}, Score: ${signalScoreData.score}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}`);
           }
           
           if (etTotalMin < startMin || etTotalMin > endMin) {
@@ -1430,9 +1430,6 @@ app.listen(PORT, () => {
           const signalScoreData = calculatesignalScore(numFloat, numInsider, numInstitutional, numShares, numVolume, numAvgVol);
           alertData.signalScore = signalScoreData.score;
           alertData.institutionalPercent = institutionalPercent;
-          
-          // Log the signal score
-          log('INFO', `Score: ${signalScoreData.score} (F: ${signalScoreData.floatScore}, I: ${signalScoreData.ownershipScore}, S/F: ${signalScoreData.sfScore}, V: ${signalScoreData.volumeScore})`);
           
           // Only save alert if we got price, float, and S/O data
           if (price !== 'N/A' && float !== 'N/A' && soRatio !== 'N/A') {

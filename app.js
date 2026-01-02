@@ -1417,9 +1417,15 @@ app.listen(PORT, () => {
           const signalScoreData = calculatesignalScore(numFloat, numInsider, numInstitutional, numShares, numVolume, numAvgVol);
           alertData.signalScore = signalScoreData.score;
           alertData.institutionalPercent = institutionalPercent;
+          alertData.scoreBreakdown = {
+            floatScore: signalScoreData.floatScore,
+            ownershipScore: signalScoreData.ownershipScore,
+            sfScore: signalScoreData.sfScore,
+            volumeScore: signalScoreData.volumeScore
+          };
           
           // Log the signal score
-          log('INFO', `Score: ${signalScoreData.score} (F: ${signalScoreData.floatScore}, I: ${signalScoreData.ownershipScore}, S/F: ${signalScoreData.sfScore}, V: ${signalScoreData.volumeScore})`);
+          log('INFO', `Score: ${signalScoreData.score} (F: ${signalScoreData.floatScore}, O: ${signalScoreData.ownershipScore}, S/F: ${signalScoreData.sfScore}, V: ${signalScoreData.volumeScore})`);
           
           // Only save alert if we got price, float, and S/O data
           if (price !== 'N/A' && float !== 'N/A' && soRatio !== 'N/A') {

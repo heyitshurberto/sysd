@@ -902,21 +902,28 @@ app.listen(PORT, () => {
   } catch (err) {
   }
     
-  while (true) {
+ while (true) {
     try {
       cycleCount++;
       const filings6K = await fetchFilings();
       const filings8K = await fetch8Ks();
       const allFilings = [...filings6K, ...filings8K];
       
-      if (allFilings.length > 0 && !loggedFetch) {
+      // Log only if there are new filings and we haven't logged this batch yet
+      let newFilingFound = false;
+      for (const filing of allFilings) {
+        const hash = crypto.createHash('md5').update(filing.title + filing.updated).digest('hex');
+        if (!processedHashes.has(hash)) {
+          newFilingFound = true;
+          break;
+        }
+      }
+      
+      if (newFilingFound) {
         const form6KCount = allFilings.filter(f => f.formType === '6-K').length;
         const form8KCount = allFilings.filter(f => f.formType === '8-K').length;
         log('INFO', `Fetched ${allFilings.length} filings: 6-K: ${form6KCount} / 8-K: ${form8KCount}`);
         console.log('');
-        loggedFetch = true;
-      } else if (allFilings.length === 0) {
-        loggedFetch = false;
       }
       
       const filingsToProcess = allFilings.slice(0, 100);

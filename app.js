@@ -886,7 +886,7 @@ app.get('/api/quote/:ticker', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  log('INFO', `Server online on port http://localhost:${PORT}`);
+  log('INFO', `State: Dashboard online at http://localhost:${PORT}`);
 });
 
 (async () => {

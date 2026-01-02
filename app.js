@@ -1008,7 +1008,7 @@ app.listen(PORT, () => {
       if (newFilingFound) {
         const form6KCount = allFilings.filter(f => f.formType === '6-K').length;
         const form8KCount = allFilings.filter(f => f.formType === '8-K').length;
-        log('INFO', `Fetched ${allFilings.length} filings: 6-K: ${form6KCount} / 8-K: ${form8KCount}`);
+        log('INFO', `New: Found ${allFilings.length} filings: 6-K: ${form6KCount} / 8-K: ${form8KCount}`);
         console.log('');
       }
       

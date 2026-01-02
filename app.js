@@ -79,11 +79,11 @@ const CONFIG = {
   REFRESH_NORMAL: 30000,     // 30s during trading hours (3:30am-6pm ET)
   REFRESH_NIGHT: 300000,     // 5m outside trading hours (conserve power)
   REFRESH_WEEKEND: 600000,   // 10m on weekends (very low activity)
-  YAHOO_TIMEOUT: 6000,       // Reduced from 8s for Pi performance
-  SEC_RATE_LIMIT: 2000,      // Reduced to 2s for batch processing (still respects SEC)
+  YAHOO_TIMEOUT: 10000,       // Reduced from 10s for Pi performance
+  SEC_RATE_LIMIT: 2000,       // Minimum 2ms between SEC requests
   SEC_FETCH_TIMEOUT: 5000,   // Reduced for Pi memory constraints
   MAX_COMBINED_SIZE: 100000, // Reduced from 150k for Pi RAM
-  MAX_RETRY_ATTEMPTS: 3      // Reduced from 5 for Pi resources
+  MAX_RETRY_ATTEMPTS: 7      // Reduced from 7 for Pi resources
 };
 
 const rateLimit = {
@@ -492,7 +492,7 @@ async function getCountryAndTicker(cik) {
       await wait(500);
       const res = await fetch(`https://data.sec.gov/submissions/CIK${padded}.json`, {
         headers: {
-          'User-Agent': 'SEC-Bot/1.0 (your-email@domain.com)',
+          'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
           'Accept': 'application/json'
         },
         timeout: CONFIG.SEC_FETCH_TIMEOUT
@@ -589,7 +589,7 @@ async function getFilingText(indexUrl) {
       await wait(100); // Minimal delay, rate limiter handles the rest
       const res = await fetch(indexUrl, {
         headers: {
-          'User-Agent': 'SEC-Bot/1.0 (your-email@domain.com)',
+          'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'Accept-Language': 'en-US,en;q=0.5',
           'Accept-Encoding': 'gzip, deflate, br',
@@ -634,13 +634,13 @@ async function getFilingText(indexUrl) {
       let combinedText = '';
       const MAX_COMBINED_SIZE = CONFIG.MAX_COMBINED_SIZE;
       
-      for (const href of prioritizedHrefs.slice(0, 5)) {
+      for (const href of prioritizedHrefs.slice(0, 2)) {
         const fullUrl = href.startsWith('http') ? href : `https://www.sec.gov${href}`;        
         
         try {
           const docRes = await fetch(fullUrl, {
             headers: {
-              'User-Agent': 'SEC-Bot/1.0 (your-email@domain.com)',
+              'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
               'Accept-Language': 'en-US,en;q=0.5',
               'Accept-Encoding': 'gzip, deflate, br',
@@ -794,11 +794,16 @@ const sendPersonalWebhook = (alertData) => {
 const pushToGitHub = () => {
   try {
     const projectRoot = CONFIG.GITHUB_REPO_PATH;
-    execSync(`cd ${projectRoot} && git add alert.json quote.json 2>/dev/null && git commit -m "Auto: Alert update $(date '+%Y-%m-%d %H:%M:%S')" 2>/dev/null && git push origin main 2>/dev/null`, { 
-      stdio: 'ignore' 
+    // Run git push in background, don't wait for it
+    require('child_process').exec(`cd ${projectRoot} && git add logs/alert.json logs/stocks.json 2>/dev/null && git commit -m "Auto: Alert update $(date '+%Y-%m-%d %H:%M:%S')" 2>/dev/null && git push origin main 2>/dev/null`, { 
+      timeout: 5000 // 5 second timeout for git operations
+    }, (error) => {
+      if (error && !error.message.includes('timeout')) {
+        // Silently fail if not timeout
+      }
     });
-    log('INFO', `Pushed to GitHub (${CONFIG.GITHUB_USERNAME}/${CONFIG.GITHUB_REPO_NAME})`);
   } catch (err) {
+    // Git operations failed silently
   }
 };
 
@@ -853,7 +858,7 @@ app.get('/git-status', (req, res) => {
     const lastCommit = execSync(`cd ${projectRoot} && git log -1 --pretty=format:"%h - %s (%ai)" 2>/dev/null`, { encoding: 'utf8' }).trim();
     const branch = execSync(`cd ${projectRoot} && git rev-parse --abbrev-ref HEAD 2>/dev/null`, { encoding: 'utf8' }).trim();
     
-    log('INFO', `Git: Branch ${branch || 'main'}, Last commit: ${lastCommit || 'No commits'}`);
+    log('INFO', `Last commit: ${lastCommit || 'No commits'}`);
     
     res.json({
       status: 'online',
@@ -965,7 +970,7 @@ app.get('/api/quote/:ticker', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  log('INFO', `State: Dashboard online at http://localhost:${PORT} & https://eugenesnonprofit.com/`);
+  log('INFO', `App: Dashboard online at https://eugenesnonprofit.com/ & http://localhost:${PORT}`);
 });
 
 (async () => {
@@ -977,15 +982,21 @@ app.listen(PORT, () => {
     const projectRoot = '/home/user/Documents/sysd';
     const branch = execSync(`cd ${projectRoot} && git rev-parse --abbrev-ref HEAD`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim() || 'main';
     const lastCommit = execSync(`cd ${projectRoot} && git log -1 --pretty=format:"%h - %s (%ai)"`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim() || 'No commits';
-    log('INFO', `Git: Branch ${branch}, Last commit: ${lastCommit}`);
+    log('INFO', `Last commit: ${lastCommit}`);
   } catch (err) {
   }
     
  while (true) {
     try {
       cycleCount++;
-      const filings6K = await fetchFilings();
-      const filings8K = await fetch8Ks();
+      const filings6K = await Promise.race([
+        fetchFilings(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('fetch timeout')), 30000))
+      ]).catch(() => []);
+      const filings8K = await Promise.race([
+        fetch8Ks(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('fetch timeout')), 30000))
+      ]).catch(() => []);
       const allFilings = [...filings6K, ...filings8K];
       
       // Log only if there are new filings and we haven't logged this batch yet
@@ -1157,28 +1168,30 @@ app.listen(PORT, () => {
               const quoteData = await Promise.race([
                 yahooFinance.quoteSummary(ticker, { modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'majorHoldersBreakdown', 'financialData'] }),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), CONFIG.YAHOO_TIMEOUT))
-              ]);
+              ]).catch(() => null);
               
-              const priceModule = quoteData.price || {};
-              const summaryDetail = quoteData.summaryDetail || {};
-              const keyStats = quoteData.defaultKeyStatistics || {};
-              const holders = quoteData.majorHoldersBreakdown || {};
-              const finData = quoteData.financialData || {};
-              
-              price = priceModule?.regularMarketPrice || summaryDetail?.regularMarketPrice || 'N/A';
-              marketCap = summaryDetail?.marketCap || 'N/A';
-              volume = priceModule?.regularMarketVolume || summaryDetail?.regularMarketVolume || 'N/A';
-              averageVolume = summaryDetail?.averageVolume || summaryDetail?.averageDailyVolume10Day || 'N/A';
-              float = keyStats?.floatShares || 'N/A';
-              sharesOutstanding = keyStats?.sharesOutstanding || 'N/A';
-              insiderPercent = holders?.insidersPercentHeld || 'N/A';
-              institutionalPercent = holders?.institutionsPercentHeld || 'N/A';
-              
-              debtToEquity = keyStats?.debtToEquity || 'N/A';
-              totalCash = finData?.totalCash || 'N/A';
-              totalCashPerShare = finData?.totalCashPerShare || 'N/A';
-              profitMargins = keyStats?.profitMargins || 'N/A';
-              quickRatio = finData?.quickRatio || 'N/A';
+              if (quoteData) {
+                const priceModule = quoteData.price || {};
+                const summaryDetail = quoteData.summaryDetail || {};
+                const keyStats = quoteData.defaultKeyStatistics || {};
+                const holders = quoteData.majorHoldersBreakdown || {};
+                const finData = quoteData.financialData || {};
+                
+                price = priceModule?.regularMarketPrice || summaryDetail?.regularMarketPrice || 'N/A';
+                marketCap = summaryDetail?.marketCap || 'N/A';
+                volume = priceModule?.regularMarketVolume || summaryDetail?.regularMarketVolume || 'N/A';
+                averageVolume = summaryDetail?.averageVolume || summaryDetail?.averageDailyVolume10Day || 'N/A';
+                float = keyStats?.floatShares || 'N/A';
+                sharesOutstanding = keyStats?.sharesOutstanding || 'N/A';
+                insiderPercent = holders?.insidersPercentHeld || 'N/A';
+                institutionalPercent = holders?.institutionsPercentHeld || 'N/A';
+                
+                debtToEquity = keyStats?.debtToEquity || 'N/A';
+                totalCash = finData?.totalCash || 'N/A';
+                totalCashPerShare = finData?.totalCashPerShare || 'N/A';
+                profitMargins = keyStats?.profitMargins || 'N/A';
+                quickRatio = finData?.quickRatio || 'N/A';
+              }
             } catch (yahooErr) {
               // Yahoo failed, try Finnhub fallback for comprehensive data
               const finnhubKey = process.env.FINNHUB_API_KEY;
@@ -1313,10 +1326,20 @@ app.listen(PORT, () => {
           const startMin = 3.5 * 60; // 3:30am = 210 minutes
           const endMin = 18 * 60; // 6:00pm = 1080 minutes
           
+          // Calculate signal score early for logging
+          const numFloat = (() => { const v = typeof float === 'number' ? float : (typeof float === 'string' && float !== 'N/A' ? parseInt(float) : NaN); return isNaN(v) ? 0 : v; })();
+          const numVolume = (() => { const v = typeof volume === 'number' ? volume : (typeof volume === 'string' && volume !== 'N/A' ? parseInt(volume) : NaN); return isNaN(v) ? 0 : v; })();
+          const numAvgVol = (() => { const v = typeof averageVolume === 'number' ? averageVolume : (typeof averageVolume === 'string' && averageVolume !== 'N/A' ? parseInt(averageVolume) : NaN); return isNaN(v) ? 1 : v; })();
+          const numInsider = (() => { const v = typeof insiderPercent === 'number' ? insiderPercent * 100 : (typeof insiderPercent === 'string' && insiderPercent !== 'N/A' ? parseFloat(insiderPercent) * 100 : NaN); return isNaN(v) ? 0 : v; })();
+          const numInstitutional = (() => { const v = typeof institutionalPercent === 'number' ? institutionalPercent * 100 : (typeof institutionalPercent === 'string' && institutionalPercent !== 'N/A' ? parseFloat(institutionalPercent) * 100 : NaN); return isNaN(v) ? 0 : v; })();
+          const numShares = (() => { const v = typeof sharesOutstanding === 'number' ? sharesOutstanding : (typeof sharesOutstanding === 'string' && sharesOutstanding !== 'N/A' ? parseInt(sharesOutstanding) : NaN); return isNaN(v) ? 1 : v; })();
+          const signalScoreData = calculatesignalScore(numFloat, numInsider, numInstitutional, numShares, numVolume, numAvgVol);
+          const signalScoreDisplay = signalScoreData.score;
+          
           if (shortOpportunity || longOpportunity) {
-            log('INFO', `Stock: $${ticker}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}, ${shortOpportunity || longOpportunity}`);
+            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}, ${shortOpportunity || longOpportunity}`);
           } else {
-            log('INFO', `Stock: $${ticker}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}`);
+            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}`);
           }
           
           if (etTotalMin < startMin || etTotalMin > endMin) {
@@ -1390,7 +1413,7 @@ app.listen(PORT, () => {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (need 2 keywords or 1 neutral and another)\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (needs 2 keywords or 1 neutral and another)\x1b[0m`);
             console.log('');
             continue;
           }
@@ -1420,14 +1443,7 @@ app.listen(PORT, () => {
           };
           
           // Calculate signal score
-          const numFloat = typeof float === 'number' ? float : parseInt(float) || 0;
-          const numVolume = typeof volume === 'number' ? volume : parseInt(volume) || 0;
-          const numAvgVol = typeof averageVolume === 'number' ? averageVolume : parseInt(averageVolume) || 1;
-          const numInsider = typeof insiderPercent === 'number' ? insiderPercent * 100 : (typeof insiderPercent === 'string' ? parseFloat(insiderPercent) : 0);
-          const numInstitutional = typeof institutionalPercent === 'number' ? institutionalPercent * 100 : (typeof institutionalPercent === 'string' ? parseFloat(institutionalPercent) : 0);
-          const numShares = typeof sharesOutstanding === 'number' ? sharesOutstanding : parseInt(sharesOutstanding) || 1;
-          
-          const signalScoreData = calculatesignalScore(numFloat, numInsider, numInstitutional, numShares, numVolume, numAvgVol);
+          // Score already calculated above for logging
           alertData.signalScore = signalScoreData.score;
           alertData.institutionalPercent = institutionalPercent;
           

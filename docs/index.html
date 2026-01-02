@@ -3157,12 +3157,12 @@ table {
                 // Check for new tickers in alert.json every 2 seconds
                 setInterval(() => {
                     this.checkForNewAlerts();
-                }, 2000); // Check for new alerts every 2 seconds
+                }, 5000); // Check for new alerts every 5 seconds
 
                 // Then start the monitoring interval for price updates
                 setInterval(() => {
                     this.checkAllPrices();
-                }, 1000); // Check prices every 1 second
+                }, 2000); // Check prices every 2 seconds
 
                 // Initial checks
                 this.checkForNewAlerts();

@@ -66,7 +66,7 @@ const CONFIG = {
   GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name',
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com',
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '',
-  FILE_TIME: 1, // Minutes refresh interval for filings
+  FILE_TIME: 1, // Minutes to consider a filing "new"
   MIN_ALERT_VOLUME: 50000, // Min volume threshold
   MAX_FLOAT: 50000000, // Max float size
   MAX_SO_RATIO: 40.0,  // Max short interest ratio
@@ -74,16 +74,16 @@ const CONFIG = {
   STOCKS_FILE: 'logs/stocks.json', // File to store all alerts
   PERFORMANCE_FILE: 'logs/quote.json', // File to store performance data
   ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware'], // Allowed incorporation/located countries
-  PI_MODE: true,             // Optimized settings for resource-constrained systems
-  REFRESH_PEAK: 1000,        // Check for filings every 1s (peak hours: 7am-10am ET)
-  REFRESH_NORMAL: 5000,      // Check for filings every 5s (trading hours: 10am-6pm ET)
-  REFRESH_NIGHT: 10000,      // Check for filings every 10s (outside trading hours)
-  REFRESH_WEEKEND: 30000,    // Check for filings every 30s (weekends)
-  YAHOO_TIMEOUT: 10000,      // Wait max 10s for stock quote data from Yahoo Finance
-  SEC_RATE_LIMIT: 3000,      // Wait 3s between SEC filing fetches (API rate limits)
-  SEC_FETCH_TIMEOUT: 5000,   // Wait max 5s to fetch filing text from SEC
-  MAX_COMBINED_SIZE: 100000, // Max filing size (100KB) before truncating
-  MAX_RETRY_ATTEMPTS: 3      // Retry failed API calls up to 3 times
+  PI_MODE: true,             // Enable optimizations for Raspberry Pi 
+  REFRESH_PEAK: 10000,       // 10s during trading hours (7am-10am ET)
+  REFRESH_NORMAL: 30000,     // 30s during trading hours (3:30am-6pm ET)
+  REFRESH_NIGHT: 300000,     // 5m outside trading hours (conserve power)
+  REFRESH_WEEKEND: 600000,   // 10m on weekends (very low activity)
+  YAHOO_TIMEOUT: 6000,       // Reduced from 8s for Pi performance
+  SEC_RATE_LIMIT: 500,       // Reduced to 500ms for batch processing (still respects SEC)
+  SEC_FETCH_TIMEOUT: 5000,   // Reduced for Pi memory constraints
+  MAX_COMBINED_SIZE: 100000, // Reduced from 150k for Pi RAM
+  MAX_RETRY_ATTEMPTS: 3      // Reduced from 5 for Pi resources
 };
 
 const rateLimit = {
@@ -586,7 +586,7 @@ async function fetch8Ks() {
 async function getFilingText(indexUrl) {
   for (let attempt = 1; attempt <= CONFIG.MAX_RETRY_ATTEMPTS; attempt++) {
     try {
-      await wait(1000); // 1 second delay before SEC request
+      await wait(100); // Minimal delay, rate limiter handles the rest
       const res = await fetch(indexUrl, {
         headers: {
           'User-Agent': 'SEC-Bot/1.0 (your-email@domain.com)',
@@ -634,7 +634,7 @@ async function getFilingText(indexUrl) {
       let combinedText = '';
       const MAX_COMBINED_SIZE = CONFIG.MAX_COMBINED_SIZE;
       
-      for (const href of prioritizedHrefs) {
+      for (const href of prioritizedHrefs.slice(0, 5)) {
         const fullUrl = href.startsWith('http') ? href : `https://www.sec.gov${href}`;        
         
         try {
@@ -674,17 +674,11 @@ async function getFilingText(indexUrl) {
             .replace(/&quot;/g, '"')
             .replace(/&#(\d+);/g, (match, code) => String.fromCharCode(parseInt(code)))
             .replace(/<[^>]+>/g, ' ')
-            // Strip SEC metadata patterns like "0001292814-25-004426.txt : 20251230 0001292814-25-004426.hdr"
             .replace(/\d{10}-\d{2}-\d{6}\.\w+\s*:\s*\d+\s*\d{10}-\d{2}-\d{6}\.\w+/g, '')
-            // Remove exhibit/item/form references (already logged separately) - but be selective
             .replace(/^\s*(?:exhibit|annex|appendix|schedule|form|section)\s+[a-z0-9]+\s*\n/gim, '')
-            // Remove common SEC boilerplate headers
             .replace(/(?:table of contents|index to exhibits|signatures|certification|forward-looking statements|risk factors)/gi, '')
-            // Remove footer/header patterns
             .replace(/(?:page \d+|continued|see page|see exhibit|see schedule)/gi, '')
-            // Remove date/time/filing metadata (but keep actual content dates)
             .replace(/(?:^\s*)*(?:filed (?:on |with )?|as of |as amended|amended and restated|effective (?:as of )?|period ended|fiscal year|calendar year|quarterly period)\s+/gim, '')
-            // Remove SEC references
             .replace(/(?:sec\.?gov|edgar|securities and exchange|s\.e\.c\.|rule \d+-\d+)/gi, '')
             .replace(/\s+/g, ' ')
             .trim();
@@ -710,11 +704,11 @@ async function getFilingText(indexUrl) {
       
       return combinedText;
     } catch (err) {
-      log('ERROR', `Filing text fetch attempt ${attempt}/5 failed: ${err.message}`);
-      if (attempt < 5) await wait(10000); // 10 seconds wait between retries
+      log('ERROR', `Filing text fetch attempt ${attempt}/3 failed: ${err.message}`);
+      if (attempt < 3) await wait(3000);
     }
   }
-  log('ERROR', `Failed to fetch filing text after 5 attempts from ${indexUrl}`);
+  log('ERROR', `Failed to fetch filing text after 3 attempts from ${indexUrl}`);
   return '';
 }
 
@@ -971,6 +965,7 @@ app.get('/api/quote/:ticker', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
+  log('INFO', `State: Dashboard online at http://localhost:${PORT} & https://eugenesnonprofit.com/`);
 });
 
 (async () => {
@@ -978,13 +973,11 @@ app.listen(PORT, () => {
   let processedHashes = new Map(); // Pure in-memory, session-based (100 max)
   let loggedFetch = false;
   
-  log('INFO', `App: System online at http://localhost:${PORT} & https://eugenesnonprofit.com/`);
-  
   try {
     const projectRoot = '/home/user/Documents/sysd';
     const branch = execSync(`cd ${projectRoot} && git rev-parse --abbrev-ref HEAD`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim() || 'main';
     const lastCommit = execSync(`cd ${projectRoot} && git log -1 --pretty=format:"%h - %s (%ai)"`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim() || 'No commits';
-    log('INFO', `Git: Last commit: ${lastCommit}`);
+    log('INFO', `Git: Branch ${branch}, Last commit: ${lastCommit}`);
   } catch (err) {
   }
     
@@ -1008,12 +1001,13 @@ app.listen(PORT, () => {
       if (newFilingFound) {
         const form6KCount = allFilings.filter(f => f.formType === '6-K').length;
         const form8KCount = allFilings.filter(f => f.formType === '8-K').length;
-        log('INFO', `New: Found ${allFilings.length} filings: 6-K: ${form6KCount} / 8-K: ${form8KCount}`);
+        log('INFO', `Fetched ${allFilings.length} filings: 6-K: ${form6KCount} / 8-K: ${form8KCount}`);
         console.log('');
       }
       
       const filingsToProcess = allFilings.slice(0, 100);
-      for (const filing of filingsToProcess) {
+      for (let i = 0; i < filingsToProcess.length; i++) {
+        const filing = filingsToProcess[i];
         try {
           const hash = crypto.createHash('md5').update(filing.title + filing.updated).digest('hex');
           
@@ -1177,10 +1171,8 @@ app.listen(PORT, () => {
               averageVolume = summaryDetail?.averageVolume || summaryDetail?.averageDailyVolume10Day || 'N/A';
               float = keyStats?.floatShares || 'N/A';
               sharesOutstanding = keyStats?.sharesOutstanding || 'N/A';
-              
-              // Yahoo returns insider/institutional as decimals (0-1), convert to percentages
-              insiderPercent = holders?.insidersPercentHeld ? (holders.insidersPercentHeld * 100) : 'N/A';
-              institutionalPercent = holders?.institutionsPercentHeld ? (holders.institutionsPercentHeld * 100) : 'N/A';
+              insiderPercent = holders?.insidersPercentHeld || 'N/A';
+              institutionalPercent = holders?.institutionsPercentHeld || 'N/A';
               
               debtToEquity = keyStats?.debtToEquity || 'N/A';
               totalCash = finData?.totalCash || 'N/A';
@@ -1193,51 +1185,69 @@ app.listen(PORT, () => {
               if (finnhubKey) {
                 try {
                   // Get quote data (price, volume, change, changePercent)
-                  const finnhubRes = await Promise.race([
-                    fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-                  ]);
-                  if (finnhubRes.ok) {
-                    const data = await finnhubRes.json();
-                    if (data.c && data.c > 0 && price === 'N/A') {
-                      price = data.c;
+                  try {
+                    const finnhubRes = await Promise.race([
+                      fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`),
+                      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                    ]);
+                    if (finnhubRes.ok) {
+                      const data = await Promise.race([
+                        finnhubRes.json(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('json parse timeout')), 2000))
+                      ]);
+                      if (data.c && data.c > 0 && price === 'N/A') {
+                        price = data.c;
+                      }
+                      if (data.v && volume === 'N/A') {
+                        volume = data.v;
+                      }
                     }
-                    if (data.v && volume === 'N/A') {
-                      volume = data.v;
-                    }
+                  } catch (e) {
+                    // Quote fetch failed
                   }
                   
                   // Get company profile for market cap, shares outstanding, and IPO date
-                  const profileRes = await Promise.race([
-                    fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-                  ]);
-                  if (profileRes.ok) {
-                    const profileData = await profileRes.json();
-                    if (profileData.marketCapitalization && marketCap === 'N/A') {
-                      marketCap = profileData.marketCapitalization * 1000000;
+                  try {
+                    const profileRes = await Promise.race([
+                      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`),
+                      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                    ]);
+                    if (profileRes.ok) {
+                      const profileData = await Promise.race([
+                        profileRes.json(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('json parse timeout')), 2000))
+                      ]);
+                      if (profileData.marketCapitalization && marketCap === 'N/A') {
+                        marketCap = profileData.marketCapitalization * 1000000;
+                      }
+                      if (profileData.shareOutstanding && sharesOutstanding === 'N/A') {
+                        sharesOutstanding = profileData.shareOutstanding;
+                      }
                     }
-                    if (profileData.shareOutstanding && sharesOutstanding === 'N/A') {
-                      sharesOutstanding = profileData.shareOutstanding;
-                    }
+                  } catch (e) {
+                    // Profile fetch failed
                   }
                   
                   // Get basic financials for additional metrics (volumes, ratios, cash data)
-                  const metricsRes = await Promise.race([
-                    fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${finnhubKey}`),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-                  ]);
-                  if (metricsRes.ok) {
-                    const metricsData = await metricsRes.json();
-                    const metrics = metricsData.metric || {};
-                    
-                    // Average volume
-                    if (metrics['10DayAverageTradingVolume'] && averageVolume === 'N/A') {
-                      averageVolume = metrics['10DayAverageTradingVolume'] * 1000000;
+                  try {
+                    const metricsRes = await Promise.race([
+                      fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${finnhubKey}`),
+                      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                    ]);
+                    if (metricsRes.ok) {
+                      const metricsData = await Promise.race([
+                        metricsRes.json(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('json parse timeout')), 2000))
+                      ]);
+                      const metrics = metricsData.metric || {};
+                      
+                      // Average volume
+                      if (metrics['10DayAverageTradingVolume'] && averageVolume === 'N/A') {
+                        averageVolume = metrics['10DayAverageTradingVolume'] * 1000000;
+                      }
                     }
-                    
-                    // Note: Finnhub doesn't directly provide float, debtToEquity, totalCash, totalCashPerShare, profitMargins, or quickRatio
-                    // These would require additional premium endpoints or calculations
+                  } catch (e) {
+                    // Metrics fetch failed
                   }
                 } catch (finnhubErr) {
                   // Finnhub also failed, keep N/A values
@@ -1380,7 +1390,7 @@ app.listen(PORT, () => {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (needs 2 plus or 1 neutral and a bearish/bullish)\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (need 2+ or neutral + 1 other)\x1b[0m`);
             console.log('');
             continue;
           }
@@ -1420,21 +1430,15 @@ app.listen(PORT, () => {
           const signalScoreData = calculatesignalScore(numFloat, numInsider, numInstitutional, numShares, numVolume, numAvgVol);
           alertData.signalScore = signalScoreData.score;
           alertData.institutionalPercent = institutionalPercent;
-          alertData.scoreBreakdown = {
-            floatScore: signalScoreData.floatScore,
-            ownershipScore: signalScoreData.ownershipScore,
-            sfScore: signalScoreData.sfScore,
-            volumeScore: signalScoreData.volumeScore
-          };
           
           // Log the signal score
-          log('INFO', `Score: ${signalScoreData.score} (F: ${signalScoreData.floatScore}, O: ${signalScoreData.ownershipScore}, S/F: ${signalScoreData.sfScore}, V: ${signalScoreData.volumeScore})`);
+          log('INFO', `Score: ${signalScoreData.score} (F: ${signalScoreData.floatScore}, I: ${signalScoreData.ownershipScore}, S/F: ${signalScoreData.sfScore}, V: ${signalScoreData.volumeScore})`);
           
-          // Only save alert if we got price, float, S/O, and ownership data
-          if (price !== 'N/A' && float !== 'N/A' && soRatio !== 'N/A' && insiderPercent !== 'N/A' && institutionalPercent !== 'N/A') {
+          // Only save alert if we got price, float, and S/O data
+          if (price !== 'N/A' && float !== 'N/A' && soRatio !== 'N/A') {
             saveAlert(alertData);
           } else {
-            log('INFO', `Quote: Incomplete data for ${ticker} (price: ${price}, float: ${float}, s/o: ${soRatio}, ownership: ${insiderPercent === 'N/A' ? institutionalPercent : insiderPercent})`);
+            log('INFO', `Quote: Incomplete data for ${ticker} (price: ${price}, float: ${float}, S/O: ${soRatio})`);
           }
         } catch (err) {
           log('WARN', `Filing processing error: ${err.message}`);

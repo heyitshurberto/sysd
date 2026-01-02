@@ -2549,7 +2549,7 @@ table {
                     const list = document.getElementById('notification-list');
                     list.innerHTML = '';
                     
-                    if (alerts.length === 0) {
+                    if (!alerts || !Array.isArray(alerts) || alerts.length === 0) {
                         const emptyState = document.createElement('div');
                         emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
                         emptyState.textContent = 'No recent alerts';
@@ -2588,7 +2588,15 @@ table {
                         list.appendChild(item);
                     });
                 })
-                .catch(e => console.log('Error loading recent alerts:', e));
+                .catch(e => {
+                    console.error('Error loading recent alerts:', e);
+                    const list = document.getElementById('notification-list');
+                    list.innerHTML = '';
+                    const emptyState = document.createElement('div');
+                    emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
+                    emptyState.textContent = 'Error loading alerts';
+                    list.appendChild(emptyState);
+                });
         }
 
         function loadHistoryAlerts() {
@@ -2598,7 +2606,7 @@ table {
                     const list = document.getElementById('notification-history-list');
                     list.innerHTML = '';
                     
-                    if (stocks.length === 0) {
+                    if (!stocks || !Array.isArray(stocks) || stocks.length === 0) {
                         const emptyState = document.createElement('div');
                         emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
                         emptyState.textContent = 'No history available';
@@ -2632,7 +2640,15 @@ table {
                         list.appendChild(item);
                     });
                 })
-                .catch(e => console.log('Error loading history:', e));
+                .catch(e => {
+                    console.error('Error loading history:', e);
+                    const list = document.getElementById('notification-history-list');
+                    list.innerHTML = '';
+                    const emptyState = document.createElement('div');
+                    emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
+                    emptyState.textContent = 'Error loading history';
+                    list.appendChild(emptyState);
+                });
         }
 
         function loadInboxMessages() {

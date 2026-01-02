@@ -56,7 +56,9 @@ const yahooFinance = require('yahoo-finance2').default;
 
 process.env.DEBUG = '';
 yahooFinance.suppressNotices(['ripHistorical', 'yahooSurvey']);
-yahooFinance.setGlobalConfig({ validation: { logErrors: false } });
+yahooFinance.setGlobalConfig({ 
+  validation: { logErrors: false, logWarnings: false }
+});
 
 const CONFIG = {
   GITHUB_REPO_PATH: process.env.GITHUB_REPO_PATH || '/home/user/Documents/sysd',
@@ -64,7 +66,7 @@ const CONFIG = {
   GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name',
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com',
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '',
-  FILE_TIME: 1000,
+  FILE_TIME: 10000,
   MIN_ALERT_VOLUME: 25000,
   MAX_FLOAT: 25000000,
   MAX_SO_RATIO: 25.0,
@@ -72,6 +74,7 @@ const CONFIG = {
   STOCKS_FILE: 'logs/stocks.json',
   PERFORMANCE_FILE: 'logs/quote.json',
   ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'delaware'],
+
   // Power conservation for Pi Zero 2 W
   PI_MODE: true,
   REFRESH_PEAK: 30000,       // 30s during trading hours (7am-10am ET)
@@ -231,6 +234,36 @@ const truncateAtSentence = (text, maxLength) => {
   return truncated;
 };
 
+const cleanupStaleAlerts = () => {
+  try {
+    if (!fs.existsSync(CONFIG.ALERTS_FILE)) return;
+    
+    const alerts = JSON.parse(fs.readFileSync(CONFIG.ALERTS_FILE, 'utf8'));
+    if (!Array.isArray(alerts) || alerts.length === 0) return;
+    
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, 5 = Friday, 6 = Saturday
+    
+    // Monday-Thursday: wipe after 7 days
+    // Friday-Sunday: wipe after 5 days (less stale data over weekend)
+    const daysToKeep = (dayOfWeek >= 1 && dayOfWeek <= 4) ? 7 : 5;
+    const cutoffTime = now.getTime() - (daysToKeep * 24 * 60 * 60 * 1000);
+    
+    const filtered = alerts.filter(alert => {
+      const alertTime = new Date(alert.recordedAt).getTime();
+      return alertTime > cutoffTime;
+    });
+    
+    if (filtered.length < alerts.length) {
+      const removed = alerts.length - filtered.length;
+      fs.writeFileSync(CONFIG.ALERTS_FILE, JSON.stringify(filtered, null, 2));
+      log('INFO', `Cleanup: Removed ${removed} stale alerts (${daysToKeep} day policy)`);
+    }
+  } catch (err) {
+    // Cleanup error - don't break the app
+  }
+};
+
 const saveAlert = (alertData) => {
   try {
     let alerts = [];
@@ -258,6 +291,9 @@ const saveAlert = (alertData) => {
     
     fs.writeFileSync(CONFIG.ALERTS_FILE, JSON.stringify(alerts, null, 2));
     
+    // Cleanup stale alerts based on day of week
+    cleanupStaleAlerts();
+    
     if (Object.keys(alertData.semanticSignals || {}).length > 0) {
       let stocks = [];
       if (fs.existsSync(CONFIG.STOCKS_FILE)) {
@@ -278,6 +314,8 @@ const saveAlert = (alertData) => {
     
     sendPersonalWebhook(alertData);
     
+    log('INFO', `Log: Alert saved ${alertData.ticker} (pushed to GitHub)`);
+    
     const volDisplay = alertData.volume && alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'n/a';
     const avgVolDisplay = alertData.averageVolume && alertData.averageVolume !== 'N/A' ? (alertData.averageVolume / 1000000).toFixed(2) + 'm' : 'n/a';
     const floatDisplay = alertData.float && alertData.float !== 'N/A' && !isNaN(alertData.float) ? (alertData.float / 1000000).toFixed(2) + 'm' : 'n/a';
@@ -286,7 +324,7 @@ const saveAlert = (alertData) => {
     const priceDisplay = alertData.price && alertData.price !== 'N/A' ? `$${alertData.price.toFixed(2)}` : 'N/A';
     const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${alertData.cik}&type=${alertData.formType}&dateb=&owner=exclude&count=100`;
     const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(alertData.ticker)}:${alertData.ticker}`;
-    console.log(`\x1b[90m[${new Date().toISOString()}] ${secLink} ${tvLink}\x1b[0m`);
+    log('INFO', `Links: ${secLink} ${tvLink}`);
     console.log('');
     
     try {
@@ -294,13 +332,11 @@ const saveAlert = (alertData) => {
         const savedAlerts = JSON.parse(fs.readFileSync(CONFIG.ALERTS_FILE, 'utf8'));
         const lastAlert = savedAlerts[savedAlerts.length - 1];
         if (lastAlert && lastAlert.recordId === enrichedData.recordId) {
-          log('INFO', `Log: Alert saved ${alertData.ticker}, record: ${enrichedData.recordId}`);
-        } else {
-          log('WARN', `Alert save verification failed for ${alertData.ticker}`);
+          // Alert saved successfully
         }
       }
     } catch (verifyErr) {
-      log('WARN', `Could not verify alert save: ${verifyErr.message}`);
+      // Verification failed silently
     }
   } catch (err) {
     log('ERROR', `Failed to save alert: ${err.message}`);
@@ -560,6 +596,22 @@ async function getFilingText(indexUrl) {
             .replace(/&quot;/g, '"')
             .replace(/&#(\d+);/g, (match, code) => String.fromCharCode(parseInt(code)))
             .replace(/<[^>]+>/g, ' ')
+            // Strip SEC metadata patterns like "0001292814-25-004426.txt : 20251230 0001292814-25-004426.hdr"
+            .replace(/\d{10}-\d{2}-\d{6}\.\w+\s*:\s*\d+\s*\d{10}-\d{2}-\d{6}\.\w+/g, '')
+            // Remove exhibit/item/form references (already logged separately)
+            .replace(/(?:exhibit|annex|appendix|schedule|item|form|section|subsection|clause|subclause|paragraph)\s+(?:[a-z]|\d+(?:\.\d+)*)/gi, '')
+            // Remove common SEC boilerplate headers
+            .replace(/(?:table of contents|index to exhibits|signatures|certification|forward-looking statements|risk factors|selected financial data|management's discussion|business overview|description of business)/gi, '')
+            // Remove disclaimer text patterns
+            .replace(/(?:this filing|this document|this form|this report|contains forward-looking|safe harbor|except as required|not liable|no warranty|all rights reserved)/gi, '')
+            // Remove footer/header patterns
+            .replace(/(?:page \d+|continued|see page|see exhibit|see schedule|see item|see form|see above|hereby|thereof|thereto|thereof)/gi, '')
+            // Remove date/time/filing metadata
+            .replace(/(?:filed (?:on |with )?|as of |as amended|amended and restated|effective (?:as of )?|period ended|fiscal year|calendar year|quarterly period)/gi, '')
+            // Remove SEC references
+            .replace(/(?:sec\.?gov|edgar|securities and exchange|s\.e\.c\.|rule \d+-\d+)/gi, '')
+            // Remove company/legal boilerplate
+            .replace(/(?:incorporated|organized|corporation|company|llc|lp|partnership|limited|subsidiary|division|branch|office|principal place|business address|registrant|issuer)/gi, '')
             .replace(/\s+/g, ' ')
             .trim();
           
@@ -747,10 +799,96 @@ app.get('/git-status', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.sendFile('./docs/run.html', { root: '.' });
+  res.sendFile('./docs/index.html', { root: '.' });
 });
 
 app.use(express.static('./docs'));
+
+// Quote endpoint with Yahoo fallback to Finnhub
+app.get('/api/quote/:ticker', async (req, res) => {
+  const ticker = req.params.ticker.toUpperCase();
+  
+  try {
+    // Try Yahoo Finance first
+    let quote = await yahooFinance.quote(ticker, {
+      fields: ['regularMarketPrice', 'regularMarketVolume', 'marketCap', 'exchange'],
+      timeout: CONFIG.YAHOO_TIMEOUT
+    }).catch(() => null);
+    
+    // If Yahoo fails, try Finnhub
+    if (!quote || !quote.regularMarketPrice) {
+      const finnhubKey = process.env.FINNHUB_API_KEY;
+      if (finnhubKey) {
+        try {
+          const finnhubRes = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`, {
+            timeout: 5000
+          });
+          if (finnhubRes.ok) {
+            const data = await finnhubRes.json();
+            // Finnhub data structure: c=current, v=volume
+            if (data.c && data.c > 0) {
+              quote = {
+                symbol: ticker,
+                regularMarketPrice: data.c,
+                regularMarketVolume: data.v || 0,
+                marketCap: 'N/A',
+                exchange: 'UNKNOWN'
+              };
+            }
+          }
+        } catch (e) {
+          // Silently fail Finnhub fallback
+        }
+      }
+    }
+    
+    // Try to get fundamental data from alert.json for this ticker
+    let fundamentals = {};
+    try {
+      if (fs.existsSync(CONFIG.ALERTS_FILE)) {
+        const alerts = JSON.parse(fs.readFileSync(CONFIG.ALERTS_FILE, 'utf8'));
+        const latestAlert = alerts.filter(a => a.ticker === ticker).pop();
+        if (latestAlert) {
+          fundamentals = {
+            float: latestAlert.float || 'N/A',
+            sharesOutstanding: latestAlert.sharesOutstanding || 'N/A',
+            insiderPercent: latestAlert.insiderPercent || 'N/A',
+            soRatio: latestAlert.soRatio || 'N/A'
+          };
+        }
+      }
+    } catch (e) {
+      // Silently fail if alert.json doesn't exist
+    }
+    
+    res.json({
+      symbol: ticker,
+      price: quote?.regularMarketPrice || 'N/A',
+      volume: quote?.regularMarketVolume || 0,
+      averageVolume: quote?.regularMarketVolume || 0,
+      marketCap: quote?.marketCap || 'N/A',
+      exchange: quote?.exchange || 'UNKNOWN',
+      float: fundamentals.float || 'N/A',
+      sharesOutstanding: fundamentals.sharesOutstanding || 'N/A',
+      insiderPercent: fundamentals.insiderPercent || 'N/A',
+      soRatio: fundamentals.soRatio || 'N/A'
+    });
+  } catch (error) {
+    log('ERROR', `Quote endpoint error for ${ticker}: ${error.message}`);
+    res.json({
+      symbol: ticker,
+      price: 'N/A',
+      volume: 0,
+      averageVolume: 0,
+      marketCap: 'N/A',
+      exchange: 'UNKNOWN',
+      float: 'N/A',
+      sharesOutstanding: 'N/A',
+      insiderPercent: 'N/A',
+      soRatio: 'N/A'
+    });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
@@ -806,45 +944,38 @@ app.listen(PORT, () => {
           let source = 'SEC';
           let intent = Object.keys(semanticSignals).join(', ') || null;
           
+          // Intent fallback - skip file headers and extract first real sentence
           if (!intent && text) {
-            let summary = '';
+            // Remove common file headers and boilerplate
+            let cleanText = text
+              .replace(/^[^a-z]*?\d{10}-\d{2}-\d{6}[^.]*\./im, '')
+              .replace(/^[^a-z]*?EXHIBITS[^.]*\./im, '')
+              .replace(/^[^a-z]*?(?:EXHIBIT|INDEX|INFORMATION CONTAINED)[^.]*\./im, '')
+              .replace(/^[^a-z]*?(?:form\s*6-?k|period of report|filed|certification)[^.]*\./im, '')
+              .replace(/^[^a-z]*?\d{10}-\d{2}-\d{6}\.\w+\s*:\s*\d+\s*\d{10}-\d{2}-\d{6}\.\w+[^.]*\./im, '') // Remove SEC metadata like "0001292814-25-004426.txt : 20251230 0001292814-25-004426.hdr"
+              .replace(/^[^a-z]*?SEC\.GOV[^.]*\./im, '')
+              .replace(/^[^a-z]*?EDGAR[^.]*\./im, '')
+              .replace(/^[^a-z]*?(?:table of contents|company information|item\s+\d+|exhibit|schedule|appendix|annex)[^.]*\./im, '')
+              .replace(/^[^a-z]*?(?:signatures|certification|forward-looking|risk factors)[^.]*\./im, '')
+              .trim();
             
-            const anchors = [
-              /\b(announced|acquired|entered|issued|approved|appointed|received|granted|signed|completed|launched|began|commenced)\b[^.]*\./i,
-              /INFORMATION CONTAINED IN THIS (?:FORM )?6-?K REPORT[^.]*\./i,
-              /SUBMITTED HEREWITH|^EXHIBITS/im,
-            ];
-            
-            for (const anchor of anchors) {
-              const match = text.match(anchor);
-              if (match && match.index !== undefined) {
-                summary = match[0];
-                break;
+            // Get first sentence that's longer than 20 chars
+            const sentences = cleanText.match(/[^.!?]*[.!?]/);
+            if (sentences && sentences[0]) {
+              let firstSentence = sentences[0]
+                .replace(/^\s+|\s+$/g, '')
+                .replace(/\d+\s*of\s*\d+/g, '')
+                // Remove common boilerplate words
+                .replace(/\b(?:exhibit|item|form|section|schedule|annex|appendix|certification|pursuant|hereby|thereof|thereto|incorporated|organized|registrant|issuer|sec\.?gov|edgar|rule\s+\d+)/gi, '')
+                // Remove filing metadata
+                .replace(/\b(?:page|pages|continued|see|table|contents|index|filed|effective|period|fiscal|calendar|quarterly|annual)\b/gi, '')
+                .replace(/[^\w\s]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+              
+              if (firstSentence.length > 20 && firstSentence.length < 200) {
+                intent = firstSentence;
               }
-            }
-            
-            if (!summary) {
-              const searchStart = Math.min(1500, text.length - 500);
-              const remainder = text.slice(searchStart);
-              const sentenceMatch = remainder.match(/[A-Z][^.,;:\-—]*?[.,;:\-—]/);
-              if (sentenceMatch) {
-                summary = sentenceMatch[0];
-              } else {
-                summary = text.slice(searchStart, searchStart + 200);
-              }
-            }
-            
-            let cleaned = summary
-              .replace(/&[a-z]+;/gi, ' ')
-              .replace(/&#\d+;/gi, ' ')
-              .replace(/&#x[0-9a-f]+;/gi, ' ')
-              .replace(/form\s*\d+|form\s*6-?k|commission|washington|pursuant|exchange act|rule \d+|duly authorized|thereunto|registrant|securities exchange|edgar inline|viewer|exhibit|signature|officer|director|title|issuer|report/gi, '')
-              .replace(/\s+/g, ' ')
-              .trim()
-              .substring(0, 120);
-            
-            if (cleaned && cleaned.length > 50 && /[A-Z]/.test(cleaned)) {
-              intent = cleaned;
             }
           }
           
@@ -887,27 +1018,9 @@ app.listen(PORT, () => {
             
             log('INFO', `News: ${newsDisplay}`);
           } else if (intent) {
-            let displayIntent = intent
-              .replace(/&[a-z]+;/gi, ' ')
-              .replace(/&#\d+;/gi, ' ')
-              .replace(/&#x[0-9a-f]+;/gi, ' ')
-              .replace(/\/s\//gi, '')
-              .replace(/^\d+(\.\d)?\s+/g, '')
-              .replace(/form\s*\d+|form\s*6-?k/gi, '')
-              .replace(/exhibit|description|certification|interim|report|filing|securities|exchange|commission|washington|d\.c\.|pursuant|rule|duly|authorized|thereunto|registrant|officer|director/gi, '')
-              .replace(/\s+/g, ' ')
-              .trim();
-            
-            // Truncate original text at sentence boundary before fallback
-            displayIntent = truncateAtSentence(text, 200);
-            
-            if (displayIntent && displayIntent.length > 20) {
-              log('INFO', `News: ${displayIntent}`);
-            } else {
-              log('INFO', `News: Regulatory Update`);
-            }
-          } else {
             log('INFO', `News: Regulatory Update`);
+          } else {
+            log('INFO', `News: Press Release`);
           }
           
           const foundForms = new Set();
@@ -940,10 +1053,15 @@ app.listen(PORT, () => {
           const hasBearish = signalKeys.some(cat => bearishCategories.includes(cat));
           const direction = hasBearish ? 'Short' : 'Long';
           
-          let formLogMessage = formsDisplay && formsDisplay !== '' ? formsDisplay : 'None';
-          if (itemsDisplay && itemsDisplay !== '') {
-            formLogMessage += ', ' + itemsDisplay;
+          let formLogMessage = '';
+          if (formsDisplay && formsDisplay !== '') {
+            formLogMessage = formsDisplay;
           }
+          if (itemsDisplay && itemsDisplay !== '') {
+            if (formLogMessage) formLogMessage += ', ' + itemsDisplay;
+            else formLogMessage = itemsDisplay;
+          }
+          if (!formLogMessage) formLogMessage = 'None';
           log('INFO', `Form: ${formLogMessage}`);
           
           if (signalKeys.length > 0) {
@@ -979,7 +1097,62 @@ app.listen(PORT, () => {
               totalCashPerShare = finData?.totalCashPerShare || 'N/A';
               profitMargins = keyStats?.profitMargins || 'N/A';
               quickRatio = finData?.quickRatio || 'N/A';
-            } catch (err) {
+            } catch (yahooErr) {
+              // Yahoo failed, try Finnhub fallback for comprehensive data
+              const finnhubKey = process.env.FINNHUB_API_KEY;
+              if (finnhubKey) {
+                try {
+                  // Get quote data (price, volume, change, changePercent)
+                  const finnhubRes = await Promise.race([
+                    fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                  ]);
+                  if (finnhubRes.ok) {
+                    const data = await finnhubRes.json();
+                    if (data.c && data.c > 0 && price === 'N/A') {
+                      price = data.c;
+                    }
+                    if (data.v && volume === 'N/A') {
+                      volume = data.v;
+                    }
+                  }
+                  
+                  // Get company profile for market cap, shares outstanding, and IPO date
+                  const profileRes = await Promise.race([
+                    fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                  ]);
+                  if (profileRes.ok) {
+                    const profileData = await profileRes.json();
+                    if (profileData.marketCapitalization && marketCap === 'N/A') {
+                      marketCap = profileData.marketCapitalization * 1000000;
+                    }
+                    if (profileData.shareOutstanding && sharesOutstanding === 'N/A') {
+                      sharesOutstanding = profileData.shareOutstanding;
+                    }
+                  }
+                  
+                  // Get basic financials for additional metrics (volumes, ratios, cash data)
+                  const metricsRes = await Promise.race([
+                    fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${finnhubKey}`),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                  ]);
+                  if (metricsRes.ok) {
+                    const metricsData = await metricsRes.json();
+                    const metrics = metricsData.metric || {};
+                    
+                    // Average volume
+                    if (metrics['10DayAverageTradingVolume'] && averageVolume === 'N/A') {
+                      averageVolume = metrics['10DayAverageTradingVolume'] * 1000000;
+                    }
+                    
+                    // Note: Finnhub doesn't directly provide float, debtToEquity, totalCash, totalCashPerShare, profitMargins, or quickRatio
+                    // These would require additional premium endpoints or calculations
+                  }
+                } catch (finnhubErr) {
+                  // Finnhub also failed, keep N/A values
+                }
+              }
             }
           }
           
@@ -1117,7 +1290,7 @@ app.listen(PORT, () => {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, insufficient signals (need 2+ or neutral + 1 other)\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (need 2+ or neutral + 1 other)\x1b[0m`);
             console.log('');
             continue;
           }
@@ -1145,7 +1318,13 @@ app.listen(PORT, () => {
             formType: foundForms,
             cik: filing.cik
           };
-          saveAlert(alertData);
+          
+          // Only save alert if we got price, float, and S/O data
+          if (price !== 'N/A' && float !== 'N/A' && soRatio !== 'N/A') {
+            saveAlert(alertData);
+          } else {
+            log('INFO', `Quote: Incomplete data for ${ticker} (price: ${price}, float: ${float}, S/O: ${soRatio})`);
+          }
         } catch (err) {
           log('WARN', `Filing processing error: ${err.message}`);
         }

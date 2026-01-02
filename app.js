@@ -1314,9 +1314,9 @@ app.listen(PORT, () => {
           const endMin = 18 * 60; // 6:00pm = 1080 minutes
           
           if (shortOpportunity || longOpportunity) {
-            log('INFO', `Stock: $${ticker}, Price: ${priceDisplay}, Score: ${signalScoreData.score}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}, ${shortOpportunity || longOpportunity}`);
+            log('INFO', `Stock: $${ticker}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}, ${shortOpportunity || longOpportunity}`);
           } else {
-            log('INFO', `Stock: $${ticker}, Price: ${priceDisplay}, Score: ${signalScoreData.score}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}`);
+            log('INFO', `Stock: $${ticker}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}`);
           }
           
           if (etTotalMin < startMin || etTotalMin > endMin) {
@@ -1390,7 +1390,7 @@ app.listen(PORT, () => {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (need 2+ or neutral + 1 other)\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (need 2 keywords or 1 neutral and another)\x1b[0m`);
             console.log('');
             continue;
           }

@@ -74,16 +74,16 @@ const CONFIG = {
   STOCKS_FILE: 'logs/stocks.json', // File to store all alerts
   PERFORMANCE_FILE: 'logs/quote.json', // File to store performance data
   ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware'], // Allowed incorporation/located countries
-  PI_MODE: true,             // Enable optimizations for Raspberry Pi 
-  REFRESH_PEAK: 2000,        // 2s during trading hours (7am-10am ET)
-  REFRESH_NORMAL: 5000,      // 5s during trading hours (3:30am-6pm ET)
-  REFRESH_NIGHT: 60000,      // 1m outside trading hours (conserve power)
-  REFRESH_WEEKEND: 120000,   // 2m on weekends (very low activity)
-  YAHOO_TIMEOUT: 10000,       // Reduced to 10s for Pi
-  SEC_RATE_LIMIT: 3000,      // Increased from 2s to respect SEC limits on Pi
-  SEC_FETCH_TIMEOUT: 5000,   // Reduced for Pi memory constraints
-  MAX_COMBINED_SIZE: 100000, // Reduced from 150k for Pi RAM
-  MAX_RETRY_ATTEMPTS: 3      // Reduced from 5 for Pi resources
+  PI_MODE: true,             // Optimized settings for resource-constrained systems
+  REFRESH_PEAK: 1000,        // Check for filings every 1s (peak hours: 7am-10am ET)
+  REFRESH_NORMAL: 5000,      // Check for filings every 5s (trading hours: 10am-6pm ET)
+  REFRESH_NIGHT: 10000,      // Check for filings every 10s (outside trading hours)
+  REFRESH_WEEKEND: 30000,    // Check for filings every 30s (weekends)
+  YAHOO_TIMEOUT: 10000,      // Wait max 10s for stock quote data from Yahoo Finance
+  SEC_RATE_LIMIT: 3000,      // Wait 3s between SEC filing fetches (API rate limits)
+  SEC_FETCH_TIMEOUT: 5000,   // Wait max 5s to fetch filing text from SEC
+  MAX_COMBINED_SIZE: 100000, // Max filing size (100KB) before truncating
+  MAX_RETRY_ATTEMPTS: 3      // Retry failed API calls up to 3 times
 };
 
 const rateLimit = {

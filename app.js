@@ -67,9 +67,9 @@ const CONFIG = {
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com',
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '',
   FILE_TIME: 1, // Minutes to consider a filing "new"
-  MIN_ALERT_VOLUME: 30000, // Min volume threshold
-  MAX_FLOAT: 30000000, // Max float size
-  MAX_SO_RATIO: 30.0,  // Max short interest ratio
+  MIN_ALERT_VOLUME: 50000, // Min volume threshold
+  MAX_FLOAT: 50000000, // Max float size
+  MAX_SO_RATIO: 40.0,  // Max short interest ratio
   ALERTS_FILE: 'logs/alert.json', // File to store recent alerts
   STOCKS_FILE: 'logs/stocks.json', // File to store all alerts
   PERFORMANCE_FILE: 'logs/quote.json', // File to store performance data
@@ -98,7 +98,7 @@ const rateLimit = {
 };
 
 // Signal Score Calculator
-const calculatesignalScore = (float, insiderPercent, sharesOutstanding, volume, avgVolume) => {
+const calculatesignalScore = (float, insiderPercent, institutionalPercent, sharesOutstanding, volume, avgVolume) => {
   // Float Score (smaller is better)
   let floatScore = 0.5;
   const floatMillion = float / 1000000;
@@ -108,14 +108,40 @@ const calculatesignalScore = (float, insiderPercent, sharesOutstanding, volume, 
   else if (floatMillion < 25) floatScore = 0.7;
   else if (floatMillion < 50) floatScore = 0.6;
   
-  // Insider Score (lower % is better)
-  let insiderScore = 0.5;
+  // Ownership Score (lower % is better) - use insider, fallback to institutional
+  let ownershipScore = 0.5;
   const insiderPct = parseFloat(insiderPercent) || 0;
-  if (insiderPct < 0.5) insiderScore = 1.0;
-  else if (insiderPct < 2) insiderScore = 0.9;
-  else if (insiderPct < 5) insiderScore = 0.8;
-  else if (insiderPct < 10) insiderScore = 0.7;
-  else if (insiderPct < 20) insiderScore = 0.6;
+  const instPct = parseFloat(institutionalPercent) || 0;
+  
+  // Determine if we should use insider or institutional ownership
+  let usingInsider = true;
+  let effectiveOwnershipPct = insiderPct;
+  
+  // Use insider if it's valid (> 0 and not NaN)
+  if (isNaN(insiderPct) || insiderPct <= 0) {
+    // Fall back to institutional ownership if insider is missing/invalid
+    usingInsider = false;
+    // For institutional ownership, cap at 40% (unusual to see higher)
+    effectiveOwnershipPct = Math.min(instPct, 40);
+  }
+  
+  // Score based on which metric we're using
+  if (usingInsider) {
+    // Insider ownership scoring (stricter - lower is better)
+    if (effectiveOwnershipPct < 0.5) ownershipScore = 1.0;
+    else if (effectiveOwnershipPct < 2) ownershipScore = 0.9;
+    else if (effectiveOwnershipPct < 5) ownershipScore = 0.8;
+    else if (effectiveOwnershipPct < 10) ownershipScore = 0.7;
+    else if (effectiveOwnershipPct < 20) ownershipScore = 0.6;
+  } else {
+    // Institutional ownership scoring (more lenient - can be higher)
+    // Institutional ownership under 40% is good for pump potential
+    if (effectiveOwnershipPct < 10) ownershipScore = 1.0;
+    else if (effectiveOwnershipPct < 15) ownershipScore = 0.9;
+    else if (effectiveOwnershipPct < 20) ownershipScore = 0.8;
+    else if (effectiveOwnershipPct < 30) ownershipScore = 0.7;
+    else if (effectiveOwnershipPct < 40) ownershipScore = 0.6;
+  }
   
   // S/F Score (Shares Outstanding / Float ratio)
   // Higher ratio means more shares outstanding relative to float
@@ -123,9 +149,9 @@ const calculatesignalScore = (float, insiderPercent, sharesOutstanding, volume, 
   const numFloat = parseFloat(float) || 1;
   const numShares = parseFloat(sharesOutstanding) || 1;
   const sfRatio = numShares / numFloat; // Shares Outstanding / Float
-  
-  if (sfRatio >= 3.0) sfScore = 1.0;      // 3x or more shares than float
-  else if (sfRatio >= 2.5) sfScore = 0.9;
+
+  if (sfRatio >= 5.0) sfScore = 1.0;      // 5x or more shares than float
+  else if (sfRatio >= 3.0) sfScore = 0.9;
   else if (sfRatio >= 2.0) sfScore = 0.8;
   else if (sfRatio >= 1.5) sfScore = 0.7;
   else if (sfRatio >= 1.0) sfScore = 0.6;
@@ -133,19 +159,19 @@ const calculatesignalScore = (float, insiderPercent, sharesOutstanding, volume, 
   // Volume Score (higher volume ratio is better)
   let volumeScore = 0.5;
   const volumeRatio = avgVolume > 0 ? volume / avgVolume : 0.5;
-  if (volumeRatio >= 3) volumeScore = 1.0;
+  if (volumeRatio >= 3.0) volumeScore = 1.0;
   else if (volumeRatio >= 2.5) volumeScore = 0.9;
-  else if (volumeRatio >= 2) volumeScore = 0.8;
+  else if (volumeRatio >= 2.0) volumeScore = 0.8;
   else if (volumeRatio >= 1.5) volumeScore = 0.7;
   else if (volumeRatio >= 1.0) volumeScore = 0.6;
 
   // Calculate signal score (multiply all 4 factors)
-  const signalScore = floatScore * insiderScore * sfScore * volumeScore;
+  const signalScore = floatScore * ownershipScore * sfScore * volumeScore;
   
   return {
     score: parseFloat(signalScore.toFixed(2)),
     floatScore: parseFloat(floatScore.toFixed(2)),
-    insiderScore: parseFloat(insiderScore.toFixed(2)),
+    ownershipScore: parseFloat(ownershipScore.toFixed(2)),
     sfScore: parseFloat(sfScore.toFixed(2)),
     volumeScore: parseFloat(volumeScore.toFixed(2))
   };
@@ -749,13 +775,17 @@ const sendPersonalWebhook = (alertData) => {
     const priceDisplay = price && price !== 'N/A' ? `$${parseFloat(price).toFixed(2)}` : 'N/A';
     const volDisplay = alertData.volume && alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A';
     const floatDisplay = alertData.float && alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A';
-    const insiderDisplay = alertData.insiderPercent && alertData.insiderPercent !== 'N/A' ? (alertData.insiderPercent * 100).toFixed(2) + '%' : 'N/A';
+    const insiderDisplay = alertData.insiderPercent && alertData.insiderPercent !== 'N/A' ? (parseFloat(alertData.insiderPercent) * 100).toFixed(2) + '%' : 'N/A';
+    const institutionalDisplay = alertData.institutionalPercent && alertData.institutionalPercent !== 'N/A' ? (parseFloat(alertData.institutionalPercent) * 100).toFixed(2) + '%' : 'N/A';
     const signalScoreDisplay = alertData.signalScore ? `**${alertData.signalScore}**` : 'N/A';
     
-    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreDisplay}, vol: ${volDisplay}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, ownership: ${insiderDisplay}, ${reason}, ${alertData.shortOpportunity || alertData.longOpportunity || ''} https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+    // Build ownership display (prefer insider, fallback to institutional)
+    const ownershipDisplay = insiderDisplay !== 'N/A' ? `ownership: ${insiderDisplay}` : `institutional: ${institutionalDisplay}`;
+    
+    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreDisplay}, vol: ${volDisplay}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, ownership: ${ownershipDisplay}, ${reason}, ${alertData.shortOpportunity || alertData.longOpportunity || ''} https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
     const personalMsg = { content: personalAlertContent };
     
-    log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}, Float: ${alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A'}, Vol: ${alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A'}, S/O: ${alertData.soRatio}, Ownership: ${alertData.insiderPercent !== 'N/A' ? (alertData.insiderPercent * 100).toFixed(2) + '%' : 'N/A'}`);
+    log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}, Float: ${alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A'}, Vol: ${alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A'}, S/O: ${alertData.soRatio}, ${ownershipDisplay}`);
     
     fetch(CONFIG.PERSONAL_WEBHOOK_URL, {
       method: 'POST',
@@ -1124,7 +1154,7 @@ app.listen(PORT, () => {
             log('INFO', `${direction}: ${signalKeys.join(', ')}`);
           }
           
-          let price = 'N/A', volume = 'N/A', marketCap = 'N/A', averageVolume = 'N/A', float = 'N/A', sharesOutstanding = 'N/A', insiderPercent = 'N/A';
+          let price = 'N/A', volume = 'N/A', marketCap = 'N/A', averageVolume = 'N/A', float = 'N/A', sharesOutstanding = 'N/A', insiderPercent = 'N/A', institutionalPercent = 'N/A';
           let debtToEquity = 'N/A', totalCash = 'N/A', totalCashPerShare = 'N/A', profitMargins = 'N/A', quickRatio = 'N/A';
           
           if (ticker !== 'UNKNOWN' && isValidTicker(ticker)) {
@@ -1147,6 +1177,7 @@ app.listen(PORT, () => {
               float = keyStats?.floatShares || 'N/A';
               sharesOutstanding = keyStats?.sharesOutstanding || 'N/A';
               insiderPercent = holders?.insidersPercentHeld || 'N/A';
+              institutionalPercent = holders?.institutionsPercentHeld || 'N/A';
               
               debtToEquity = keyStats?.debtToEquity || 'N/A';
               totalCash = finData?.totalCash || 'N/A';
@@ -1380,13 +1411,15 @@ app.listen(PORT, () => {
           const numVolume = typeof volume === 'number' ? volume : parseInt(volume) || 0;
           const numAvgVol = typeof averageVolume === 'number' ? averageVolume : parseInt(averageVolume) || 1;
           const numInsider = typeof insiderPercent === 'number' ? insiderPercent * 100 : (typeof insiderPercent === 'string' ? parseFloat(insiderPercent) : 0);
+          const numInstitutional = typeof institutionalPercent === 'number' ? institutionalPercent * 100 : (typeof institutionalPercent === 'string' ? parseFloat(institutionalPercent) : 0);
           const numShares = typeof sharesOutstanding === 'number' ? sharesOutstanding : parseInt(sharesOutstanding) || 1;
           
-          const signalScoreData = calculatesignalScore(numFloat, numInsider, numShares, numVolume, numAvgVol);
+          const signalScoreData = calculatesignalScore(numFloat, numInsider, numInstitutional, numShares, numVolume, numAvgVol);
           alertData.signalScore = signalScoreData.score;
+          alertData.institutionalPercent = institutionalPercent;
           
           // Log the signal score
-          log('INFO', `Score: ${signalScoreData.score} (F: ${signalScoreData.floatScore}, I: ${signalScoreData.insiderScore}, S/F: ${signalScoreData.sfScore}, VM: ${signalScoreData.volumeScore})`);
+          log('INFO', `Score: ${signalScoreData.score} (F: ${signalScoreData.floatScore}, I: ${signalScoreData.ownershipScore}, S/F: ${signalScoreData.sfScore}, V: ${signalScoreData.volumeScore})`);
           
           // Only save alert if we got price, float, and S/O data
           if (price !== 'N/A' && float !== 'N/A' && soRatio !== 'N/A') {

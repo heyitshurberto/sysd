@@ -66,10 +66,10 @@ const CONFIG = {
   GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name',
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com',
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '',
-  FILE_TIME: 10000,
-  MIN_ALERT_VOLUME: 25000,
-  MAX_FLOAT: 25000000,
-  MAX_SO_RATIO: 25.0,
+  FILE_TIME: 1, // Minutes
+  MIN_ALERT_VOLUME: 30000, // Min volume threshold
+  MAX_FLOAT: 30000000, // Max float size
+  MAX_SO_RATIO: 30.0,  // Max short interest ratio
   ALERTS_FILE: 'logs/alert.json',
   STOCKS_FILE: 'logs/stocks.json',
   PERFORMANCE_FILE: 'logs/quote.json',
@@ -598,20 +598,16 @@ async function getFilingText(indexUrl) {
             .replace(/<[^>]+>/g, ' ')
             // Strip SEC metadata patterns like "0001292814-25-004426.txt : 20251230 0001292814-25-004426.hdr"
             .replace(/\d{10}-\d{2}-\d{6}\.\w+\s*:\s*\d+\s*\d{10}-\d{2}-\d{6}\.\w+/g, '')
-            // Remove exhibit/item/form references (already logged separately)
-            .replace(/(?:exhibit|annex|appendix|schedule|item|form|section|subsection|clause|subclause|paragraph)\s+(?:[a-z]|\d+(?:\.\d+)*)/gi, '')
+            // Remove exhibit/item/form references (already logged separately) - but be selective
+            .replace(/^\s*(?:exhibit|annex|appendix|schedule|form|section)\s+[a-z0-9]+\s*\n/gim, '')
             // Remove common SEC boilerplate headers
-            .replace(/(?:table of contents|index to exhibits|signatures|certification|forward-looking statements|risk factors|selected financial data|management's discussion|business overview|description of business)/gi, '')
-            // Remove disclaimer text patterns
-            .replace(/(?:this filing|this document|this form|this report|contains forward-looking|safe harbor|except as required|not liable|no warranty|all rights reserved)/gi, '')
+            .replace(/(?:table of contents|index to exhibits|signatures|certification|forward-looking statements|risk factors)/gi, '')
             // Remove footer/header patterns
-            .replace(/(?:page \d+|continued|see page|see exhibit|see schedule|see item|see form|see above|hereby|thereof|thereto|thereof)/gi, '')
-            // Remove date/time/filing metadata
-            .replace(/(?:filed (?:on |with )?|as of |as amended|amended and restated|effective (?:as of )?|period ended|fiscal year|calendar year|quarterly period)/gi, '')
+            .replace(/(?:page \d+|continued|see page|see exhibit|see schedule)/gi, '')
+            // Remove date/time/filing metadata (but keep actual content dates)
+            .replace(/(?:^\s*)*(?:filed (?:on |with )?|as of |as amended|amended and restated|effective (?:as of )?|period ended|fiscal year|calendar year|quarterly period)\s+/gim, '')
             // Remove SEC references
             .replace(/(?:sec\.?gov|edgar|securities and exchange|s\.e\.c\.|rule \d+-\d+)/gi, '')
-            // Remove company/legal boilerplate
-            .replace(/(?:incorporated|organized|corporation|company|llc|lp|partnership|limited|subsidiary|division|branch|office|principal place|business address|registrant|issuer)/gi, '')
             .replace(/\s+/g, ' ')
             .trim();
           
@@ -1237,21 +1233,21 @@ app.listen(PORT, () => {
           }
           
           const floatValue = float !== 'N/A' ? parseFloat(float) : null;
-          if (floatValue !== null && floatValue > 25000000) {
+          if (floatValue !== null && floatValue > CONFIG.MAX_FLOAT) {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, Float ${floatValue.toLocaleString('en-US')} exceeds 25m limit\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, Float ${floatValue.toLocaleString('en-US')} exceeds ${(CONFIG.MAX_FLOAT / 1000000).toFixed(0)}m limit\x1b[0m`);
             console.log('');
             continue;
           }
           
           const volumeValue = volume !== 'N/A' ? parseFloat(volume) : null;
-          if (volumeValue !== null && volumeValue < 25000) {
+          if (volumeValue !== null && volumeValue < CONFIG.MIN_ALERT_VOLUME) {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, volume ${volumeValue.toLocaleString('en-US')} below 25k minimum\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, volume ${volumeValue.toLocaleString('en-US')} below ${(CONFIG.MIN_ALERT_VOLUME / 1000).toFixed(0)}k minimum\x1b[0m`);
             console.log('');
             continue;
           }
@@ -1265,11 +1261,11 @@ app.listen(PORT, () => {
             }
           }
           
-          if (soRatioValue !== null && soRatioValue >= 25) {
+          if (soRatioValue !== null && soRatioValue >= CONFIG.MAX_SO_RATIO) {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, S/O ${soRatioValue.toFixed(2)}% exceeds 25% limit\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, S/O ${soRatioValue.toFixed(2)}% exceeds ${CONFIG.MAX_SO_RATIO.toFixed(0)}% limit\x1b[0m`);
             console.log('');
             continue;
           }

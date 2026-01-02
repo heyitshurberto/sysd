@@ -2496,13 +2496,34 @@ table {
         function clearNotifications() {
             customConfirm('Clear alerts from notifications?', null).then(confirmed => {
                 if (confirmed) {
-                    // Clear recent alerts
-                    const list = document.getElementById('notification-list');
-                    list.innerHTML = '';
-                    const emptyState = document.createElement('div');
-                    emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
-                    emptyState.textContent = 'No recent alerts available';
-                    list.appendChild(emptyState);
+                    // Determine which tab is active
+                    const recentList = document.getElementById('notification-list');
+                    const historyList = document.getElementById('notification-history-list');
+                    const inboxList = document.getElementById('notification-inbox-list');
+                    
+                    const recentVisible = recentList.style.display !== 'none';
+                    const historyVisible = historyList.style.display !== 'none';
+                    const inboxVisible = inboxList.style.display !== 'none';
+                    
+                    if (recentVisible) {
+                        recentList.innerHTML = '';
+                        const emptyState = document.createElement('div');
+                        emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
+                        emptyState.textContent = 'No recent alerts';
+                        recentList.appendChild(emptyState);
+                    } else if (historyVisible) {
+                        historyList.innerHTML = '';
+                        const emptyState = document.createElement('div');
+                        emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
+                        emptyState.textContent = 'No history available';
+                        historyList.appendChild(emptyState);
+                    } else if (inboxVisible) {
+                        inboxList.innerHTML = '';
+                        const emptyState = document.createElement('div');
+                        emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
+                        emptyState.textContent = 'No messages';
+                        inboxList.appendChild(emptyState);
+                    }
                 }
             });
         }

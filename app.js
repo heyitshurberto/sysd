@@ -316,7 +316,7 @@ const saveAlert = (alertData) => {
     // Cleanup stale alerts based on day of week
     cleanupStaleAlerts();
     
-    if (Object.keys(alertData.semanticSignals || {}).length > 0) {
+    if (Object.keys(alertData.signals || {}).length > 0) {
       let stocks = [];
       if (fs.existsSync(CONFIG.STOCKS_FILE)) {
         const content = fs.readFileSync(CONFIG.STOCKS_FILE, 'utf8').trim();
@@ -335,6 +335,9 @@ const saveAlert = (alertData) => {
     }
     
     sendPersonalWebhook(alertData);
+    
+    // Update performance tracking data for HTML dashboard
+    updatePerformanceData(alertData);
     
     log('INFO', `Log: Alert saved ${alertData.ticker} (pushed to GitHub)`);
     
@@ -365,6 +368,66 @@ const saveAlert = (alertData) => {
   }
   
   pushToGitHub();
+};
+
+// Update performance tracking data for alerts (for HTML dashboard)
+const updatePerformanceData = (alertData) => {
+  try {
+    let performanceData = {};
+    
+    // Load existing performance data
+    if (fs.existsSync(CONFIG.PERFORMANCE_FILE)) {
+      const content = fs.readFileSync(CONFIG.PERFORMANCE_FILE, 'utf8').trim();
+      if (content) {
+        try {
+          performanceData = JSON.parse(content);
+          if (!performanceData || typeof performanceData !== 'object') {
+            performanceData = {};
+          }
+        } catch (e) {
+          performanceData = {};
+        }
+      }
+    }
+    
+    const ticker = alertData.ticker;
+    const currentPrice = parseFloat(alertData.price) || 0;
+    
+    // Initialize or update ticker performance data
+    if (!performanceData[ticker]) {
+      performanceData[ticker] = {
+        alertPrice: currentPrice,
+        peakPrice: currentPrice,
+        lowPrice: currentPrice,
+        currentPrice: currentPrice,
+        recordedAt: new Date().toISOString()
+      };
+    } else {
+      // Update current price and track peaks/lows
+      performanceData[ticker].currentPrice = currentPrice;
+      if (currentPrice > performanceData[ticker].peakPrice) {
+        performanceData[ticker].peakPrice = currentPrice;
+      }
+      if (currentPrice < performanceData[ticker].lowPrice) {
+        performanceData[ticker].lowPrice = currentPrice;
+      }
+    }
+    
+    // Calculate performance metrics
+    const alertPrice = performanceData[ticker].alertPrice;
+    if (alertPrice > 0) {
+      const change = currentPrice - alertPrice;
+      const percentChange = (change / alertPrice) * 100;
+      performanceData[ticker].performance = parseFloat(percentChange.toFixed(2));
+      performanceData[ticker].reverseSplitRatio = null; // Can be updated if needed
+    }
+    
+    // Write updated performance data
+    fs.writeFileSync(CONFIG.PERFORMANCE_FILE, JSON.stringify(performanceData, null, 2));
+    
+  } catch (err) {
+    log('WARN', `Failed to update performance data: ${err.message}`);
+  }
 };
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -780,7 +843,7 @@ const sendPersonalWebhook = (alertData) => {
     const signalScoreBold = alertData.signalScore ? `**${alertData.signalScore}**` : 'N/A';
     const signalScoreDisplay = alertData.signalScore ? alertData.signalScore : 'N/A';
     
-    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, vol: ${volDisplay}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, ${reason}, ${alertData.shortOpportunity || alertData.longOpportunity || ''} https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, vol: ${volDisplay}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, ${reason} https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
     const personalMsg = { content: personalAlertContent };
     
     log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}, Float: ${alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A'}, Vol: ${alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A'}, S/O: ${alertData.soRatio}`);
@@ -984,6 +1047,49 @@ app.get('/api/quote/:ticker', async (req, res) => {
       sharesOutstanding: fundamentals.sharesOutstanding || 'N/A',
       soRatio: fundamentals.soRatio || 'N/A'
     });
+    
+    // Update performance data if price is available
+    if (quote?.regularMarketPrice && quote.regularMarketPrice > 0) {
+      try {
+        let performanceData = {};
+        if (fs.existsSync(CONFIG.PERFORMANCE_FILE)) {
+          const content = fs.readFileSync(CONFIG.PERFORMANCE_FILE, 'utf8').trim();
+          if (content) {
+            try {
+              performanceData = JSON.parse(content);
+              if (!performanceData || typeof performanceData !== 'object') {
+                performanceData = {};
+              }
+            } catch (e) {
+              performanceData = {};
+            }
+          }
+        }
+        
+        if (performanceData[ticker]) {
+          const currentPrice = quote.regularMarketPrice;
+          performanceData[ticker].currentPrice = currentPrice;
+          if (currentPrice > performanceData[ticker].peakPrice) {
+            performanceData[ticker].peakPrice = currentPrice;
+          }
+          if (currentPrice < performanceData[ticker].lowPrice) {
+            performanceData[ticker].lowPrice = currentPrice;
+          }
+          
+          // Recalculate performance
+          const alertPrice = performanceData[ticker].alertPrice;
+          if (alertPrice > 0) {
+            const change = currentPrice - alertPrice;
+            const percentChange = (change / alertPrice) * 100;
+            performanceData[ticker].performance = parseFloat(percentChange.toFixed(2));
+          }
+          
+          fs.writeFileSync(CONFIG.PERFORMANCE_FILE, JSON.stringify(performanceData, null, 2));
+        }
+      } catch (e) {
+        // Silently fail performance update
+      }
+    }
   } catch (error) {
     log('ERROR', `Quote endpoint error for ${ticker}: ${error.message}`);
     res.json({
@@ -1413,29 +1519,25 @@ app.listen(PORT, () => {
           const alertData = {
             ticker: ticker || filing.cik || 'Unknown',
             price: price,
+            signalScore: signalScoreData.score,
             volume: volume,
             averageVolume: averageVolume,
             float: float,
             sharesOutstanding: sharesOutstanding,
             soRatio: soRatio,
             marketCap: marketCap,
-            shortOpportunity: shortOpportunity,
-            floatFilter: floatValue !== null ? (floatValue <= 25000000 ? 'Pass' : 'Fail') : 'N/A',
-            volumeFilter: volumeCheckLater !== null ? (volumeCheckLater >= minVolumeThreshold ? 'Pass' : 'Fail') : 'N/A',
-            soFilter: soRatioValue !== null ? (soRatioValue < 25 ? 'Pass' : 'Fail') : 'N/A',
+            short: shortOpportunity ? true : false,
             intent: intent || 'Regulatory Filing',
             incorporated: normalizedIncorporated,
             located: normalizedLocated,
-            semanticSignals: semanticSignals,
             filingDate: periodOfReport,
-            source: source,
+            signals: semanticSignals,
             formType: foundForms,
             cik: filing.cik
           };
           
-          // Calculate signal score
-          // Score already calculated above for logging
-          alertData.signalScore = signalScoreData.score;
+          // Calculate signal score (already calculated above)
+          // signalScore already set at top of alertData
           
           // Only save alert if we got price, float, and S/O data
           if (price !== 'N/A' && float !== 'N/A' && soRatio !== 'N/A') {

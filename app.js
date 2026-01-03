@@ -16,6 +16,33 @@ if (fs.existsSync('.env')) {
   });
 }
 
+const CONFIG = {
+  FILE_TIME: 1, // Minutes retro to fetch filings
+  MIN_ALERT_VOLUME: 50000, // Min volume threshold
+  MAX_FLOAT: 75000000, // Max float size
+  MAX_SO_RATIO: 50.0,  // Max short interest ratio
+  ALERTS_FILE: 'logs/alert.json', // File to store recent alerts
+  STOCKS_FILE: 'logs/stocks.json', // File to store all alerts
+  PERFORMANCE_FILE: 'logs/quote.json', // File to store performance data
+  ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware'], // Allowed incorporation/located countries
+  PI_MODE: true,             // Enable optimizations for Raspberry Pi 
+  REFRESH_PEAK: 10000,       // 10s during trading hours (7am-10am ET)
+  REFRESH_NORMAL: 30000,     // 30s during trading hours (3:30am-6pm ET)
+  REFRESH_NIGHT: 300000,     // 5m outside trading hours (conserve power)
+  REFRESH_WEEKEND: 600000,   // 10m on weekends (very low activity)
+  YAHOO_TIMEOUT: 10000,      // Reduced from 10s for Pi performance
+  SEC_RATE_LIMIT: 2000,      // Minimum 2ms between SEC requests
+  SEC_FETCH_TIMEOUT: 5000,   // Reduced for Pi memory constraints
+  MAX_COMBINED_SIZE: 100000, // Reduced from 150k for Pi RAM
+  MAX_RETRY_ATTEMPTS: 7,     // Reduced from 7 for Pi resources
+  // GitHub & Webhook settings
+  GITHUB_REPO_PATH: process.env.GITHUB_REPO_PATH || '/home/user/Documents/sysd',
+  GITHUB_USERNAME: process.env.GITHUB_USERNAME || 'your-github-username',
+  GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name',
+  GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com',
+  PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || ''
+};
+
 const originalLog = console.log;
 const originalWarn = console.warn;
 const originalError = console.error;
@@ -56,32 +83,6 @@ const YahooFinance = require('yahoo-finance2').default;
 const yahooFinance = new YahooFinance();
 
 process.env.DEBUG = '';
-
-const CONFIG = {
-  GITHUB_REPO_PATH: process.env.GITHUB_REPO_PATH || '/home/user/Documents/sysd',
-  GITHUB_USERNAME: process.env.GITHUB_USERNAME || 'your-github-username',
-  GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name',
-  GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com',
-  PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '',
-  FILE_TIME: 10000000, // Minutes retro to fetch filings
-  MIN_ALERT_VOLUME: 50000, // Min volume threshold
-  MAX_FLOAT: 50000000, // Max float size
-  MAX_SO_RATIO: 40.0,  // Max short interest ratio
-  ALERTS_FILE: 'logs/alert.json', // File to store recent alerts
-  STOCKS_FILE: 'logs/stocks.json', // File to store all alerts
-  PERFORMANCE_FILE: 'logs/quote.json', // File to store performance data
-  ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware'], // Allowed incorporation/located countries
-  PI_MODE: true,             // Enable optimizations for Raspberry Pi 
-  REFRESH_PEAK: 10000,       // 10s during trading hours (7am-10am ET)
-  REFRESH_NORMAL: 30000,     // 30s during trading hours (3:30am-6pm ET)
-  REFRESH_NIGHT: 300000,     // 5m outside trading hours (conserve power)
-  REFRESH_WEEKEND: 600000,   // 10m on weekends (very low activity)
-  YAHOO_TIMEOUT: 10000,       // Reduced from 10s for Pi performance
-  SEC_RATE_LIMIT: 2000,       // Minimum 2ms between SEC requests
-  SEC_FETCH_TIMEOUT: 5000,   // Reduced for Pi memory constraints
-  MAX_COMBINED_SIZE: 100000, // Reduced from 150k for Pi RAM
-  MAX_RETRY_ATTEMPTS: 7      // Reduced from 7 for Pi resources
-};
 
 const rateLimit = {
   lastRequest: 0,

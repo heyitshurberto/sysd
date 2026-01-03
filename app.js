@@ -183,7 +183,7 @@ const SEMANTIC_KEYWORDS = {
   'Going Concern': ['Going Concern Warning', 'Substantial Doubt Going Concern', 'Auditor Going Concern Note', 'Continued Losses'],
   'Public Offering': ['Public Offering Announced', 'Secondary Offering', 'Follow-On Offering', 'Shelf Offering', 'At-The-Market Offering'],
   'Dilution': ['Dilutive Securities', 'New Shares Issued', 'Convertible Notes', 'Warrant Issuance', 'Option Grants Excessive'],
-  'Delisting Risk': ['Nasdaq Deficiency', 'Listing Standards Warning', 'Nasdaq Notification', 'Minimum Bid Price Warning', 'Delisting Threat'],
+  'Delisting Risk': ['Nasdaq Deficiency', 'Listing Standards Warning', 'Nasdaq Notification', 'Minimum Bid Price Warning', 'Minimum Bid Price', 'Delisting Threat'],
   'Warrant Redemption': ['Warrant Redemption Notice', 'Forced Exercise', 'Warrant Call Notice', 'Final Expiration Notice'],
   'Insider Selling': ['Director Sale', 'Officer Sale', 'CEO Selling', 'CFO Selling', 'Massive Liquidation'],
   'Accounting Restatement': ['Financial Restatement', 'Audit Non-Reliance', 'Material Weakness', 'Control Deficiency', 'Audit Adjustment'],

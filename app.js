@@ -52,13 +52,10 @@ process.stdout.write = function(str) {
 };
 
 const require = createRequire(import.meta.url);
-const yahooFinance = require('yahoo-finance2').default;
+const YahooFinance = require('yahoo-finance2').default;
+const yahooFinance = new YahooFinance();
 
 process.env.DEBUG = '';
-yahooFinance.suppressNotices(['ripHistorical', 'yahooSurvey']);
-yahooFinance.setGlobalConfig({ 
-  validation: { logErrors: false, logWarnings: false }
-});
 
 const CONFIG = {
   GITHUB_REPO_PATH: process.env.GITHUB_REPO_PATH || '/home/user/Documents/sysd',
@@ -66,7 +63,7 @@ const CONFIG = {
   GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name',
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com',
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '',
-  FILE_TIME: 1, // Minutes retro to fetch filings
+  FILE_TIME: 10000000, // Minutes retro to fetch filings
   MIN_ALERT_VOLUME: 50000, // Min volume threshold
   MAX_FLOAT: 50000000, // Max float size
   MAX_SO_RATIO: 40.0,  // Max short interest ratio
@@ -98,64 +95,31 @@ const rateLimit = {
 };
 
 // Signal Score Calculator
-const calculatesignalScore = (float, insiderPercent, institutionalPercent, sharesOutstanding, volume, avgVolume) => {
+const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume) => {
   // Float Score (smaller is better)
   let floatScore = 0.5;
   const floatMillion = float / 1000000;
-  if (floatMillion < 2) floatScore = 1.0;
-  else if (floatMillion < 5) floatScore = 0.9;
-  else if (floatMillion < 15) floatScore = 0.8;
+  if (floatMillion < 1) floatScore = 1.0;
+  else if (floatMillion < 2.5) floatScore = 0.9;
+  else if (floatMillion < 10) floatScore = 0.8;
   else if (floatMillion < 25) floatScore = 0.7;
   else if (floatMillion < 50) floatScore = 0.6;
+  else if (floatMillion < 75) floatScore = 0.55;
   
-  // Ownership Score (lower % is better) - use insider, fallback to institutional
-  let ownershipScore = 0.5;
-  const insiderPct = parseFloat(insiderPercent) || 0;
-  const instPct = parseFloat(institutionalPercent) || 0;
-  
-  // Determine if we should use insider or institutional ownership
-  let usingInsider = true;
-  let effectiveOwnershipPct = insiderPct;
-  
-  // Use insider if it's valid (> 0 and not NaN)
-  if (isNaN(insiderPct) || insiderPct <= 0) {
-    // Fall back to institutional ownership if insider is missing/invalid
-    usingInsider = false;
-    // For institutional ownership, cap at 40% (unusual to see higher)
-    effectiveOwnershipPct = Math.min(instPct, 40);
-  }
-  
-  // Score based on which metric we're using
-  if (usingInsider) {
-    // Insider ownership scoring (stricter - lower is better)
-    if (effectiveOwnershipPct < 0.5) ownershipScore = 1.0;
-    else if (effectiveOwnershipPct < 2) ownershipScore = 0.9;
-    else if (effectiveOwnershipPct < 5) ownershipScore = 0.8;
-    else if (effectiveOwnershipPct < 10) ownershipScore = 0.7;
-    else if (effectiveOwnershipPct < 20) ownershipScore = 0.6;
-  } else {
-    // Institutional ownership scoring (more lenient - can be higher)
-    // Institutional ownership under 40% is good for pump potential
-    if (effectiveOwnershipPct < 10) ownershipScore = 1.0;
-    else if (effectiveOwnershipPct < 15) ownershipScore = 0.9;
-    else if (effectiveOwnershipPct < 20) ownershipScore = 0.8;
-    else if (effectiveOwnershipPct < 30) ownershipScore = 0.7;
-    else if (effectiveOwnershipPct < 40) ownershipScore = 0.6;
-  }
-  
-  // S/F Score (Shares Outstanding / Float ratio)
-  // Higher ratio means more shares outstanding relative to float
-  let sfScore = 0.5;
+  // S/O Score (Float / Shares Outstanding percentage)
+  // Lower S/O % means smaller float relative to shares = higher squeeze potential
+  let soScore = 0.5;
   const numFloat = parseFloat(float) || 1;
   const numShares = parseFloat(sharesOutstanding) || 1;
-  const sfRatio = numShares / numFloat; // Shares Outstanding / Float
+  const soPercent = numShares > 0 ? (numFloat / numShares) * 100 : 50;
 
-  if (sfRatio >= 5.0) sfScore = 1.0;      // 5x or more shares than float
-  else if (sfRatio >= 3.0) sfScore = 0.9;
-  else if (sfRatio >= 2.0) sfScore = 0.8;
-  else if (sfRatio >= 1.5) sfScore = 0.7;
-  else if (sfRatio >= 1.0) sfScore = 0.6;
-  
+  if (soPercent < 1) soScore = 1.0;       // < 1% float = highest potential
+  else if (soPercent < 5) soScore = 0.95; // 1-5% float
+  else if (soPercent < 15) soScore = 0.9; // 5-15% float
+  else if (soPercent < 25) soScore = 0.8; // 15-25% float
+  else if (soPercent < 50) soScore = 0.7; // 25-50% float
+  else soScore = 0.6;                     // >= 50% float = lowest potential
+
   // Volume Score (higher volume ratio is better)
   let volumeScore = 0.5;
   const volumeRatio = avgVolume > 0 ? volume / avgVolume : 0.5;
@@ -163,19 +127,20 @@ const calculatesignalScore = (float, insiderPercent, institutionalPercent, share
   else if (volumeRatio >= 2.5) volumeScore = 0.9;
   else if (volumeRatio >= 2.0) volumeScore = 0.8;
   else if (volumeRatio >= 1.5) volumeScore = 0.7;
-  else if (volumeRatio >= 1.0) volumeScore = 0.6;
+  else if (volumeRatio >= 1.2) volumeScore = 0.6;
+  else if (volumeRatio >= 1.0) volumeScore = 0.55;
 
-  // Calculate signal score (multiply all 4 factors)
-  const signalScore = floatScore * ownershipScore * sfScore * volumeScore;
+  // Calculate signal score (multiply all 3 factors)
+  const signalScore = floatScore * soScore * volumeScore;
   
   return {
     score: parseFloat(signalScore.toFixed(2)),
     floatScore: parseFloat(floatScore.toFixed(2)),
-    ownershipScore: parseFloat(ownershipScore.toFixed(2)),
-    sfScore: parseFloat(sfScore.toFixed(2)),
+    soScore: parseFloat(soScore.toFixed(2)),
     volumeScore: parseFloat(volumeScore.toFixed(2))
   };
 };
+
 
 const log = (level, message) => {
   let titleColor = '\x1b[90m';
@@ -199,7 +164,6 @@ const log = (level, message) => {
 };
 
 const FORM_TYPES = ['6-K', '6-K/A', '8-K', '8-K/A', 'S-1', 'S-3', 'S-4', 'S-8', 'F-1', 'F-3', 'F-4', '424B1', '424B2', '424B3', '424B4', '424B5', '424H8', '20-F', '20-F/A', '13G', '13G/A', '13D', '13D/A', 'Form D', 'EX-99.1', 'EX-99.2', 'EX-10.1', 'EX-10.2', 'EX-3.1', 'EX-3.2', 'EX-4.1', 'EX-4.2', 'EX-10.3', 'EX-1.1', 'Item 1.01', 'Item 1.02', 'Item 1.03', 'Item 1.04', 'Item 1.05', 'Item 2.01', 'Item 2.02', 'Item 2.03', 'Item 2.04', 'Item 2.05', 'Item 2.06', 'Item 3.01', 'Item 3.02', 'Item 3.03', 'Item 4.01', 'Item 5.01', 'Item 5.02', 'Item 5.03', 'Item 5.04', 'Item 5.05', 'Item 5.06', 'Item 5.07', 'Item 5.08', 'Item 5.09', 'Item 5.10', 'Item 5.11', 'Item 5.12', 'Item 5.13', 'Item 5.14', 'Item 5.15', 'Item 6.01', 'Item 7.01', 'Item 8.01', 'Item 9.01'];
-
 const SEMANTIC_KEYWORDS = {
   'Merger/Acquisition': ['Merger Agreement', 'Acquisition Agreement', 'Agreed To Acquire', 'Merger Consideration', 'Premium Valuation', 'Going Private', 'Take Private'],
   'FDA Approval': ['FDA Approval', 'FDA Clearance', 'EMA Approval', 'Breakthrough Therapy', 'Fast Track Designation', 'Priority Review'],
@@ -210,7 +174,6 @@ const SEMANTIC_KEYWORDS = {
   'Regulatory Approval': ['Regulatory Approval Granted', 'Patent Approved', 'License Granted', 'Permit Issued'],
   'Revenue Growth': ['Revenue Growth Acceleration', 'Record Quarterly Revenue', 'Guidance Raise', 'Organic Growth'],
   'Insider Buying': ['Director Purchase', 'Executive Purchase', 'CEO Buying', 'CFO Buying', 'Meaningful Accumulation'],
-  
   'Reverse Split': ['Reverse Stock Split', 'Reverse Split', 'Reversed Split', 'Reverse Split Announced', 'Announced Reverse Split', '1-for-', 'Consolidation Of Shares', 'Share Consolidation', 'Combine Shares', 'Combined Shares', 'Restructuring Of Capital', 'Stock Consolidation', 'Share Combination'],
   'Bankruptcy Filing': ['Bankruptcy Protection', 'Chapter 11 Filing', 'Chapter 7 Filing', 'Insolvency Proceedings', 'Creditor Protection'],
   'Going Concern': ['Going Concern Warning', 'Substantial Doubt Going Concern', 'Auditor Going Concern Note', 'Continued Losses'],
@@ -224,14 +187,23 @@ const SEMANTIC_KEYWORDS = {
   'Debt Issuance': ['Debt Issuance', 'Senior Debt Issued', 'Convertible Bonds', 'Junk Bond Offering', 'High Leverage'],
   'Material Lawsuit': ['Material Litigation', 'Lawsuit Filed', 'Major Lawsuit', 'SEC Investigation', 'DOJ Investigation'],
   'Supply Chain Crisis': ['Supply Chain Disruption', 'Production Halt', 'Factory Closure', 'Supplier Bankruptcy', 'Shipping Delays'],
-  
   'Executive Departure': ['CEO Departed', 'CFO Departed', 'CEO Resigned', 'Board Resignation', 'Chief Officer Left'],
   'Asset Impairment': ['Goodwill Impairment', 'Asset Write-Down', 'Impairment Charge', 'Valuation Adjustment'],
   'Restructuring': ['Organizational Restructure', 'Cost Reduction Program', 'Efficiency Initiative', 'Division Realignment'],
   'Stock Buyback': ['Share Repurchase', 'Buyback Authorization', 'Accelerated Buyback', 'Repurchase Program'],
   'Licensing Deal': ['Exclusive License', 'License Agreement', 'Technology License', 'IP Licensing'],
   'Partnership': ['Strategic Partnership', 'Joint Venture', 'Partnership Agreement', 'Strategic Alliance'],
-  'Facility Expansion': ['New Facility Opening', 'Capacity Expansion', 'Manufacturing Expansion', 'Facility Upgrade']
+  'Facility Expansion': ['New Facility Opening', 'Capacity Expansion', 'Manufacturing Expansion', 'Facility Upgrade'],
+  'Blockchain Initiative': ['Blockchain Integration', 'Cryptocurrency Payment', 'NFT Launch', 'Web3 Partnership', 'Token Launch', 'Smart Contract Deployment', 'Blockchain Adoption', 'Crypto Exchange Partnership', 'Decentralized Platform'],
+  'Government Contract': ['Government Contract Award', 'Defense Contract', 'Federal Contract', 'DOD Contract', 'GSA Schedule', 'Federal Procurement'],
+  'Stock Split': ['Stock Split Announced', 'Forward Split', 'Stock Dividend', 'Share Split'],
+  'Dividend Increase': ['Dividend Increase', 'Dividend Hike', 'Special Dividend', 'Increased Dividend', 'Quarterly Dividend Raised', 'Annual Dividend Increase'],
+  'Compliance Issue': ['Regulatory Violation', 'FDA Warning', 'Product Recall', 'Safety Recall', 'Warning Letter', 'Compliance Violation', 'Regulatory Enforcement'],
+  'Mining Operations': ['Mining Operation', 'Cryptocurrency Mining', 'Blockchain Mining', 'Bitcoin Mining', 'Ethereum Mining', 'Mining Facility', 'Mining Expansion', 'Hash Rate Growth'],
+  'Financing Events': ['IPO Announced', 'Debt Offering', 'Credit Facility', 'Loan Facility', 'Financing Secured', 'Capital Structure', 'Bond Issuance'],
+  'Analyst Coverage': ['Analyst Initiation', 'Analyst Upgrade', 'Analyst Initiation Buy', 'Rating Upgrade', 'Price Target Increase', 'Outperform Rating', 'Buy Rating Initiated'],
+  'Product Discontinuation': ['Product Discontinuation', 'Product Discontinue', 'Discontinuing Product', 'Product Line Discontinued', 'End Of Life Product', 'Phase Out Product'],
+  'Loss of Major Customer': ['Major Customer Loss', 'Lost Major Customer', 'Customer Concentration Risk', 'Significant Customer Left', 'Key Customer Departure', 'Primary Customer Loss']
 };
 
 
@@ -282,34 +254,6 @@ const getExchangePrefix = (ticker) => {
   // For now, default to NASDAQ for 1-4 letter tickers
   // You can add specific NYSE mappings if needed
   return 'NASDAQ';
-};
-
-const truncateAtSentence = (text, maxLength) => {
-  if (!text || text.length <= maxLength) return text;
-  
-  // Truncate to max length first
-  let truncated = text.substring(0, maxLength);
-  
-  // Find last sentence boundary (. ! ?)
-  const lastPeriod = Math.max(
-    truncated.lastIndexOf('.'),
-    truncated.lastIndexOf('!'),
-    truncated.lastIndexOf('?')
-  );
-  
-  // If we found punctuation, cut there and add it back
-  if (lastPeriod > 0) {
-    return truncated.substring(0, lastPeriod + 1);
-  }
-  
-  // If no punctuation found, cut at last space to avoid mid-word cuts
-  const lastSpace = truncated.lastIndexOf(' ');
-  if (lastSpace > maxLength * 0.7) {
-    return truncated.substring(0, lastSpace);
-  }
-  
-  // Fallback to max length
-  return truncated;
 };
 
 const cleanupStaleAlerts = () => {
@@ -424,6 +368,53 @@ const saveAlert = (alertData) => {
 };
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Fetch float data from Financial Modeling Prep
+const getFloatData = async (ticker) => {
+  try {
+    const fmpKey = process.env.FMP_API_KEY;
+    if (!fmpKey) return 'N/A';
+    
+    const url = `https://financialmodelingprep.com/stable/shares-float?symbol=${ticker}&apikey=${fmpKey}`;
+    const res = await fetch(url, { timeout: 5000 });
+    if (!res.ok) return 'N/A';
+    
+    const data = await res.json();
+    if (Array.isArray(data) && data[0] && data[0].floatShares) {
+      return Math.round(data[0].floatShares);
+    }
+    return 'N/A';
+  } catch (e) {
+    return 'N/A';
+  }
+};
+
+// Fetch all quote data from Financial Modeling Prep shares-float endpoint
+const getFMPQuote = async (ticker) => {
+  try {
+    const fmpKey = process.env.FMP_API_KEY;
+    if (!fmpKey) return null;
+    
+    const res = await fetch(`https://financialmodelingprep.com/stable/shares-float?symbol=${ticker}&apikey=${fmpKey}`, { timeout: 5000 });
+    if (!res.ok) return null;
+    
+    const data = await res.json();
+    if (!Array.isArray(data) || !data[0]) return null;
+    
+    const d = data[0];
+    
+    return {
+      regularMarketPrice: 'N/A', // FMP shares-float doesn't have price
+      regularMarketVolume: 0,
+      marketCap: 'N/A',
+      sharesOutstanding: d.outstandingShares ? Math.round(d.outstandingShares) : 'N/A',
+      averageDailyVolume3Month: 0,
+      floatShares: d.floatShares ? Math.round(d.floatShares) : 'N/A'
+    };
+  } catch (e) {
+    return null;
+  }
+};
 
 async function fetchFilings() {
   const allFilings = [];
@@ -587,15 +578,18 @@ async function getFilingText(indexUrl) {
   for (let attempt = 1; attempt <= CONFIG.MAX_RETRY_ATTEMPTS; attempt++) {
     try {
       await wait(100); // Minimal delay, rate limiter handles the rest
-      const res = await fetch(indexUrl, {
-        headers: {
-          'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive'
-        }
-      });
+      const res = await Promise.race([
+        fetch(indexUrl, {
+          headers: {
+            'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive'
+          }
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('SEC index fetch timeout')), CONFIG.SEC_FETCH_TIMEOUT))
+      ]);
 
       if (res.status === 403) {
         log('WARN', `SEC blocked request (403), waiting 5 seconds`);
@@ -604,23 +598,31 @@ async function getFilingText(indexUrl) {
       }
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       
-      const html = await res.text();
+      const html = await Promise.race([
+        res.text(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('SEC index text parse timeout')), CONFIG.SEC_FETCH_TIMEOUT))
+      ]);
       
       const docHrefs = [];
       
-      const exhibitRegex = /href="([^"]*(?:ex|form|document)[^"]*\.(?:htm|html|txt))"/gi;
-      let match;
-      while ((match = exhibitRegex.exec(html)) !== null) {
-        if (!match[1].toLowerCase().includes('index')) {
-          docHrefs.push(match[1]);
+      // Simple non-backtracking regex to extract links
+      const hrefMatches = html.match(/href="([^"]+)"/g) || [];
+      for (const hrefMatch of hrefMatches) {
+        const href = hrefMatch.replace(/^href="/, '').replace(/"$/, '');
+        const lower = href.toLowerCase();
+        if ((lower.endsWith('.txt') || lower.endsWith('.html') || lower.endsWith('.htm')) && !lower.includes('index')) {
+          docHrefs.push(href);
         }
       }
       
+      // If no documents found, try a more permissive search
       if (docHrefs.length === 0) {
-        const fallbackRegex = /href="([^"]+\.(?:htm|html|txt))"/gi;
-        while ((match = fallbackRegex.exec(html)) !== null) {
-          if (!match[1].toLowerCase().includes('index') && !match[1].toLowerCase().includes('style')) {
-            docHrefs.push(match[1]);
+        const allLinks = html.match(/href="([^"]+\.(?:txt|html|htm))"/gi) || [];
+        for (const link of allLinks) {
+          const href = link.replace(/^href="/, '').replace(/"$/i, '');
+          const lower = href.toLowerCase();
+          if (!lower.includes('index') && !lower.includes('style')) {
+            docHrefs.push(href);
           }
         }
       }
@@ -638,17 +640,23 @@ async function getFilingText(indexUrl) {
         const fullUrl = href.startsWith('http') ? href : `https://www.sec.gov${href}`;        
         
         try {
-          const docRes = await fetch(fullUrl, {
-            headers: {
-              'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-              'Accept-Language': 'en-US,en;q=0.5',
-              'Accept-Encoding': 'gzip, deflate, br',
-              'Connection': 'keep-alive'
-            }
-          });
+          const docRes = await Promise.race([
+            fetch(fullUrl, {
+              headers: {
+                'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive'
+              }
+            }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SEC document fetch timeout')), CONFIG.SEC_FETCH_TIMEOUT))
+          ]);
 
-          let docText = await docRes.text();
+          let docText = await Promise.race([
+            docRes.text(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('SEC document text parse timeout')), CONFIG.SEC_FETCH_TIMEOUT))
+          ]);
           
           const lowerText = docText.toLowerCase();
           if ((lowerText.includes('sec.gov') && lowerText.includes('search filings')) ||
@@ -664,8 +672,8 @@ async function getFilingText(indexUrl) {
           }
           
           let cleanText = docText
-            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-            .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
             .replace(/<!--[\s\S]*?-->/g, '')
             .replace(/&nbsp;/g, ' ')
             .replace(/&amp;/g, '&')
@@ -678,7 +686,7 @@ async function getFilingText(indexUrl) {
             .replace(/^\s*(?:exhibit|annex|appendix|schedule|form|section)\s+[a-z0-9]+\s*\n/gim, '')
             .replace(/(?:table of contents|index to exhibits|signatures|certification|forward-looking statements|risk factors)/gi, '')
             .replace(/(?:page \d+|continued|see page|see exhibit|see schedule)/gi, '')
-            .replace(/(?:^\s*)*(?:filed (?:on |with )?|as of |as amended|amended and restated|effective (?:as of )?|period ended|fiscal year|calendar year|quarterly period)\s+/gim, '')
+            .replace(/filed\s+(?:on\s+)?[\d\-\/]*/gi, '')
             .replace(/(?:sec\.?gov|edgar|securities and exchange|s\.e\.c\.|rule \d+-\d+)/gi, '')
             .replace(/\s+/g, ' ')
             .trim();
@@ -769,17 +777,13 @@ const sendPersonalWebhook = (alertData) => {
     const priceDisplay = price && price !== 'N/A' ? `$${parseFloat(price).toFixed(2)}` : 'N/A';
     const volDisplay = alertData.volume && alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A';
     const floatDisplay = alertData.float && alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A';
-    const insiderDisplay = alertData.insiderPercent && alertData.insiderPercent !== 'N/A' ? (parseFloat(alertData.insiderPercent) * 100).toFixed(2) + '%' : 'N/A';
-    const institutionalDisplay = alertData.institutionalPercent && alertData.institutionalPercent !== 'N/A' ? (parseFloat(alertData.institutionalPercent) * 100).toFixed(2) + '%' : 'N/A';
-    const signalScoreDisplay = alertData.signalScore ? `**${alertData.signalScore}**` : 'N/A';
+    const signalScoreBold = alertData.signalScore ? `**${alertData.signalScore}**` : 'N/A';
+    const signalScoreDisplay = alertData.signalScore ? alertData.signalScore : 'N/A';
     
-    // Build ownership display (prefer insider, fallback to institutional)
-    const ownershipDisplay = insiderDisplay !== 'N/A' ? `ownership: ${insiderDisplay}` : `institutional: ${institutionalDisplay}`;
-    
-    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreDisplay}, vol: ${volDisplay}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, ownership: ${ownershipDisplay}, ${reason}, ${alertData.shortOpportunity || alertData.longOpportunity || ''} https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, vol: ${volDisplay}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, ${reason}, ${alertData.shortOpportunity || alertData.longOpportunity || ''} https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
     const personalMsg = { content: personalAlertContent };
     
-    log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}, Float: ${alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A'}, Vol: ${alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A'}, S/O: ${alertData.soRatio}, ${ownershipDisplay}`);
+    log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}, Float: ${alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A'}, Vol: ${alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A'}, S/O: ${alertData.soRatio}`);
     
     fetch(CONFIG.PERSONAL_WEBHOOK_URL, {
       method: 'POST',
@@ -882,7 +886,7 @@ app.get('/', (req, res) => {
 
 app.use(express.static('./docs'));
 
-// Quote endpoint with Yahoo fallback to Finnhub
+// Quote endpoint with Yahoo → FMP → Finnhub fallback
 app.get('/api/quote/:ticker', async (req, res) => {
   const ticker = req.params.ticker.toUpperCase();
   
@@ -893,7 +897,7 @@ app.get('/api/quote/:ticker', async (req, res) => {
       timeout: CONFIG.YAHOO_TIMEOUT
     }).catch(() => null);
     
-    // If Yahoo fails, try Finnhub
+    // If Yahoo fails, try FMP
     if (!quote || !quote.regularMarketPrice) {
       const finnhubKey = process.env.FINNHUB_API_KEY;
       if (finnhubKey) {
@@ -910,14 +914,35 @@ app.get('/api/quote/:ticker', async (req, res) => {
                 regularMarketPrice: data.c,
                 regularMarketVolume: data.v || 0,
                 marketCap: 'N/A',
+                sharesOutstanding: 'N/A',
+                averageDailyVolume3Month: 0,
                 exchange: 'UNKNOWN'
               };
+              
+              // Get profile for shares and market cap
+              try {
+                const profRes = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`);
+                if (profRes.ok) {
+                  const prof = await profRes.json();
+                  if (prof.shareOutstanding && prof.shareOutstanding > 0) {
+                    quote.sharesOutstanding = Math.round(prof.shareOutstanding);
+                  }
+                  if (prof.marketCapitalization && prof.marketCapitalization > 0) {
+                    quote.marketCap = Math.round(prof.marketCapitalization * 1000000);
+                  }
+                }
+              } catch (e) {}
             }
           }
         } catch (e) {
           // Silently fail Finnhub fallback
         }
       }
+    }
+    
+    // If Finnhub failed, try FMP for shares outstanding and float
+    if (!quote || !quote.regularMarketPrice) {
+      quote = await getFMPQuote(ticker);
     }
     
     // Try to get fundamental data from alert.json for this ticker
@@ -930,7 +955,6 @@ app.get('/api/quote/:ticker', async (req, res) => {
           fundamentals = {
             float: latestAlert.float || 'N/A',
             sharesOutstanding: latestAlert.sharesOutstanding || 'N/A',
-            insiderPercent: latestAlert.insiderPercent || 'N/A',
             soRatio: latestAlert.soRatio || 'N/A'
           };
         }
@@ -939,16 +963,25 @@ app.get('/api/quote/:ticker', async (req, res) => {
       // Silently fail if alert.json doesn't exist
     }
     
+    // If no float data in alerts, try FMP as fallback
+    if (!fundamentals.float || fundamentals.float === 'N/A') {
+      fundamentals.float = quote?.floatShares || await getFloatData(ticker);
+    }
+    
+    // If no shares outstanding in alerts, use quote data
+    if (!fundamentals.sharesOutstanding || fundamentals.sharesOutstanding === 'N/A') {
+      fundamentals.sharesOutstanding = quote?.sharesOutstanding || 'N/A';
+    }
+    
     res.json({
       symbol: ticker,
       price: quote?.regularMarketPrice || 'N/A',
       volume: quote?.regularMarketVolume || 0,
-      averageVolume: quote?.regularMarketVolume || 0,
+      averageVolume: quote?.averageDailyVolume3Month || 0,
       marketCap: quote?.marketCap || 'N/A',
       exchange: quote?.exchange || 'UNKNOWN',
       float: fundamentals.float || 'N/A',
       sharesOutstanding: fundamentals.sharesOutstanding || 'N/A',
-      insiderPercent: fundamentals.insiderPercent || 'N/A',
       soRatio: fundamentals.soRatio || 'N/A'
     });
   } catch (error) {
@@ -962,7 +995,6 @@ app.get('/api/quote/:ticker', async (req, res) => {
       exchange: 'UNKNOWN',
       float: 'N/A',
       sharesOutstanding: 'N/A',
-      insiderPercent: 'N/A',
       soRatio: 'N/A'
     });
   }
@@ -1030,7 +1062,16 @@ app.listen(PORT, () => {
           
           const filingTime = new Date(filing.updated);
           const filingDate = filingTime.toLocaleString('en-US', { timeZone: 'America/New_York' });
-          const text = await getFilingText(filing.txtLink);
+          const text = await Promise.race([
+            getFilingText(filing.txtLink),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Filing text fetch timeout')), CONFIG.SEC_FETCH_TIMEOUT * 3))
+          ]).catch(() => '');
+          
+          if (!text) {
+            log('WARN', `Failed to fetch filing text for ${filing.txtLink}`);
+            continue;
+          }
+          
           let semanticSignals = parseSemanticSignals(text);
           
           let source = 'SEC';
@@ -1140,7 +1181,7 @@ app.listen(PORT, () => {
           const formsDisplay = otherForms.length > 0 ? otherForms.join(', ') : '';
           const itemsDisplay = otherItems.length > 0 ? otherItems.sort((a, b) => parseFloat(a) - parseFloat(b)).map(item => `Item ${item}`).join(', ') : '';
           
-          const bearishCategories = ['Reverse Split', 'Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Dilution', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis'];
+          const bearishCategories = ['Reverse Split', 'Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Dilution', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Compliance Issue', 'Product Discontinuation', 'Loss of Major Customer'];
           const signalKeys = Object.keys(semanticSignals);
           const hasBearish = signalKeys.some(cat => bearishCategories.includes(cat));
           const direction = hasBearish ? 'Short' : 'Long';
@@ -1160,121 +1201,83 @@ app.listen(PORT, () => {
             log('INFO', `${direction}: ${signalKeys.join(', ')}`);
           }
           
-          let price = 'N/A', volume = 'N/A', marketCap = 'N/A', averageVolume = 'N/A', float = 'N/A', sharesOutstanding = 'N/A', insiderPercent = 'N/A', institutionalPercent = 'N/A';
+          let price = 'N/A', volume = 0, marketCap = 'N/A', averageVolume = 0, float = 'N/A', sharesOutstanding = 'N/A';
           let debtToEquity = 'N/A', totalCash = 'N/A', totalCashPerShare = 'N/A', profitMargins = 'N/A', quickRatio = 'N/A';
           
           if (ticker !== 'UNKNOWN' && isValidTicker(ticker)) {
             try {
-              const quoteData = await Promise.race([
-                yahooFinance.quoteSummary(ticker, { modules: ['price', 'summaryDetail', 'defaultKeyStatistics', 'majorHoldersBreakdown', 'financialData'] }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), CONFIG.YAHOO_TIMEOUT))
-              ]).catch(() => null);
-              
-              if (quoteData) {
-                const priceModule = quoteData.price || {};
-                const summaryDetail = quoteData.summaryDetail || {};
-                const keyStats = quoteData.defaultKeyStatistics || {};
-                const holders = quoteData.majorHoldersBreakdown || {};
-                const finData = quoteData.financialData || {};
-                
-                price = priceModule?.regularMarketPrice || summaryDetail?.regularMarketPrice || 'N/A';
-                marketCap = summaryDetail?.marketCap || 'N/A';
-                volume = priceModule?.regularMarketVolume || summaryDetail?.regularMarketVolume || 'N/A';
-                averageVolume = summaryDetail?.averageVolume || summaryDetail?.averageDailyVolume10Day || 'N/A';
-                float = keyStats?.floatShares || 'N/A';
-                sharesOutstanding = keyStats?.sharesOutstanding || 'N/A';
-                insiderPercent = holders?.insidersPercentHeld || 'N/A';
-                institutionalPercent = holders?.institutionsPercentHeld || 'N/A';
-                
-                debtToEquity = keyStats?.debtToEquity || 'N/A';
-                totalCash = finData?.totalCash || 'N/A';
-                totalCashPerShare = finData?.totalCashPerShare || 'N/A';
-                profitMargins = keyStats?.profitMargins || 'N/A';
-                quickRatio = finData?.quickRatio || 'N/A';
-              }
-            } catch (yahooErr) {
-              // Yahoo failed, try Finnhub fallback for comprehensive data
+              let quoteData = null;
               const finnhubKey = process.env.FINNHUB_API_KEY;
-              if (finnhubKey) {
+              
+              // Try Yahoo FIRST as primary source
+              try {
+                quoteData = await Promise.race([
+                  yahooFinance.quote(ticker, {
+                    fields: ['regularMarketPrice', 'regularMarketVolume', 'marketCap', 'sharesOutstanding', 'averageDailyVolume3Month']
+                  }),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                ]).catch(() => null);
+              } catch (e) {}
+              
+              // If Yahoo didn't work, try Finnhub
+              if (!quoteData && finnhubKey) {
                 try {
-                  // Get quote data (price, volume, change, changePercent)
-                  try {
-                    const finnhubRes = await Promise.race([
-                      fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`),
-                      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-                    ]);
-                    if (finnhubRes.ok) {
-                      const data = await Promise.race([
-                        finnhubRes.json(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('json parse timeout')), 2000))
-                      ]);
-                      if (data.c && data.c > 0 && price === 'N/A') {
-                        price = data.c;
-                      }
-                      if (data.v && volume === 'N/A') {
-                        volume = data.v;
-                      }
-                    }
-                  } catch (e) {
-                    // Quote fetch failed
-                  }
-                  
-                  // Get company profile for market cap, shares outstanding, and IPO date
-                  try {
-                    const profileRes = await Promise.race([
-                      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`),
-                      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-                    ]);
-                    if (profileRes.ok) {
-                      const profileData = await Promise.race([
-                        profileRes.json(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('json parse timeout')), 2000))
-                      ]);
-                      if (profileData.marketCapitalization && marketCap === 'N/A') {
-                        marketCap = profileData.marketCapitalization * 1000000;
-                      }
-                      if (profileData.shareOutstanding && sharesOutstanding === 'N/A') {
-                        sharesOutstanding = profileData.shareOutstanding;
-                      }
-                    }
-                  } catch (e) {
-                    // Profile fetch failed
-                  }
-                  
-                  // Get basic financials for additional metrics (volumes, ratios, cash data)
-                  try {
-                    const metricsRes = await Promise.race([
-                      fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${finnhubKey}`),
-                      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-                    ]);
-                    if (metricsRes.ok) {
-                      const metricsData = await Promise.race([
-                        metricsRes.json(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('json parse timeout')), 2000))
-                      ]);
-                      const metrics = metricsData.metric || {};
+                  const fhRes = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`);
+                  if (fhRes.ok) {
+                    const fhQuote = await fhRes.json();
+                    if (fhQuote.c && fhQuote.c > 0) {
+                      quoteData = {
+                        regularMarketPrice: fhQuote.c,
+                        regularMarketVolume: fhQuote.v || 0,
+                        marketCap: 'N/A',
+                        sharesOutstanding: 'N/A',
+                        averageDailyVolume3Month: 0
+                      };
                       
-                      // Average volume
-                      if (metrics['10DayAverageTradingVolume'] && averageVolume === 'N/A') {
-                        averageVolume = metrics['10DayAverageTradingVolume'] * 1000000;
-                      }
+                      // Get profile for shares and market cap
+                      try {
+                        const profRes = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`);
+                        if (profRes.ok) {
+                          const prof = await profRes.json();
+                          if (prof.shareOutstanding && prof.shareOutstanding > 0) {
+                            quoteData.sharesOutstanding = Math.round(prof.shareOutstanding);
+                          }
+                          if (prof.marketCapitalization && prof.marketCapitalization > 0) {
+                            quoteData.marketCap = Math.round(prof.marketCapitalization * 1000000);
+                          }
+                        }
+                      } catch (e) {}
                     }
-                  } catch (e) {
-                    // Metrics fetch failed
                   }
-                } catch (finnhubErr) {
-                  // Finnhub also failed, keep N/A values
+                } catch (e) {}
+              }
+              
+              // If still no data, try FMP (has shares outstanding and float)
+              if (!quoteData) {
+                const fmpData = await getFMPQuote(ticker);
+                if (fmpData) {
+                  quoteData = fmpData;
                 }
               }
-            }
+              
+              if (quoteData) {
+                price = quoteData.regularMarketPrice || 'N/A';
+                volume = quoteData.regularMarketVolume || 0;
+                marketCap = quoteData.marketCap || 'N/A';
+                sharesOutstanding = quoteData.sharesOutstanding || 'N/A';
+                averageVolume = quoteData.averageDailyVolume3Month || 0;
+                
+                // Use float from quoteData if available, else fetch separately
+                float = quoteData.floatShares || await getFloatData(ticker);
+              }
+            } catch (err) {}
           }
           
           const priceDisplay = price !== 'N/A' ? `$${price.toFixed(2)}` : 'N/A';
-          const volDisplay = volume !== 'N/A' ? volume.toLocaleString('en-US', { maximumFractionDigits: 0 }) : 'N/A';
-          const avgDisplay = averageVolume !== 'N/A' ? averageVolume.toLocaleString('en-US', { maximumFractionDigits: 0 }) : 'N/A';
+          const volDisplay = volume && volume > 0 ? volume.toLocaleString('en-US', { maximumFractionDigits: 0 }) : 'N/A';
+          const avgDisplay = averageVolume && averageVolume > 0 ? averageVolume.toLocaleString('en-US', { maximumFractionDigits: 0 }) : 'N/A';
           const mcDisplay = marketCap !== 'N/A' && marketCap > 0 ? '$' + Math.round(marketCap).toLocaleString('en-US') : 'N/A';
           const floatDisplay = float !== 'N/A' ? float.toLocaleString('en-US', { maximumFractionDigits: 0 }) : 'N/A';
-          const insiderDisplay = insiderPercent !== 'N/A' ? (insiderPercent * 100).toFixed(2) + '%' : 'N/A';
           let soRatio = 'N/A';
           if (sharesOutstanding !== 'N/A' && float !== 'N/A' && sharesOutstanding > 0 && !isNaN(float) && !isNaN(sharesOutstanding)) {
             const ratio = (float / sharesOutstanding) * 100;
@@ -1284,38 +1287,9 @@ app.listen(PORT, () => {
           let shortOpportunity = null;
           let longOpportunity = null;
           
-          if ((normalizedIncorporated.includes('Cayman') || normalizedIncorporated.includes('Virgin') || normalizedIncorporated.includes('Hong Kong')) 
-              && insiderPercent !== 'N/A' && insiderPercent < 0.01 
-              && Object.keys(semanticSignals).includes('Reverse Split')) {
-            shortOpportunity = 'Intent: Artificial Inflation (Foreign Issuer + Low Insider + Reverse Split)';
-          }
-          
-          if (profitMargins !== 'N/A' && profitMargins < -0.5 
-              && totalCashPerShare !== 'N/A' && totalCashPerShare < 0.05 
-              && Object.keys(semanticSignals).includes('Dilution')) {
-            shortOpportunity = 'Intent: Desperation Play (Negative Margins + Low Cash + Dilution)';
-          }
-          
-          if (debtToEquity !== 'N/A' && debtToEquity > 5000 
-              && insiderPercent !== 'N/A' && insiderPercent < 0.01) {
-            shortOpportunity = 'Intent: Bankruptcy Play (High Debt + No Insider Support)';
-          }
-          
           if (Object.keys(semanticSignals).includes('Going Concern') 
               && quickRatio !== 'N/A' && quickRatio < 0.5) {
             shortOpportunity = 'Intent: Imminent Collapse (Going Concern + Insolvency)';
-          }
-          
-          if (insiderPercent !== 'N/A' && insiderPercent < 0.01 
-              && totalCashPerShare !== 'N/A' && totalCashPerShare < 0.05 
-              && profitMargins !== 'N/A' && profitMargins < 0) {
-            shortOpportunity = 'Intent: Dilution Incoming (Insider Exit + Cash Burn)';
-          }
-          
-          if (insiderPercent !== 'N/A' && insiderPercent > 0.15 
-              && profitMargins !== 'N/A' && profitMargins > 0.1 
-              && (Object.keys(semanticSignals).includes('Merger/Acquisition') || Object.keys(semanticSignals).includes('FDA Approval'))) {
-            longOpportunity = 'Intent: Insider Support + Strong Fundamentals';
           }
           
           const now = new Date();
@@ -1330,16 +1304,14 @@ app.listen(PORT, () => {
           const numFloat = (() => { const v = typeof float === 'number' ? float : (typeof float === 'string' && float !== 'N/A' ? parseInt(float) : NaN); return isNaN(v) ? 0 : v; })();
           const numVolume = (() => { const v = typeof volume === 'number' ? volume : (typeof volume === 'string' && volume !== 'N/A' ? parseInt(volume) : NaN); return isNaN(v) ? 0 : v; })();
           const numAvgVol = (() => { const v = typeof averageVolume === 'number' ? averageVolume : (typeof averageVolume === 'string' && averageVolume !== 'N/A' ? parseInt(averageVolume) : NaN); return isNaN(v) ? 1 : v; })();
-          const numInsider = (() => { const v = typeof insiderPercent === 'number' ? insiderPercent * 100 : (typeof insiderPercent === 'string' && insiderPercent !== 'N/A' ? parseFloat(insiderPercent) * 100 : NaN); return isNaN(v) ? 0 : v; })();
-          const numInstitutional = (() => { const v = typeof institutionalPercent === 'number' ? institutionalPercent * 100 : (typeof institutionalPercent === 'string' && institutionalPercent !== 'N/A' ? parseFloat(institutionalPercent) * 100 : NaN); return isNaN(v) ? 0 : v; })();
           const numShares = (() => { const v = typeof sharesOutstanding === 'number' ? sharesOutstanding : (typeof sharesOutstanding === 'string' && sharesOutstanding !== 'N/A' ? parseInt(sharesOutstanding) : NaN); return isNaN(v) ? 1 : v; })();
-          const signalScoreData = calculatesignalScore(numFloat, numInsider, numInstitutional, numShares, numVolume, numAvgVol);
+          const signalScoreData = calculatesignalScore(numFloat, numShares, numVolume, numAvgVol);
           const signalScoreDisplay = signalScoreData.score;
           
           if (shortOpportunity || longOpportunity) {
-            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}, ${shortOpportunity || longOpportunity}`);
+            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, ${shortOpportunity || longOpportunity}`);
           } else {
-            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, Ownership: ${insiderDisplay}`);
+            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}`);
           }
           
           if (etTotalMin < startMin || etTotalMin > endMin) {
@@ -1370,14 +1342,10 @@ app.listen(PORT, () => {
           }
           
           const volumeValue = volume !== 'N/A' ? parseFloat(volume) : null;
-          if (volumeValue !== null && volumeValue < CONFIG.MIN_ALERT_VOLUME) {
-            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
-            const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
-            log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, volume ${volumeValue.toLocaleString('en-US')} below ${(CONFIG.MIN_ALERT_VOLUME / 1000).toFixed(0)}k minimum\x1b[0m`);
-            console.log('');
-            continue;
-          }
+          
+          // Determine volume threshold based on signal type (will be calculated later after semantic analysis)
+          // Store volume value for later threshold check after signal detection
+          const volumeCheckLater = volumeValue;
           
           let soRatioValue = null;
           if (sharesOutstanding !== 'N/A' && float !== 'N/A' && sharesOutstanding > 0) {
@@ -1397,13 +1365,37 @@ app.listen(PORT, () => {
             continue;
           }
           
-          const neutralCategories = ['Executive Departure', 'Asset Impairment', 'Restructuring', 'Stock Buyback', 'Licensing Deal', 'Partnership', 'Facility Expansion'];
+          const neutralCategories = ['Executive Departure', 'Asset Impairment', 'Restructuring', 'Stock Buyback', 'Licensing Deal', 'Partnership', 'Facility Expansion', 'Blockchain Initiative', 'Government Contract', 'Stock Split', 'Dividend Increase', 'Mining Operations', 'Financing Events', 'Analyst Coverage'];
           const signalCategories = Object.keys(semanticSignals);
           const neutralSignals = signalCategories.filter(cat => neutralCategories.includes(cat));
           const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
           
+          // Dynamic volume threshold: 20k for biotech signals, 50k for others
+          const isBiotechSignal = signalCategories.includes('FDA Approval') || signalCategories.includes('Clinical Success');
+          const minVolumeThreshold = isBiotechSignal ? 20000 : CONFIG.MIN_ALERT_VOLUME;
+          
+          // Check volume after knowing signal type
+          if (volumeCheckLater !== null && volumeCheckLater < minVolumeThreshold) {
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+            log('INFO', `Links: ${secLink} ${tvLink}`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, volume ${volumeCheckLater.toLocaleString('en-US')} below ${(minVolumeThreshold / 1000).toFixed(0)}k minimum (biotech: ${isBiotechSignal ? 'yes' : 'no'})\x1b[0m`);
+            console.log('');
+            continue;
+          }
+          
+          // Special case: China/Cayman Islands reverse splits bypass signal requirements
+          const isChinaOrCaymanReverseSplit = (normalizedIncorporated === 'China' || normalizedLocated === 'China' || normalizedIncorporated === 'Cayman Islands' || normalizedLocated === 'Cayman Islands') && signalCategories.includes('Reverse Split');
+          
+          // Special case: FDA Approval alone is strong enough
+          const hasFDAApproval = signalCategories.includes('FDA Approval');
+          
           let validSignals = false;
-          if (neutralSignals.length > 0 && signalCategories.length >= 2) {
+          if (isChinaOrCaymanReverseSplit) {
+            validSignals = true; // China/Cayman Islands reverse splits always trigger
+          } else if (hasFDAApproval) {
+            validSignals = true; // FDA Approval is strong enough alone
+          } else if (neutralSignals.length > 0 && signalCategories.length >= 2) {
             validSignals = true; // Has neutral signal + at least 1 other signal
           } else if (nonNeutralSignals.length >= 2) {
             validSignals = true; // Has 2+ non-neutral signals from different categories
@@ -1413,7 +1405,7 @@ app.listen(PORT, () => {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (needs 2 keywords or 1 neutral and another)\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (needs 2 keywords or 1 neutral and another, or an FDA Approval)\x1b[0m`);
             console.log('');
             continue;
           }
@@ -1426,11 +1418,10 @@ app.listen(PORT, () => {
             float: float,
             sharesOutstanding: sharesOutstanding,
             soRatio: soRatio,
-            insiderPercent: insiderPercent,
             marketCap: marketCap,
             shortOpportunity: shortOpportunity,
             floatFilter: floatValue !== null ? (floatValue <= 25000000 ? 'Pass' : 'Fail') : 'N/A',
-            volumeFilter: volumeValue !== null ? (volumeValue >= 50000 ? 'Pass' : 'Fail') : 'N/A',
+            volumeFilter: volumeCheckLater !== null ? (volumeCheckLater >= minVolumeThreshold ? 'Pass' : 'Fail') : 'N/A',
             soFilter: soRatioValue !== null ? (soRatioValue < 25 ? 'Pass' : 'Fail') : 'N/A',
             intent: intent || 'Regulatory Filing',
             incorporated: normalizedIncorporated,
@@ -1445,13 +1436,42 @@ app.listen(PORT, () => {
           // Calculate signal score
           // Score already calculated above for logging
           alertData.signalScore = signalScoreData.score;
-          alertData.institutionalPercent = institutionalPercent;
           
           // Only save alert if we got price, float, and S/O data
           if (price !== 'N/A' && float !== 'N/A' && soRatio !== 'N/A') {
-            saveAlert(alertData);
+            // Check for duplicate alert - don't re-alert the same stock within session
+            let isDuplicate = false;
+            try {
+              if (fs.existsSync(CONFIG.ALERTS_FILE)) {
+                const existingAlerts = JSON.parse(fs.readFileSync(CONFIG.ALERTS_FILE, 'utf8'));
+                if (Array.isArray(existingAlerts) && existingAlerts.length > 0) {
+                  // Check if this ticker was already alerted (last alert)
+                  const lastAlert = existingAlerts[existingAlerts.length - 1];
+                  if (lastAlert.ticker === ticker) {
+                    isDuplicate = true;
+                  }
+                }
+              }
+            } catch (e) {
+              // If can't read alerts file, proceed without duplicate check
+            }
+            
+            if (isDuplicate) {
+              const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+              const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+              log('INFO', `Links: ${secLink} ${tvLink}`);
+              console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, duplicate alert - already alerted in current session\x1b[0m`);
+              console.log('');
+            } else {
+              saveAlert(alertData);
+            }
           } else {
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+            log('INFO', `Links: ${secLink} ${tvLink}`);
             log('INFO', `Quote: Incomplete data for ${ticker} (price: ${price}, float: ${float}, S/O: ${soRatio})`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (needs 2 keywords or 1 neutral and another)\x1b[0m`);
+            console.log('');
           }
         } catch (err) {
           log('WARN', `Filing processing error: ${err.message}`);

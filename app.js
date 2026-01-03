@@ -21,11 +21,9 @@ const CONFIG = {
   MIN_ALERT_VOLUME: 50000, // Min volume threshold
   MAX_FLOAT: 75000000, // Max float size
   MAX_SO_RATIO: 50.0,  // Max short interest ratio
-  ALERTS_FILE: 'logs/alert.json', // File to store recent alerts
-  STOCKS_FILE: 'logs/stocks.json', // File to store all alerts
-  PERFORMANCE_FILE: 'logs/quote.json', // File to store performance data
   ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware'], // Allowed incorporation/located countries
-  PI_MODE: true,             // Enable optimizations for Raspberry Pi 
+  // Enable optimizations for Raspberry Pi devices
+  PI_MODE: true,             // Enable Pi optimizations          
   REFRESH_PEAK: 10000,       // 10s during trading hours (7am-10am ET)
   REFRESH_NORMAL: 30000,     // 30s during trading hours (3:30am-6pm ET)
   REFRESH_NIGHT: 300000,     // 5m outside trading hours (conserve power)
@@ -35,12 +33,16 @@ const CONFIG = {
   SEC_FETCH_TIMEOUT: 5000,   // Reduced for Pi memory constraints
   MAX_COMBINED_SIZE: 100000, // Reduced from 150k for Pi RAM
   MAX_RETRY_ATTEMPTS: 7,     // Reduced from 7 for Pi resources
+  // Log files
+  ALERTS_FILE: 'logs/alert.json', // File to store recent alerts
+  STOCKS_FILE: 'logs/stocks.json', // File to store all alerts
+  PERFORMANCE_FILE: 'logs/quote.json', // File to store performance data
   // GitHub & Webhook settings
-  GITHUB_REPO_PATH: process.env.GITHUB_REPO_PATH || '/home/user/Documents/sysd',
-  GITHUB_USERNAME: process.env.GITHUB_USERNAME || 'your-github-username',
-  GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name',
-  GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com',
-  PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || ''
+  GITHUB_REPO_PATH: process.env.GITHUB_REPO_PATH || '/home/user/Documents/sysd', // Local path to GitHub repo
+  GITHUB_USERNAME: process.env.GITHUB_USERNAME || 'your-github-username', // GitHub username
+  GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name', // GitHub repo name
+  GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com', // GitHub Pages domain
+  PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '' // Personal Discord webhook URL
 };
 
 const originalLog = console.log;

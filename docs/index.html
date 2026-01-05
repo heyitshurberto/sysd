@@ -2443,16 +2443,19 @@ table {
             const panel = document.getElementById('notification-panel');
             const isVisible = panel.style.display === 'block';
 
-            // Close all dropdowns when opening notifications
+            // Close all dropdowns when opening notifications (without triggering their close handlers)
             if (!isVisible) {
                 document.querySelectorAll('.score-breakdown').forEach(dropdown => {
-                    const button = dropdown.closest('.alert-card').querySelector('.score-details-toggle');
+                    const card = dropdown.closest('.alert-card');
+                    const button = card.querySelector('.score-details-toggle');
                     if (button) button.textContent = '▼';
                     dropdown.style.display = 'none';
                     dropdown.style.opacity = '0';
+                    card.dataset.dropdownOpen = 'false';
                 });
                 window.activeDropdown = null;
                 window.lastActiveTicker = null;
+                window.dropdownStates = new Map();
                 // Load Recent alerts when opening panel
                 loadRecentAlerts();
             }
@@ -2494,36 +2497,35 @@ table {
         }
 
         function clearNotifications() {
-            customConfirm('Clear alerts from notifications?', null).then(confirmed => {
+            customConfirm('Clear all alerts?', null).then(confirmed => {
                 if (confirmed) {
-                    // Determine which tab is active
-                    const recentList = document.getElementById('notification-list');
-                    const historyList = document.getElementById('notification-history-list');
-                    const inboxList = document.getElementById('notification-inbox-list');
-                    
-                    const recentVisible = recentList.style.display !== 'none';
-                    const historyVisible = historyList.style.display !== 'none';
-                    const inboxVisible = inboxList.style.display !== 'none';
-                    
-                    if (recentVisible) {
-                        recentList.innerHTML = '';
-                        const emptyState = document.createElement('div');
-                        emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
-                        emptyState.textContent = 'No recent alerts';
-                        recentList.appendChild(emptyState);
-                    } else if (historyVisible) {
-                        historyList.innerHTML = '';
-                        const emptyState = document.createElement('div');
-                        emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
-                        emptyState.textContent = 'No history available';
-                        historyList.appendChild(emptyState);
-                    } else if (inboxVisible) {
-                        inboxList.innerHTML = '';
-                        const emptyState = document.createElement('div');
-                        emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
-                        emptyState.textContent = 'No messages';
-                        inboxList.appendChild(emptyState);
-                    }
+                    // Send request to clear alerts on server
+                    fetch('/api/clear-alerts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    }).then(res => res.json()).then(data => {
+                        // Clear all notification lists
+                        const recentList = document.getElementById('notification-list');
+                        const historyList = document.getElementById('notification-history-list');
+                        const inboxList = document.getElementById('notification-inbox-list');
+                        
+                        [recentList, historyList, inboxList].forEach(list => {
+                            list.innerHTML = '';
+                            const emptyState = document.createElement('div');
+                            emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
+                            emptyState.textContent = 'No alerts';
+                            list.appendChild(emptyState);
+                        });
+                        
+                        // Clear local storage
+                        localStorage.removeItem('recentAlerts');
+                        localStorage.removeItem('alertHistory');
+                        
+                        // Reload the page after 200ms to refresh everything
+                        setTimeout(() => {
+                            location.reload();
+                        }, 200);
+                    }).catch(err => console.error('Error clearing alerts:', err));
                 }
             });
         }
@@ -2598,7 +2600,7 @@ table {
                         
                         item.innerHTML = `
                             <div style="font-weight: 650; margin-bottom: 8px;">$${alert.ticker} @ $${alert.price}</div>
-                            <div style="font-size: 11px; opacity: 0.77; margin-bottom: 4px;">Float: ${floatStr} | S/O: ${soStr}</div>
+                            <div style="font-size: 11px; opacity: 0.77; margin-bottom: 4px;">Score: ${alert.signalScore.toFixed(2)} | Float: ${floatStr} | S/O: ${soStr}</div>
                             <div style="margin-top: 2px; font-size: 10px; opacity: 0.5;">${dateStr} ${timeStr}</div>
                         `;
                         
@@ -3932,7 +3934,6 @@ table {
                                 <span>${alert.lunarPhase}</span>
                             </div>` : ''}
                             ${alert.ftiMetric ? `
-                            <div class="section-header">Timing Metric (FTI/CCI)</div>
                             <div class="score-item">
                                 <span>LE: ${alert.ftiMetric.layer1_LE} SF: ${alert.ftiMetric.layer2_SF} SIT: ${alert.ftiMetric.layer3_SIT} IC: ${alert.ftiMetric.layer4_IC}</span>
                                 <span>${alert.ftiMetric.cci} (${alert.ftiMetric.ftiRating})</span>
@@ -3966,8 +3967,10 @@ table {
                         </div>
                     </div>
                     <div class="ticker ticker-clickable" tabindex="0" style="cursor:pointer;display:inline-block;user-select:none;transition:background 0.15s,border 0.15s; border-radius:4px; padding:2px 6px; margin-bottom:2px; font-size: 8px;">
-                    <div class="ticker"><i>$${alert.ticker}</i> <span style="color: ${alert.isShort ? '#aa0000' : '#0ee50e'};">[${alert.isShort ? 'SHORT' : 'LONG'}]</span></div>
-                    </div><span style="font-size: 0.95em">(${(alert.signalScore || 0).toFixed(2)})</span></div>
+                    <div class="ticker" style="transition: all 0.15s ease;">
+                        <i>$${alert.ticker}</i> 
+                        <span style="color: ${alert.isShort ? '#39FF14' : '#39FF14'}; transition: color 0.15s ease; text-shadow: 0px 2px 4px rgba(0,0,0,0.0);">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>
+                    </div>                    </div><span style="font-size: 0.95em">(${(alert.signalScore || 0).toFixed(2)})</span></div>
                     <div>Price: $${alert.alertPrice.toFixed(4)}</div>
                     <div>Current: $${alert.currentPrice.toFixed(4)} (H/L: $${Math.max(alert.peakPrice, alert.lowPrice).toFixed(4)}/$${Math.min(alert.peakPrice, alert.lowPrice).toFixed(4)})</div>
                     <div class="price-change ${parseFloat(percentChange) > 0 ? 'positive' : (parseFloat(percentChange) === 0 ? 'neutral' : 'negative')}">

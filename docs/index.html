@@ -2598,7 +2598,7 @@ table {
                         
                         item.innerHTML = `
                             <div style="font-weight: 650; margin-bottom: 8px;">$${alert.ticker} @ $${alert.price}</div>
-                            <div style="font-size: 11px; opacity: 0.77; margin-bottom: 4px;">Float: ${floatStr} | S/O: ${soStr} | Ownership: ${insiderStr}</div>
+                            <div style="font-size: 11px; opacity: 0.77; margin-bottom: 4px;">Float: ${floatStr} | S/O: ${soStr}</div>
                             <div style="margin-top: 2px; font-size: 10px; opacity: 0.5;">${dateStr} ${timeStr}</div>
                         `;
                         
@@ -3967,15 +3967,13 @@ table {
                     </div>
                     <div class="ticker ticker-clickable" tabindex="0" style="cursor:pointer;display:inline-block;user-select:none;transition:background 0.15s,border 0.15s; border-radius:4px; padding:2px 6px; margin-bottom:2px; font-size: 8px;">
                     <div class="ticker"><i>$${alert.ticker}</i> <span style="color: ${alert.isShort ? '#aa0000' : '#0ee50e'};">[${alert.isShort ? 'SHORT' : 'LONG'}]</span></div>
-                    </div>
-                    <div style="font-weight: bold; color: ${alert.signalScore >= 0.6 ? '#00dd00' : alert.signalScore >= 0.3 ? '#ffdd00' : '#ff6666'}; margin-bottom: 6px;">Score: ${(alert.signalScore || 0).toFixed(2)}</div>
+                    </div>(${(alert.signalScore || 0).toFixed(2)})</div>
                     <div>Price: $${alert.alertPrice.toFixed(4)}</div>
                     <div>Current: $${alert.currentPrice.toFixed(4)} (H/L: $${Math.max(alert.peakPrice, alert.lowPrice).toFixed(4)}/$${Math.min(alert.peakPrice, alert.lowPrice).toFixed(4)})</div>
                     <div class="price-change ${parseFloat(percentChange) > 0 ? 'positive' : (parseFloat(percentChange) === 0 ? 'neutral' : 'negative')}">
                         (${priceDiff > 0 ? '+' : ''}$${Math.abs(priceDiff).toFixed(4)}) ${percentChange > 0 ? '+' : ''}${percentChange}%
                     </div>
                     <div>Volume: ${alert.currentVolume.toLocaleString()} (Avg: ${alert.averageVolume.toLocaleString()}) ${alert.volumeSpike ? '<span class="volume-spike">' + volumeRatio + 'x</span>' : ''}</div>
-                    <div>Ownership: ${alert.insiderPercent && alert.insiderPercent !== 'N/A' && !isNaN(parseFloat(alert.insiderPercent) * 100) ? (parseFloat(alert.insiderPercent) * 100).toFixed(2) + '%' : 'N/A'}</div>
                     <div>Float: ${alert.float.toLocaleString()} (S/O: ${alert.soRatio || 'N/A'})</div>
                     <div class="timestamp" style="color: ${
                         alert.triggered ?

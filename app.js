@@ -18,7 +18,7 @@ if (fs.existsSync('.env')) {
 
 const CONFIG = {
   // Alert filtering criteria
-  FILE_TIME: 1, // Minutes retro to fetch filings
+  FILE_TIME: 1000, // Minutes retro to fetch filings
   MIN_ALERT_VOLUME: 50000, // Min volume threshold
   MAX_FLOAT: 75000000, // Max float size
   MAX_SO_RATIO: 50.0,  // Max short interest ratio
@@ -1456,7 +1456,7 @@ app.listen(PORT, () => {
           }
           
           const volumeValue = volume !== 'N/A' ? parseFloat(volume) : null;
-          
+
           // Determine volume threshold based on signal type (will be calculated later after semantic analysis)
           // Store volume value for later threshold check after signal detection
           const volumeCheckLater = volumeValue;
@@ -1470,6 +1470,13 @@ app.listen(PORT, () => {
             }
           }
           
+          const neutralCategories = ['Executive Departure', 'Asset Impairment', 'Restructuring', 'Stock Buyback', 'Licensing Deal', 'Partnership', 'Facility Expansion', 'Blockchain Initiative', 'Government Contract', 'Stock Split', 'Dividend Increase', 'Mining Operations', 'Financing Events', 'Analyst Coverage'];
+          const signalCategories = Object.keys(semanticSignals);
+          const neutralSignals = signalCategories.filter(cat => neutralCategories.includes(cat));
+          const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
+          // Special case: FDA Approval alone is strong enough
+          const hasFDAApproval = signalCategories.includes('FDA Approval');
+
           // Skip S/O ratio check for FDA Approval signals
           if (!hasFDAApproval && soRatioValue !== null && soRatioValue >= CONFIG.MAX_SO_RATIO) {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
@@ -1479,11 +1486,6 @@ app.listen(PORT, () => {
             console.log('');
             continue;
           }
-          
-          const neutralCategories = ['Executive Departure', 'Asset Impairment', 'Restructuring', 'Stock Buyback', 'Licensing Deal', 'Partnership', 'Facility Expansion', 'Blockchain Initiative', 'Government Contract', 'Stock Split', 'Dividend Increase', 'Mining Operations', 'Financing Events', 'Analyst Coverage'];
-          const signalCategories = Object.keys(semanticSignals);
-          const neutralSignals = signalCategories.filter(cat => neutralCategories.includes(cat));
-          const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
           
           // Dynamic volume threshold: 20k for biotech signals, 50k for others
           const isBiotechSignal = signalCategories.includes('FDA Approval') || signalCategories.includes('Clinical Success');
@@ -1500,10 +1502,7 @@ app.listen(PORT, () => {
           }
           
           // Special case: China/Cayman Islands reverse splits bypass signal requirements
-          const isChinaOrCaymanReverseSplit = (normalizedIncorporated === 'China' || normalizedLocated === 'China' || normalizedIncorporated === 'Cayman Islands' || normalizedLocated === 'Cayman Islands') && signalCategories.includes('Reverse Split');
-          
-          // Special case: FDA Approval alone is strong enough
-          const hasFDAApproval = signalCategories.includes('FDA Approval');
+          const isChinaOrCaymanReverseSplit = (normalizedIncorporated === 'China' || normalizedLocated === 'China' || normalizedIncorporated === 'Cayman Islands' || normalizedLocated === 'Cayman Islands') && signalCategories.includes('Reverse Split');          
           
           let validSignals = false;
           if (isChinaOrCaymanReverseSplit) {

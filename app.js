@@ -30,7 +30,7 @@ const CONFIG = {
   REFRESH_NIGHT: 300000,     // 5m outside trading hours (conserve power)
   REFRESH_WEEKEND: 600000,   // 10m on weekends (very low activity)
   YAHOO_TIMEOUT: 10000,      // Reduced from 10s for Pi performance
-  SEC_RATE_LIMIT: 2000,      // Minimum 2ms between SEC requests
+  SEC_RATE_LIMIT: 5000,      // Minimum 5ms between SEC requests
   SEC_FETCH_TIMEOUT: 5000,   // Reduced for Pi memory constraints
   MAX_COMBINED_SIZE: 100000, // Reduced from 150k for Pi RAM
   MAX_RETRY_ATTEMPTS: 7,     // Reduced from 7 for Pi resources
@@ -839,18 +839,20 @@ const sendPersonalWebhook = (alertData) => {
     
     const countryDisplay = incorporatedCode === locatedCode ? incorporatedCode : `${incorporatedCode}/${locatedCode}`;
     
-    const direction = intent?.toLowerCase().includes('short') || intent?.toLowerCase().includes('bankruptcy') || intent?.toLowerCase().includes('dilution') ? 'Short' : 'Long';
+    const direction = intent?.toLowerCase().includes('short') || intent?.toLowerCase().includes('bankruptcy') || intent?.toLowerCase().includes('dilution') ? 'SHORT' : 'LONG';
     const reason = (intent || 'Filing').substring(0, 50).toLowerCase();
     const priceDisplay = price && price !== 'N/A' ? `$${parseFloat(price).toFixed(2)}` : 'N/A';
     const volDisplay = alertData.volume && alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A';
+    const avgDisplay = alertData.averageVolume && alertData.averageVolume !== 'N/A' ? (alertData.averageVolume / 1000000).toFixed(2) + 'm' : 'n/a';
     const floatDisplay = alertData.float && alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A';
     const signalScoreBold = alertData.signalScore ? `**${alertData.signalScore}**` : 'N/A';
     const signalScoreDisplay = alertData.signalScore ? alertData.signalScore : 'N/A';
     
-    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, vol: ${volDisplay}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, ${reason} https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, ${reason}, vol/avg: ${volDisplay}/${avgDisplay}, float: ${floatDisplay}, s/o: ${alertData.soRatio}
+    https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
     const personalMsg = { content: personalAlertContent };
     
-    log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}, Float: ${alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A'}, Vol: ${alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A'}, S/O: ${alertData.soRatio}`);
+    log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}, Float: ${alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A'}, Vol/Avg: ${volDisplay}/${avgDisplay}, S/O: ${alertData.soRatio}`);
     
     fetch(CONFIG.PERSONAL_WEBHOOK_URL, {
       method: 'POST',
@@ -961,7 +963,6 @@ app.get('/api/quote/:ticker', async (req, res) => {
     // Try Yahoo Finance first
     let quote = await yahooFinance.quote(ticker, {
       fields: ['regularMarketPrice', 'regularMarketVolume', 'marketCap', 'exchange'],
-      timeout: CONFIG.YAHOO_TIMEOUT
     }).catch(() => null);
     
     // If Yahoo fails, try FMP
@@ -1022,7 +1023,8 @@ app.get('/api/quote/:ticker', async (req, res) => {
           fundamentals = {
             float: latestAlert.float || 'N/A',
             sharesOutstanding: latestAlert.sharesOutstanding || 'N/A',
-            soRatio: latestAlert.soRatio || 'N/A'
+            soRatio: latestAlert.soRatio || 'N/A',
+            averageVolume: latestAlert.averageVolume || 0
           };
         }
       }
@@ -1044,7 +1046,7 @@ app.get('/api/quote/:ticker', async (req, res) => {
       symbol: ticker,
       price: quote?.regularMarketPrice || 'N/A',
       volume: quote?.regularMarketVolume || 0,
-      averageVolume: quote?.averageDailyVolume3Month || 0,
+      averageVolume: fundamentals.averageVolume || quote?.averageDailyVolume3Month || 0,
       marketCap: quote?.marketCap || 'N/A',
       exchange: quote?.exchange || 'UNKNOWN',
       float: fundamentals.float || 'N/A',
@@ -1179,6 +1181,8 @@ app.listen(PORT, () => {
           
           if (!text) {
             log('WARN', `Failed to fetch filing text for ${filing.txtLink}`);
+            console.log('');
+        
             continue;
           }
           
@@ -1457,7 +1461,7 @@ app.listen(PORT, () => {
           // Store volume value for later threshold check after signal detection
           const volumeCheckLater = volumeValue;
           
-          let soRatioValue = null;
+                    let soRatioValue = null;
           if (sharesOutstanding !== 'N/A' && float !== 'N/A' && sharesOutstanding > 0) {
             const so = parseFloat(sharesOutstanding);
             const fl = parseFloat(float);
@@ -1466,7 +1470,8 @@ app.listen(PORT, () => {
             }
           }
           
-          if (soRatioValue !== null && soRatioValue >= CONFIG.MAX_SO_RATIO) {
+          // Skip S/O ratio check for FDA Approval signals
+          if (!hasFDAApproval && soRatioValue !== null && soRatioValue >= CONFIG.MAX_SO_RATIO) {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);

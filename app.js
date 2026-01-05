@@ -18,7 +18,7 @@ if (fs.existsSync('.env')) {
 
 const CONFIG = {
   // Alert filtering criteria
-  FILE_TIME: 1000, // Minutes retro to fetch filings
+  FILE_TIME: 1, // Minutes retro to fetch filings
   MIN_ALERT_VOLUME: 50000, // Min volume threshold
   MAX_FLOAT: 75000000, // Max float size
   MAX_SO_RATIO: 50.0,  // Max short interest ratio
@@ -38,6 +38,7 @@ const CONFIG = {
   ALERTS_FILE: 'logs/alert.json', // File to store recent alerts
   STOCKS_FILE: 'logs/stocks.json', // File to store all alerts
   PERFORMANCE_FILE: 'logs/quote.json', // File to store performance data
+  CSV_FILE: 'logs/track.csv', // File to store CSV export of all alerts
   // GitHub & Webhook settings
   GITHUB_REPO_PATH: process.env.GITHUB_REPO_PATH || '/home/user/Documents/sysd', // Local path to GitHub repo
   GITHUB_USERNAME: process.env.GITHUB_USERNAME || 'your-github-username', // GitHub username
@@ -290,6 +291,83 @@ const cleanupStaleAlerts = () => {
   }
 };
 
+const saveToCSV = (alertData) => {
+  try {
+    const csvPath = CONFIG.CSV_FILE;
+    const headers = 'CIK,Filed Date,Filed Time,Scanned Date,Scanned Time,Ticker,Price,Score,Float,Shares,S/F_Ratio,Volume,AvgVol,Incorporated,Located,Filing Type,Signals\n';
+    
+    // Create file with headers if it doesn't exist
+    if (!fs.existsSync(csvPath)) {
+      fs.writeFileSync(csvPath, headers);
+    }
+    
+    // Format filing timestamp
+    const filingTime = new Date(alertData.filingDate);
+    const filedDate = filingTime.toISOString().split('T')[0];
+    const filedTime = filingTime.toTimeString().split(' ')[0];
+    
+    // Format scan timestamp
+    const now = new Date();
+    const scannedDate = now.toISOString().split('T')[0];
+    const scannedTime = now.toTimeString().split(' ')[0];
+    
+    // Format signals/intent as readable string
+    const signals = (alertData.intent && Array.isArray(alertData.intent)) 
+      ? alertData.intent.join('; ').replace(/,/g, ';')
+      : (alertData.intent ? String(alertData.intent).replace(/,/g, ';') : 'N/A');
+    
+    // Extract country (last part after comma if exists)
+    let incorporated = alertData.incorporated || 'Unknown';
+    if (incorporated.includes(',')) {
+      const parts = incorporated.split(',');
+      incorporated = parts[parts.length - 1].trim();
+    }
+    
+    let located = alertData.located || 'Unknown';
+    if (located.includes(',')) {
+      const parts = located.split(',');
+      located = parts[parts.length - 1].trim();
+    }
+    
+    // Helper function to safely escape CSV values
+    const escapeCSV = (value) => {
+      if (value === null || value === undefined) return 'N/A';
+      const str = String(value);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+    
+    // Build CSV row with data
+    const row = [
+      escapeCSV(alertData.cik || 'N/A'),
+      escapeCSV(filedDate),
+      escapeCSV(filedTime),
+      escapeCSV(scannedDate),
+      escapeCSV(scannedTime),
+      escapeCSV(alertData.ticker || 'N/A'),
+      escapeCSV(alertData.price || 'N/A'),
+      escapeCSV(alertData.signalScore || 'N/A'),
+      escapeCSV(alertData.float || 'N/A'),
+      escapeCSV(alertData.sharesOutstanding || 'N/A'),
+      escapeCSV(alertData.soRatio || 'N/A'),
+      escapeCSV(alertData.volume || 'N/A'),
+      escapeCSV(alertData.averageVolume || 'N/A'),
+      escapeCSV(incorporated || 'N/A'),
+      escapeCSV(located) || 'N/A',
+      escapeCSV(alertData.filingType || 'N/A'),
+      escapeCSV(signals) || 'Press Release/Regulatory Update',
+    ];
+    
+    // Convert to CSV string
+    const csvRow = row.join(',') + '\n';
+    fs.appendFileSync(csvPath, csvRow);
+  } catch (err) {
+    log('WARN', `CSV save failed: ${err.message}`);
+  }
+};
+
 const saveAlert = (alertData) => {
   try {
     let alerts = [];
@@ -316,6 +394,9 @@ const saveAlert = (alertData) => {
     if (alerts.length > 1000) alerts = alerts.slice(-1000);
     
     fs.writeFileSync(CONFIG.ALERTS_FILE, JSON.stringify(alerts, null, 2));
+    
+    // Save to CSV for analysis
+    saveToCSV(alertData);
     
     // Cleanup stale alerts based on day of week
     cleanupStaleAlerts();
@@ -400,25 +481,26 @@ const updatePerformanceData = (alertData) => {
     // Initialize or update ticker performance data
     if (!performanceData[ticker]) {
       performanceData[ticker] = {
-        alertPrice: currentPrice,
-        peakPrice: currentPrice,
-        lowPrice: currentPrice,
-        currentPrice: currentPrice,
-        recordedAt: new Date().toISOString()
+        short: alertData.short ? true : false,
+        alert: currentPrice,
+        highest: currentPrice,
+        lowest: currentPrice,
+        current: currentPrice,
+        date: new Date().toISOString()
       };
     } else {
       // Update current price and track peaks/lows
-      performanceData[ticker].currentPrice = currentPrice;
-      if (currentPrice > performanceData[ticker].peakPrice) {
-        performanceData[ticker].peakPrice = currentPrice;
+      performanceData[ticker].current = currentPrice;
+      if (currentPrice > performanceData[ticker].highest) {
+        performanceData[ticker].highest = currentPrice;
       }
-      if (currentPrice < performanceData[ticker].lowPrice) {
-        performanceData[ticker].lowPrice = currentPrice;
+      if (currentPrice < performanceData[ticker].lowest) {
+        performanceData[ticker].lowest = currentPrice;
       }
     }
     
     // Calculate performance metrics
-    const alertPrice = performanceData[ticker].alertPrice;
+    const alertPrice = performanceData[ticker].alert || 0;
     if (alertPrice > 0) {
       const change = currentPrice - alertPrice;
       const percentChange = (change / alertPrice) * 100;
@@ -437,13 +519,87 @@ const updatePerformanceData = (alertData) => {
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Fetch float data from Financial Modeling Prep
+// Get shares outstanding from Alpha Vantage (primary)
+const getSharesFromAlphaVantage = async (ticker) => {
+  try {
+    const avKey = process.env.ALPHA_VANTAGE_API_KEY;
+    if (!avKey) return null;
+    
+    const res = await fetch(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${avKey}`, { timeout: 5000 });
+    if (!res.ok) return null;
+    
+    const data = await res.json();
+    if (data.SharesOutstanding && data.SharesOutstanding !== 'None') {
+      return Math.round(parseInt(data.SharesOutstanding) || 0) || null;
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
+
+// Get shares outstanding from Finnhub (secondary)
+const getSharesFromFinnhub = async (ticker) => {
+  try {
+    const finnhubKey = process.env.FINNHUB_API_KEY;
+    if (!finnhubKey) return null;
+    
+    const res = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`, { timeout: 5000 });
+    if (!res.ok) return null;
+    
+    const data = await res.json();
+    if (data.shareOutstanding && data.shareOutstanding > 0) {
+      return Math.round(data.shareOutstanding);
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
+
+// Get shares outstanding with priority: Alpha Vantage → Finnhub → FMP
+const getSharesOutstanding = async (ticker) => {
+  // Try Finnhub first (most reliable, already called for profile)
+  try {
+    const finnhubKey = process.env.FINNHUB_API_KEY;
+    if (finnhubKey) {
+      const res = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`, { timeout: 3000 });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.shareOutstanding && data.shareOutstanding > 0) {
+          return Math.round(data.shareOutstanding);
+        }
+      }
+    }
+  } catch (e) {}
+  
+  return 'N/A';
+};
+
+// Get float data from Alpha Vantage first, then FMP as fallback
 const getFloatData = async (ticker) => {
+  // Try Alpha Vantage first (has both SharesFloat and SharesOutstanding)
+  try {
+    const avKey = process.env.ALPHA_VANTAGE_API_KEY;
+    if (avKey) {
+      const res = await fetch(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${avKey}`, { timeout: 3000 });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.SharesFloat && data.SharesFloat !== 'None') {
+          const float = Math.round(parseInt(data.SharesFloat) || 0);
+          if (float > 0) return float;
+        }
+      }
+    }
+  } catch (e) {}
+  
+  // Fallback to FMP
   try {
     const fmpKey = process.env.FMP_API_KEY;
     if (!fmpKey) return 'N/A';
     
     const url = `https://financialmodelingprep.com/stable/shares-float?symbol=${ticker}&apikey=${fmpKey}`;
-    const res = await fetch(url, { timeout: 5000 });
+    const res = await fetch(url, { timeout: 3000 });
     if (!res.ok) return 'N/A';
     
     const data = await res.json();
@@ -456,7 +612,7 @@ const getFloatData = async (ticker) => {
   }
 };
 
-// Fetch all quote data from Financial Modeling Prep shares-float endpoint
+// Fetch quote data - only used as fallback when Yahoo/Finnhub fail
 const getFMPQuote = async (ticker) => {
   try {
     const fmpKey = process.env.FMP_API_KEY;
@@ -844,11 +1000,21 @@ const sendPersonalWebhook = (alertData) => {
     const priceDisplay = price && price !== 'N/A' ? `$${parseFloat(price).toFixed(2)}` : 'N/A';
     const volDisplay = alertData.volume && alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A';
     const avgDisplay = alertData.averageVolume && alertData.averageVolume !== 'N/A' ? (alertData.averageVolume / 1000000).toFixed(2) + 'm' : 'n/a';
+    
+    // Calculate volume multiplier
+    let volumeMultiplier = '';
+    if (alertData.volume && alertData.averageVolume && alertData.volume !== 'N/A' && alertData.averageVolume !== 'N/A') {
+      const ratio = alertData.volume / alertData.averageVolume;
+      if (ratio >= 2) {
+        volumeMultiplier = ` (${ratio.toFixed(1)}x)`;
+      }
+    }
+    
     const floatDisplay = alertData.float && alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A';
     const signalScoreBold = alertData.signalScore ? `**${alertData.signalScore}**` : 'N/A';
     const signalScoreDisplay = alertData.signalScore ? alertData.signalScore : 'N/A';
     
-    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, ${reason}, vol/avg: ${volDisplay}/${avgDisplay}, float: ${floatDisplay}, s/o: ${alertData.soRatio}
+    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, ${reason}, form: ${filingType}, vol/avg: ${volDisplay}/${avgDisplay}${volumeMultiplier}, float: ${floatDisplay}, s/o: ${alertData.soRatio}
     https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
     const personalMsg = { content: personalAlertContent };
     
@@ -1037,9 +1203,9 @@ app.get('/api/quote/:ticker', async (req, res) => {
       fundamentals.float = quote?.floatShares || await getFloatData(ticker);
     }
     
-    // If no shares outstanding in alerts, use quote data
+    // If no shares outstanding in alerts, try: Alpha Vantage → Finnhub → FMP
     if (!fundamentals.sharesOutstanding || fundamentals.sharesOutstanding === 'N/A') {
-      fundamentals.sharesOutstanding = quote?.sharesOutstanding || 'N/A';
+      fundamentals.sharesOutstanding = quote?.sharesOutstanding || await getSharesOutstanding(ticker);
     }
     
     res.json({
@@ -1051,7 +1217,7 @@ app.get('/api/quote/:ticker', async (req, res) => {
       exchange: quote?.exchange || 'UNKNOWN',
       float: fundamentals.float || 'N/A',
       sharesOutstanding: fundamentals.sharesOutstanding || 'N/A',
-      soRatio: fundamentals.soRatio || 'N/A'
+      soRatio: fundamentals.soRatio || 'N/A',
     });
     
     // Update performance data if price is available
@@ -1109,6 +1275,17 @@ app.get('/api/quote/:ticker', async (req, res) => {
       sharesOutstanding: 'N/A',
       soRatio: 'N/A'
     });
+  }
+});
+
+app.post('/api/clear-alerts', (req, res) => {
+  try {
+    const alertsFile = CONFIG.ALERTS_FILE;
+    // Write empty array to alerts file
+    fs.writeFileSync(alertsFile, '[]');
+    res.json({ success: true, message: 'Alerts cleared' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -1316,7 +1493,6 @@ app.listen(PORT, () => {
           }
           
           let price = 'N/A', volume = 0, marketCap = 'N/A', averageVolume = 0, float = 'N/A', sharesOutstanding = 'N/A';
-          let debtToEquity = 'N/A', totalCash = 'N/A', totalCashPerShare = 'N/A', profitMargins = 'N/A', quickRatio = 'N/A';
           
           if (ticker !== 'UNKNOWN' && isValidTicker(ticker)) {
             try {
@@ -1383,6 +1559,11 @@ app.listen(PORT, () => {
                 
                 // Use float from quoteData if available, else fetch separately
                 float = quoteData.floatShares || await getFloatData(ticker);
+              
+              }
+              // If sharesOutstanding still missing, try: Alpha Vantage → Finnhub → FMP
+              if (sharesOutstanding === 'N/A' || !sharesOutstanding) {
+                sharesOutstanding = await getSharesOutstanding(ticker);
               }
             } catch (err) {}
           }
@@ -1426,6 +1607,32 @@ app.listen(PORT, () => {
             log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, ${shortOpportunity || longOpportunity}`);
           } else {
             log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}`);
+          }
+          
+          // Save to CSV for all stocks scanned (passed initial filters)
+          try {
+            const csvData = {
+              ticker,
+              price,
+              signalScore: signalScoreData.score,
+              short: shortOpportunity ? true : false,
+              marketCap: marketCap,
+              float: float,
+              sharesOutstanding: sharesOutstanding,
+              soRatio: soRatio,
+              volume: volume,
+              averageVolume: averageVolume,
+              incorporated: normalizedIncorporated,
+              located: normalizedLocated,
+              intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+              signalScoreData: signalScoreData,
+              filingDate: filing.updated,
+              filingType: formLogMessage,
+              cik: filing.cik,
+            };
+            saveToCSV(csvData);
+          } catch (csvErr) {
+            log('ERROR', `CSV error: ${csvErr.message}`);
           }
           
           if (etTotalMin < startMin || etTotalMin > endMin) {
@@ -1509,6 +1716,8 @@ app.listen(PORT, () => {
             validSignals = true; // China/Cayman Islands reverse splits always trigger
           } else if (hasFDAApproval) {
             validSignals = true; // FDA Approval is strong enough alone
+          } else if (signalScoreData.score > 0.618 && signalCategories.length === 1) {
+            validSignals = true; // High score (>0.618) with single signal overrides filter
           } else if (neutralSignals.length > 0 && signalCategories.length >= 2) {
             validSignals = true; // Has neutral signal + at least 1 other signal
           } else if (nonNeutralSignals.length >= 2) {
@@ -1519,7 +1728,7 @@ app.listen(PORT, () => {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (needs 2 keywords or 1 neutral and another, or an FDA Approval)\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (needs 2 keywords or 1 neutral and another, or an FDA Approval, or score above threshold with 1 signal)\x1b[0m`);
             console.log('');
             continue;
           }
@@ -1579,7 +1788,7 @@ app.listen(PORT, () => {
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            log('INFO', `Quote: Incomplete data for ${ticker} (price: ${price}, float: ${float}, S/O: ${soRatio})`);
+            log('INFO', `Quote: Incomplete data for ${ticker} (price: ${price}, float: ${float}, s/o: ${soRatio})`);
             console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (needs 2 keywords or 1 neutral and another)\x1b[0m`);
             console.log('');
           }

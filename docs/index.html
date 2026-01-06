@@ -860,17 +860,8 @@ table {
             font-size: 8px;
         }
 
-        .status-offline {
-            color: #aa0000;
-            font-size: 8px;
-        }
-
         body.dark-mode .status-online {
             color: #00ff00;
-        }
-
-        body.dark-mode .status-offline {
-            color: #ff0000;
         }
         
         .alerts-grid {
@@ -989,7 +980,7 @@ table {
         }
 
         body.dark-mode .alert-card[data-position="short"].triggered.up .price-change {
-            color: #039b039b !important;
+            color: #00d000cb !important;
             text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) !important;
         }
 
@@ -1256,14 +1247,19 @@ table {
 
         .position.long,
         .ticker.long {
-            color: rgba(0, 170, 0, 0.874);  /* Green with 70% opacity */
+            color: rgba(1, 186, 1, 0.874);  /* Green with 70% opacity */
             font-weight: bold;
             transition: color 0.15s ease;
         }
         
-/* Light mode: no shadow for [SHORT] on triggered green cards */
-.alert-card.triggered.up .ticker span {
-    text-shadow: none !important;
+        /* Light mode: black shadow for [LONG]/[SHORT] on triggered green cards */
+        body:not(.dark-mode) .alert-card.triggered.up .ticker span {
+            text-shadow: 0px 0px 2.9px rgba(0, 0, 0, 0.8) !important;
+        }
+
+        /* Dark mode: black shadow for [LONG]/[SHORT] on triggered green cards */
+        body.dark-mode .alert-card.triggered.up .ticker span {
+        text-shadow: 0px 0px 2.9px rgba(0, 0, 0, 0.8) !important;
 }
 
         /* Dark mode - brighter colors with transparency */
@@ -1301,7 +1297,7 @@ table {
         }
         
         /* Light mode flash animation */
-        @keyframes flashGreen {
+                @keyframes flashGreen {
             0% {
                 background: rgba(4, 221, 4, 0.85);
                 opacity: 1;
@@ -1323,6 +1319,7 @@ table {
                 opacity: 1;
             }
         }
+
 
             @keyframes flash {
                 0% {
@@ -2577,8 +2574,14 @@ table {
                         emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
                         emptyState.textContent = 'No recent alerts';
                         list.appendChild(emptyState);
+                        // Update notification count even if no alerts
+                        updateNotificationCount();
                         return;
                     }
+                    
+                    // Update notifications array for badge count
+                    notifications = alerts;
+                    updateNotificationCount();
                     
                     alerts.slice(-20).reverse().forEach(alert => {
                         const item = document.createElement('div');
@@ -2619,6 +2622,8 @@ table {
                     emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
                     emptyState.textContent = 'No recent alerts';
                     list.appendChild(emptyState);
+                    // Update notification count even on error
+                    updateNotificationCount();
                 });
         }
 
@@ -3467,7 +3472,6 @@ table {
 
                 } catch (error) {
                     smartLog('error', `Failed to check ${ticker}: ${error.message}`);
-                    // Optionally set to Offline on API failure, but keep current status for now
                 }
             }
 
@@ -3969,9 +3973,9 @@ table {
                     <div class="ticker ticker-clickable" tabindex="0" style="cursor:pointer;display:inline-block;user-select:none;transition:background 0.15s,border 0.15s; border-radius:4px; padding:2px 6px; margin-bottom:2px; font-size: 8px;">
                     <div class="ticker" style="transition: all 0.15s ease;">
                         <i>$${alert.ticker}</i> 
-                        <span style="color: ${alert.isShort ? '#39FF14' : '#39FF14'}; transition: color 0.15s ease; text-shadow: 0px 2px 4px rgba(0,0,0,0.0);">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>
+                        <span style="color: ${alert.isShort ? '#cc0000' : '#00cc00'}; transition: color 0.15s ease;">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>
                     </div>                    </div><span style="font-size: 0.95em">(${(alert.signalScore || 0).toFixed(2)})</span></div>
-                    <div>Price: $${alert.alertPrice.toFixed(4)}</div>
+                    <div>Alert: $${alert.alertPrice.toFixed(4)}</div>
                     <div>Current: $${alert.currentPrice.toFixed(4)} (H/L: $${Math.max(alert.peakPrice, alert.lowPrice).toFixed(4)}/$${Math.min(alert.peakPrice, alert.lowPrice).toFixed(4)})</div>
                     <div class="price-change ${parseFloat(percentChange) > 0 ? 'positive' : (parseFloat(percentChange) === 0 ? 'neutral' : 'negative')}">
                         (${priceDiff > 0 ? '+' : ''}$${Math.abs(priceDiff).toFixed(4)}) ${percentChange > 0 ? '+' : ''}${percentChange}%
@@ -4177,6 +4181,7 @@ table {
         document.addEventListener('DOMContentLoaded', () => {
             loadTheme();
             window.dashboard = new AlertDashboard();
+            loadRecentAlerts(); // Initialize notification count from alert.json
             updateTimeDisplay();
             setInterval(updateTimeDisplay, 1000); // Update every second
 
@@ -4193,6 +4198,10 @@ table {
                     const response = await fetch(`/api/ping?sessionId=${encodeURIComponent(sessionId)}`);
                     if (response.ok) {
                         const data = await response.json();
+                        // Update status to online on successful ping
+                        const statusEl = document.getElementById('status');
+                        if (statusEl) statusEl.className = 'status-online';
+                        
                         if (data.onlineUsers) {
                             // Try to find and update the online users span
                             let onlineUsersElement = document.getElementById('online-users');
@@ -4206,6 +4215,10 @@ table {
                                 onlineUsersElement.textContent = data.onlineUsers;
                             }
                         }
+                    } else {
+                        // Set status to offline on failed response
+                        const statusEl = document.getElementById('status');
+                        if (statusEl) statusEl.className = 'status-offline';
                     }
                 } catch (err) {
                     // Silently fail - don't spam console with network errors

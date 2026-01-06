@@ -294,7 +294,7 @@ const cleanupStaleAlerts = () => {
 const saveToCSV = (alertData) => {
   try {
     const csvPath = CONFIG.CSV_FILE;
-    const headers = 'CIK,Filed Date,Filed Time,Scanned Date,Scanned Time,Ticker,Price,Score,Float,Shares,S/F_Ratio,Volume,AvgVol,Incorporated,Located,Filing Type,Signals\n';
+    const headers = 'CIK,Ticker,Filed Date,Filed Time,Scanned Date,Scanned Time,Price,Score,Float,Shares,S/F_Ratio,Volume,AvgVol,Incorporated,Located,Filing Type,Signals,Skip Reason\n';
     
     // Create file with headers if it doesn't exist
     if (!fs.existsSync(csvPath)) {
@@ -342,11 +342,11 @@ const saveToCSV = (alertData) => {
     // Build CSV row with data
     const row = [
       escapeCSV(alertData.cik || 'N/A'),
+      escapeCSV(alertData.ticker || 'N/A'),
       escapeCSV(filedDate),
       escapeCSV(filedTime),
       escapeCSV(scannedDate),
       escapeCSV(scannedTime),
-      escapeCSV(alertData.ticker || 'N/A'),
       escapeCSV(alertData.price || 'N/A'),
       escapeCSV(alertData.signalScore || 'N/A'),
       escapeCSV(alertData.float || 'N/A'),
@@ -355,9 +355,10 @@ const saveToCSV = (alertData) => {
       escapeCSV(alertData.volume || 'N/A'),
       escapeCSV(alertData.averageVolume || 'N/A'),
       escapeCSV(incorporated || 'N/A'),
-      escapeCSV(located) || 'N/A',
+      escapeCSV(located || 'N/A'),
       escapeCSV(alertData.filingType || 'N/A'),
-      escapeCSV(signals) || 'Press Release/Regulatory Update',
+      escapeCSV(signals || 'Press Release/Regulatory Update'),
+      escapeCSV(alertData.skipReason || ''),
     ];
     
     // Convert to CSV string
@@ -1014,7 +1015,7 @@ const sendPersonalWebhook = (alertData) => {
     const signalScoreBold = alertData.signalScore ? `**${alertData.signalScore}**` : 'N/A';
     const signalScoreDisplay = alertData.signalScore ? alertData.signalScore : 'N/A';
     
-    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, ${reason}, form: ${filingType}, vol/avg: ${volDisplay}/${avgDisplay}${volumeMultiplier}, float: ${floatDisplay}, s/o: ${alertData.soRatio}
+    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, ${reason}, form: ${alertData.filingType || 'N/A'}, vol/avg: ${volDisplay}/${avgDisplay}${volumeMultiplier}, float: ${floatDisplay}, s/o: ${alertData.soRatio}
     https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
     const personalMsg = { content: personalAlertContent };
     
@@ -1340,6 +1341,7 @@ app.listen(PORT, () => {
       const filingsToProcess = allFilings.slice(0, 100);
       for (let i = 0; i < filingsToProcess.length; i++) {
         const filing = filingsToProcess[i];
+        let skipReason = ''; // Track why alert is skipped
         try {
           const hash = crypto.createHash('md5').update(filing.title + filing.updated).digest('hex');
           
@@ -1465,8 +1467,8 @@ app.listen(PORT, () => {
             });
           }
           
-          const mainForms = ['S-1', 'S-3', 'S-4', 'S-8', 'F-1', 'F-3', 'F-4', '20-F', '13G', '13D', 'Form D'];
-          const mainItems = ['1.01', '1.02', '1.03', '1.04', '1.05', '2.01', '2.02', '2.03', '2.04', '2.05', '2.06', '3.01', '3.02', '3.03', '4.01', '5.01', '5.02', '5.03', '5.04', '5.05', '5.06', '5.07', '5.08', '5.09', '5.10', '5.11', '5.12', '5.13', '5.14', '5.15', '6.01', '7.01', '8.01', '9.01'];
+          const mainForms = ['6-K', '6-K/A', '8-K', '8-K/A', 'S-1', 'S-3', 'S-4', 'S-8', 'F-1', 'F-3', 'F-4', '424B1', '424B2', '424B3', '424B4', '424B5', '424H8', '20-F', '20-F/A', '13G', '13G/A', '13D', '13D/A', 'Form D', 'EX-99.1', 'EX-99.2', 'EX-99.3', 'EX-10.1', 'EX-10.2', 'EX-10.3', 'EX-3.1', 'EX-3.2', 'EX-4.1', 'EX-4.2', 'EX-1.1'];
+          const mainItems = ['1.01', '1.02', '1.03', '1.04', '1.05', '1.06', '2.01', '2.02', '2.03', '2.04', '2.05', '2.06', '3.01', '3.02', '3.03', '4.01', '4.02', '5.01', '5.02', '5.03', '5.04', '5.05', '5.06', '5.07', '5.08', '5.09', '5.10', '5.11', '5.12', '5.13', '5.14', '5.15', '6.01', '6.02', '7.01', '8.01', '9.01', '9.02', '10.01', '10.02', '10.03', '10.04'];
           const otherForms = Array.from(foundForms).filter(f => mainForms.includes(f));
           const otherItems = Array.from(foundItems).filter(i => mainItems.includes(i));
           const formsDisplay = otherForms.length > 0 ? otherForms.join(', ') : '';
@@ -1609,56 +1611,121 @@ app.listen(PORT, () => {
             log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}`);
           }
           
-          // Save to CSV for all stocks scanned (passed initial filters)
-          try {
-            const csvData = {
-              ticker,
-              price,
-              signalScore: signalScoreData.score,
-              short: shortOpportunity ? true : false,
-              marketCap: marketCap,
-              float: float,
-              sharesOutstanding: sharesOutstanding,
-              soRatio: soRatio,
-              volume: volume,
-              averageVolume: averageVolume,
-              incorporated: normalizedIncorporated,
-              located: normalizedLocated,
-              intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
-              signalScoreData: signalScoreData,
-              filingDate: filing.updated,
-              filingType: formLogMessage,
-              cik: filing.cik,
-            };
-            saveToCSV(csvData);
-          } catch (csvErr) {
-            log('ERROR', `CSV error: ${csvErr.message}`);
-          }
+          // Check for FDA Approvals and Chinese/Cayman reverse splits that bypass time window filter
+          const signalCategories = Object.keys(semanticSignals || {});
+          const hasFDAApproval = signalCategories.includes('FDA Approval');
+          const isChinaOrCaymanReverseSplit = (normalizedIncorporated === 'China' || normalizedLocated === 'China' || normalizedIncorporated === 'Cayman Islands' || normalizedLocated === 'Cayman Islands') && signalCategories.includes('Reverse Split');
+          const highScoreOverride = signalScoreData.score > 0.618; // Score above threshold can bypass time window IF it passes all other filters
           
           if (etTotalMin < startMin || etTotalMin > endMin) {
-            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
-            const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
-            log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, filing received at ${etHour.toString().padStart(2, '0')}:${etMin.toString().padStart(2, '0')} ET (outside 3:30am-6:00pm window)\x1b[0m`);
-            console.log('');
-            continue;
+            // Allow exceptions for: FDA Approvals and Chinese/Cayman reverse splits
+            // High score override will be checked later after all other filters pass
+            if (!hasFDAApproval && !isChinaOrCaymanReverseSplit) {
+              skipReason = `filing received at ${etHour.toString().padStart(2, '0')}:${etMin.toString().padStart(2, '0')} ET (outside 3:30am-6:00pm window)`;
+              const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+              const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+              log('INFO', `Links: ${secLink} ${tvLink}`);
+              console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
+              console.log('');
+              // Save to CSV with skip reason
+              try {
+                const csvData = {
+                  ticker,
+                  price,
+                  signalScore: signalScoreData.score,
+                  short: shortOpportunity ? true : false,
+                  marketCap: marketCap,
+                  float: float,
+                  sharesOutstanding: sharesOutstanding,
+                  soRatio: soRatio,
+                  volume: volume,
+                  averageVolume: averageVolume,
+                  incorporated: normalizedIncorporated,
+                  located: normalizedLocated,
+                  intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                  signalScoreData: signalScoreData,
+                  filingDate: filing.updated,
+                  filingType: formLogMessage,
+                  cik: filing.cik,
+                  skipReason: skipReason,
+                };
+                saveToCSV(csvData);
+              } catch (csvErr) {
+                log('ERROR', `CSV error: ${csvErr.message}`);
+              }
+              continue;
+            }
           }
           if (normalizedLocated === 'Unknown') {
+            skipReason = 'no valid country';
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, no valid country\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
             console.log('');
+            // Save to CSV with skip reason
+            try {
+              const csvData = {
+                ticker,
+                price,
+                signalScore: signalScoreData.score,
+                short: shortOpportunity ? true : false,
+                marketCap: marketCap,
+                float: float,
+                sharesOutstanding: sharesOutstanding,
+                soRatio: soRatio,
+                volume: volume,
+                averageVolume: averageVolume,
+                incorporated: normalizedIncorporated,
+                located: normalizedLocated,
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                signalScoreData: signalScoreData,
+                filingDate: filing.updated,
+                filingType: formLogMessage,
+                cik: filing.cik,
+                skipReason: skipReason,
+              };
+              saveToCSV(csvData);
+            } catch (csvErr) {
+              log('ERROR', `CSV error: ${csvErr.message}`);
+            }
             continue;
           }
           
           const floatValue = float !== 'N/A' ? parseFloat(float) : null;
           if (floatValue !== null && floatValue > CONFIG.MAX_FLOAT) {
+            skipReason = `Float ${floatValue.toLocaleString('en-US')} exceeds ${(CONFIG.MAX_FLOAT / 1000000).toFixed(0)}m limit`;
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, Float ${floatValue.toLocaleString('en-US')} exceeds ${(CONFIG.MAX_FLOAT / 1000000).toFixed(0)}m limit\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
             console.log('');
+            // Save to CSV with skip reason
+            try {
+              const csvData = {
+                ticker,
+                price,
+                signalScore: signalScoreData.score,
+                short: shortOpportunity ? true : false,
+                marketCap: marketCap,
+                float: float,
+                sharesOutstanding: sharesOutstanding,
+                soRatio: soRatio,
+                volume: volume,
+                averageVolume: averageVolume,
+                incorporated: normalizedIncorporated,
+                located: normalizedLocated,
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                signalScoreData: signalScoreData,
+                filingDate: filing.updated,
+                filingType: formLogMessage,
+                cik: filing.cik,
+                skipReason: skipReason,
+              };
+              saveToCSV(csvData);
+            } catch (csvErr) {
+              log('ERROR', `CSV error: ${csvErr.message}`);
+            }
             continue;
           }
           
@@ -1678,44 +1745,96 @@ app.listen(PORT, () => {
           }
           
           const neutralCategories = ['Executive Departure', 'Asset Impairment', 'Restructuring', 'Stock Buyback', 'Licensing Deal', 'Partnership', 'Facility Expansion', 'Blockchain Initiative', 'Government Contract', 'Stock Split', 'Dividend Increase', 'Mining Operations', 'Financing Events', 'Analyst Coverage'];
-          const signalCategories = Object.keys(semanticSignals);
           const neutralSignals = signalCategories.filter(cat => neutralCategories.includes(cat));
           const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
-          // Special case: FDA Approval alone is strong enough
-          const hasFDAApproval = signalCategories.includes('FDA Approval');
+          // signalCategories, hasFDAApproval, isChinaOrCaymanReverseSplit already defined above before time window check
 
           // Skip S/O ratio check for FDA Approval signals
           if (!hasFDAApproval && soRatioValue !== null && soRatioValue >= CONFIG.MAX_SO_RATIO) {
+            skipReason = `S/O ${soRatioValue.toFixed(2)}% exceeds ${CONFIG.MAX_SO_RATIO.toFixed(0)}% limit`;
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, S/O ${soRatioValue.toFixed(2)}% exceeds ${CONFIG.MAX_SO_RATIO.toFixed(0)}% limit\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
             console.log('');
+            // Save to CSV with skip reason
+            try {
+              const csvData = {
+                ticker,
+                price,
+                signalScore: signalScoreData.score,
+                short: shortOpportunity ? true : false,
+                marketCap: marketCap,
+                float: float,
+                sharesOutstanding: sharesOutstanding,
+                soRatio: soRatio,
+                volume: volume,
+                averageVolume: averageVolume,
+                incorporated: normalizedIncorporated,
+                located: normalizedLocated,
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                signalScoreData: signalScoreData,
+                filingDate: filing.updated,
+                filingType: formLogMessage,
+                cik: filing.cik,
+                skipReason: skipReason,
+              };
+              saveToCSV(csvData);
+            } catch (csvErr) {
+              log('ERROR', `CSV error: ${csvErr.message}`);
+            }
             continue;
           }
           
           // Dynamic volume threshold: 20k for biotech signals, 50k for others
-          const isBiotechSignal = signalCategories.includes('FDA Approval') || signalCategories.includes('Clinical Success');
+          const isBiotechSignal = hasFDAApproval || signalCategories.includes('Clinical Success');
           const minVolumeThreshold = isBiotechSignal ? 20000 : CONFIG.MIN_ALERT_VOLUME;
           
           // Check volume after knowing signal type
           if (volumeCheckLater !== null && volumeCheckLater < minVolumeThreshold) {
+            skipReason = `volume ${volumeCheckLater.toLocaleString('en-US')} below ${(minVolumeThreshold / 1000).toFixed(0)}k minimum (biotech: ${isBiotechSignal ? 'yes' : 'no'})`;
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, volume ${volumeCheckLater.toLocaleString('en-US')} below ${(minVolumeThreshold / 1000).toFixed(0)}k minimum (biotech: ${isBiotechSignal ? 'yes' : 'no'})\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
             console.log('');
+            // Save to CSV with skip reason
+            try {
+              const csvData = {
+                ticker,
+                price,
+                signalScore: signalScoreData.score,
+                short: shortOpportunity ? true : false,
+                marketCap: marketCap,
+                float: float,
+                sharesOutstanding: sharesOutstanding,
+                soRatio: soRatio,
+                volume: volume,
+                averageVolume: averageVolume,
+                incorporated: normalizedIncorporated,
+                located: normalizedLocated,
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                signalScoreData: signalScoreData,
+                filingDate: filing.updated,
+                filingType: formLogMessage,
+                cik: filing.cik,
+                skipReason: skipReason,
+              };
+              saveToCSV(csvData);
+            } catch (csvErr) {
+              log('ERROR', `CSV error: ${csvErr.message}`);
+            }
             continue;
           }
-          
-          // Special case: China/Cayman Islands reverse splits bypass signal requirements
-          const isChinaOrCaymanReverseSplit = (normalizedIncorporated === 'China' || normalizedLocated === 'China' || normalizedIncorporated === 'Cayman Islands' || normalizedLocated === 'Cayman Islands') && signalCategories.includes('Reverse Split');          
           
           let validSignals = false;
           if (isChinaOrCaymanReverseSplit) {
             validSignals = true; // China/Cayman Islands reverse splits always trigger
           } else if (hasFDAApproval) {
             validSignals = true; // FDA Approval is strong enough alone
+          } else if (highScoreOverride && signalCategories.length === 1) {
+            // High score (>0.618) with single signal overrides time window IF it passes all other filters
+            validSignals = true;
           } else if (signalScoreData.score > 0.618 && signalCategories.length === 1) {
             validSignals = true; // High score (>0.618) with single signal overrides filter
           } else if (neutralSignals.length > 0 && signalCategories.length >= 2) {
@@ -1725,11 +1844,38 @@ app.listen(PORT, () => {
           }
           
           if (!validSignals) {
+            skipReason = 'not enough signals (needs 2 keywords or 1 neutral and another, or an FDA Approval, or score above threshold with 1 signal)';
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (needs 2 keywords or 1 neutral and another, or an FDA Approval, or score above threshold with 1 signal)\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
             console.log('');
+            // Save to CSV with skip reason
+            try {
+              const csvData = {
+                ticker,
+                price,
+                signalScore: signalScoreData.score,
+                short: shortOpportunity ? true : false,
+                marketCap: marketCap,
+                float: float,
+                sharesOutstanding: sharesOutstanding,
+                soRatio: soRatio,
+                volume: volume,
+                averageVolume: averageVolume,
+                incorporated: normalizedIncorporated,
+                located: normalizedLocated,
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                signalScoreData: signalScoreData,
+                filingDate: filing.updated,
+                filingType: formLogMessage,
+                cik: filing.cik,
+                skipReason: skipReason,
+              };
+              saveToCSV(csvData);
+            } catch (csvErr) {
+              log('ERROR', `CSV error: ${csvErr.message}`);
+            }
             continue;
           }
 
@@ -1750,7 +1896,9 @@ app.listen(PORT, () => {
             filingDate: periodOfReport,
             signals: semanticSignals,
             formType: foundForms,
-            cik: filing.cik
+            filingType: formLogMessage,
+            cik: filing.cik,
+            skipReason: skipReason
           };
           
           // Calculate signal score (already calculated above)
@@ -1776,21 +1924,74 @@ app.listen(PORT, () => {
             }
             
             if (isDuplicate) {
+              alertData.skipReason = 'Duplicate Alert';
               const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
               const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
               log('INFO', `Links: ${secLink} ${tvLink}`);
               console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, duplicate alert - already alerted in current session\x1b[0m`);
               console.log('');
+              saveAlert(alertData);
             } else {
+              // Set skip reason if this alert has borderline characteristics
+              if (signalScoreData.score < 0.3) {
+                alertData.skipReason = 'Low Score';
+              } else if (Object.keys(semanticSignals).length < 2) {
+                alertData.skipReason = 'Not Enough Signals';
+              } else if (float !== 'N/A' && parseFloat(float) > CONFIG.MAX_FLOAT * 0.8) {
+                alertData.skipReason = 'High Float';
+              } else if (soRatio !== 'N/A' && parseFloat(soRatio) > CONFIG.MAX_SO_RATIO * 0.8) {
+                alertData.skipReason = 'High S/O Ratio';
+              } else if (volume !== 'N/A' && parseFloat(volume) < 100000) {
+                alertData.skipReason = 'Low Volume';
+              }
+              
               saveAlert(alertData);
             }
           } else {
+            // Not enough data to process
+            if (price === 'N/A') {
+              skipReason = 'No Price Data';
+            } else if (float === 'N/A') {
+              skipReason = 'No Float Data';
+            } else if (soRatio === 'N/A') {
+              skipReason = 'No S/O Data';
+            } else {
+              skipReason = 'Incomplete Data';
+            }
+            
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
             log('INFO', `Quote: Incomplete data for ${ticker} (price: ${price}, float: ${float}, s/o: ${soRatio})`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, not enough signals (needs 2 keywords or 1 neutral and another)\x1b[0m`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
             console.log('');
+            // Save to CSV with skip reason
+            try {
+              const csvData = {
+                ticker,
+                price,
+                signalScore: signalScoreData.score,
+                short: shortOpportunity ? true : false,
+                marketCap: marketCap,
+                float: float,
+                sharesOutstanding: sharesOutstanding,
+                soRatio: soRatio,
+                volume: volume,
+                averageVolume: averageVolume,
+                incorporated: normalizedIncorporated,
+                located: normalizedLocated,
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                signalScoreData: signalScoreData,
+                filingDate: filing.updated,
+                filingType: formLogMessage,
+                cik: filing.cik,
+                skipReason: skipReason,
+              };
+              saveToCSV(csvData);
+            } catch (csvErr) {
+              log('ERROR', `CSV error: ${csvErr.message}`);
+            }
+            saveAlert(alertData);
           }
         } catch (err) {
           log('WARN', `Filing processing error: ${err.message}`);

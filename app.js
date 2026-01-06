@@ -402,11 +402,11 @@ const saveAlert = (alertData) => {
     const hasBearish = signalKeys.some(cat => bearishCategories.includes(cat));
     const direction = hasBearish ? 'SHORT' : 'LONG';
     const reason = (alertData.intent && Array.isArray(alertData.intent)) 
-      ? alertData.intent.join('; ').substring(0, 30)
-      : (alertData.intent ? String(alertData.intent).substring(0, 30) : 'Filing');
+      ? alertData.intent.join('; ')
+      : (alertData.intent ? String(alertData.intent) : 'Filing');
     
     // Update alert data with skip reason showing it was alerted
-    const bonusIndicator = alertData.hasTuesdayBonus ? ' (tues 1.2x score bonus)' : '';
+    const bonusIndicator = alertData.hasTuesdayBonus ? ' (Tuesday 1.2x score bonus)' : '';
     alertData.skipReason = `Alert sent: [${direction}] ${reason}${bonusIndicator}`;
     
     // Save to CSV for analysis

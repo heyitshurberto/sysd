@@ -856,12 +856,13 @@ table {
         }
 
         .status-online {
-            color: #00aa00;
+            color: #1cba00e5 !important; /* Neon green */
             font-size: 8px;
+            font-weight: bold;
         }
 
         body.dark-mode .status-online {
-            color: #00ff00;
+            color: #39FF14 !important; /* Same neon green for both modes */
         }
         
         .alerts-grid {
@@ -1254,12 +1255,12 @@ table {
         
         /* Light mode: black shadow for [LONG]/[SHORT] on triggered green cards */
         body:not(.dark-mode) .alert-card.triggered.up .ticker span {
-            text-shadow: 0px 0px 2.9px rgba(0, 0, 0, 0.8) !important;
+            text-shadow: 0px 0px 3px rgba(0, 0, 0, 0.8) !important;
         }
 
         /* Dark mode: black shadow for [LONG]/[SHORT] on triggered green cards */
         body.dark-mode .alert-card.triggered.up .ticker span {
-        text-shadow: 0px 0px 2.9px rgba(0, 0, 0, 0.8) !important;
+        text-shadow: 0px 0px 3px rgba(0, 0, 0, 0.8) !important;
 }
 
         /* Dark mode - brighter colors with transparency */
@@ -3282,7 +3283,7 @@ table {
                     const plStats = this.calculateProfitLoss();
                     const plCount = document.getElementById('pl-count');
                     if (plCount) {
-                        plCount.innerHTML = `${plStats.total}% <span style="font-size: 11.5px;">(L:${plStats.longCount}/${plStats.longStr}% | S:${plStats.shortCount}/${plStats.shortStr}%)</span>`;
+                        plCount.innerHTML = `${totalSign}${plStats.total}% <span style="font-size: 11.5px;">(L:${plStats.longCount}/${longSign}${plStats.longStr}% | S:${plStats.shortCount}/${shortSign}${plStats.shortStr}%)</span>`;
                         plCount.style.color = plStats.total > 0 ?
                             (document.body.classList.contains('dark-mode') ? '#1fff1f' : '#00aa00') :
                             plStats.total < 0 ?
@@ -3764,6 +3765,7 @@ table {
                 });
 
                 activeCount.innerHTML = `${sortedAlerts.length} <span style="font-size: 11.5px;">(L:${longCount} | S:${shortCount})</span>`;
+            
 
                 // Restore scroll position after update if needed
                 if (shouldRestoreScroll) {
@@ -3974,7 +3976,7 @@ table {
                     <div class="ticker" style="transition: all 0.15s ease;">
                         <i>$${alert.ticker}</i> 
                         <span style="color: ${alert.isShort ? '#cc0000' : '#00cc00'}; transition: color 0.15s ease;">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>
-                    </div>                    </div><span style="font-size: 0.95em">(${(alert.signalScore || 0).toFixed(2)})</span></div>
+                    </div>                    </div><span style="font-size: 0.95em; font-style: italic;">(${(alert.signalScore || 0).toFixed(2)})</span></div>
                     <div>Alert: $${alert.alertPrice.toFixed(4)}</div>
                     <div>Current: $${alert.currentPrice.toFixed(4)} (H/L: $${Math.max(alert.peakPrice, alert.lowPrice).toFixed(4)}/$${Math.min(alert.peakPrice, alert.lowPrice).toFixed(4)})</div>
                     <div class="price-change ${parseFloat(percentChange) > 0 ? 'positive' : (parseFloat(percentChange) === 0 ? 'neutral' : 'negative')}">

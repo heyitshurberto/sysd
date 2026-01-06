@@ -1831,7 +1831,7 @@ app.listen(PORT, () => {
           
           // Check volume after knowing signal type
           if (volumeCheckLater !== null && volumeCheckLater < minVolumeThreshold) {
-            skipReason = `volume ${volumeCheckLater.toLocaleString('en-US')} below ${(minVolumeThreshold / 1000).toFixed(0)}k minimum (biotech: ${isBiotechSignal ? 'yes' : 'no'})`;
+            skipReason = `Volume ${volumeCheckLater.toLocaleString('en-US')} below ${(minVolumeThreshold / 1000).toFixed(0)}k minimum (biotech: ${isBiotechSignal ? 'yes' : 'no'})`;
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);

@@ -711,7 +711,8 @@ async function getCountryAndTicker(cik) {
     'AS': 'American Samoa', 'MP': 'Northern Mariana Islands',
     'CN': 'China', 'HK': 'Hong Kong', 'SG': 'Singapore', 'IL': 'Israel', 'JP': 'Japan',
     'IE': 'Ireland', 'KY': 'Cayman Islands', 'VG': 'British Virgin Islands', 'CA': 'Canada',
-    'GB': 'United Kingdom', 'CH': 'Switzerland', 'DE': 'Germany', 'FR': 'France', 'BR': 'Brazil'
+    'GB': 'United Kingdom', 'CH': 'Switzerland', 'DE': 'Germany', 'FR': 'France', 'BR': 'Brazil',
+    'A8': 'Montreal, Canada'
   };
   
   for (let attempt = 1; attempt <= 3; attempt++) {
@@ -1455,7 +1456,12 @@ app.listen(PORT, () => {
             if (Object.keys(semanticSignals).includes('Reverse Split')) {
               const ratio = extractReverseSplitRatio(text);
               if (ratio) {
+                // Replace in both the display and the actual signals array
                 newsDisplay = newsDisplay.replace(/1-for-/i, ratio + ' ');
+                // Also update the semanticSignals array to replace incomplete '1-for-' with complete ratio
+                semanticSignals['Reverse Split'] = semanticSignals['Reverse Split'].map(kw => 
+                  kw === '1-for-' ? ratio : kw
+                );
               }
             }
             

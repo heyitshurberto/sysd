@@ -18,7 +18,7 @@ if (fs.existsSync('.env')) {
 
 const CONFIG = {
   // Alert filtering criteria
-  FILE_TIME: 1, // Minutes retro to fetch filings
+  FILE_TIME: 1000, // Minutes retro to fetch filings
   MIN_ALERT_VOLUME: 50000, // Min volume threshold
   MAX_FLOAT: 75000000, // Max float size
   MAX_SO_RATIO: 50.0,  // Max short interest ratio
@@ -294,7 +294,7 @@ const cleanupStaleAlerts = () => {
 const saveToCSV = (alertData) => {
   try {
     const csvPath = CONFIG.CSV_FILE;
-    const headers = 'CIK,Ticker,Filed Date,Filed Time,Scanned Date,Scanned Time,Price,Score,Float,Shares,S/F_Ratio,Volume,AvgVol,Incorporated,Located,Filing Type,Signals,Skip Reason\n';
+    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,Ticker,CIK,Price,Score,Float,Shares,S/F_Ratio,Volume,AvgVol,Incorporated,Located,Filing Type,Signals,Skip Reason\n';
     
     // Create file with headers if it doesn't exist
     if (!fs.existsSync(csvPath)) {
@@ -341,12 +341,12 @@ const saveToCSV = (alertData) => {
     
     // Build CSV row with data
     const row = [
-      escapeCSV(alertData.cik || 'N/A'),
-      escapeCSV(alertData.ticker || 'N/A'),
       escapeCSV(filedDate),
       escapeCSV(filedTime),
       escapeCSV(scannedDate),
       escapeCSV(scannedTime),
+      escapeCSV(alertData.ticker || 'N/A'),
+      escapeCSV(alertData.cik || 'N/A'),
       escapeCSV(alertData.price || 'N/A'),
       escapeCSV(alertData.signalScore || 'N/A'),
       escapeCSV(alertData.float || 'N/A'),
@@ -357,7 +357,7 @@ const saveToCSV = (alertData) => {
       escapeCSV(incorporated || 'N/A'),
       escapeCSV(located || 'N/A'),
       escapeCSV(alertData.filingType || 'N/A'),
-      escapeCSV(signals || 'Press Release/Regulatory Update'),
+      escapeCSV(signals || 'Press/Regulatory Release'),
       escapeCSV(alertData.skipReason || ''),
     ];
     
@@ -1692,6 +1692,45 @@ app.listen(PORT, () => {
             continue;
           }
           
+          // Check if country is whitelisted
+          const combinedLocation = (normalizedIncorporated || '').toLowerCase() + ' ' + (normalizedLocated || '').toLowerCase();
+          const countryWhitelisted = CONFIG.ALLOWED_COUNTRIES.some(country => combinedLocation.includes(country));
+          if (!countryWhitelisted) {
+            skipReason = 'Country not whitelisted';
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+            log('INFO', `Links: ${secLink} ${tvLink}`);
+            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
+            console.log('');
+            // Save to CSV with skip reason
+            try {
+              const csvData = {
+                ticker,
+                price,
+                signalScore: signalScoreData.score,
+                short: shortOpportunity ? true : false,
+                marketCap: marketCap,
+                float: float,
+                sharesOutstanding: sharesOutstanding,
+                soRatio: soRatio,
+                volume: volume,
+                averageVolume: averageVolume,
+                incorporated: normalizedIncorporated,
+                located: normalizedLocated,
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                signalScoreData: signalScoreData,
+                filingDate: filing.updated,
+                filingType: formLogMessage,
+                cik: filing.cik,
+                skipReason: skipReason,
+              };
+              saveToCSV(csvData);
+            } catch (csvErr) {
+              log('ERROR', `CSV error: ${csvErr.message}`);
+            }
+            continue;
+          }
+          
           const floatValue = float !== 'N/A' ? parseFloat(float) : null;
           if (floatValue !== null && floatValue > CONFIG.MAX_FLOAT) {
             skipReason = `Float ${floatValue.toLocaleString('en-US')} exceeds ${(CONFIG.MAX_FLOAT / 1000000).toFixed(0)}m limit`;
@@ -1844,7 +1883,7 @@ app.listen(PORT, () => {
           }
           
           if (!validSignals) {
-            skipReason = 'not enough signals (needs 2 keywords or 1 neutral and another, or an FDA Approval, or score above threshold with 1 signal)';
+            skipReason = 'Not enough signal weight';
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
@@ -1991,7 +2030,7 @@ app.listen(PORT, () => {
             } catch (csvErr) {
               log('ERROR', `CSV error: ${csvErr.message}`);
             }
-            saveAlert(alertData);
+            // Don't save alert if we don't have complete data
           }
         } catch (err) {
           log('WARN', `Filing processing error: ${err.message}`);

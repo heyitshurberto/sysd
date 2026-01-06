@@ -18,7 +18,7 @@ if (fs.existsSync('.env')) {
 
 const CONFIG = {
   // Alert filtering criteria
-  FILE_TIME: 1000, // Minutes retro to fetch filings
+  FILE_TIME: 1, // Minutes retro to fetch filings
   MIN_ALERT_VOLUME: 50000, // Min volume threshold
   MAX_FLOAT: 75000000, // Max float size
   MAX_SO_RATIO: 50.0,  // Max short interest ratio

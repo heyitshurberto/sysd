@@ -3304,7 +3304,7 @@ table {
                     // Get only the most recent 50 alerts
                     const recentAlerts = alertData.slice(-50);
                     
-                    let newAlertsFound = false;
+                    const newAlertCards = [];
 
                     // Process new alerts without clearing existing ones
                     for (const alert of recentAlerts) {
@@ -3313,7 +3313,6 @@ table {
                         // Only add if we haven't seen this specific alert before
                         if (!this.knownAlerts.has(alertKey)) {
                             this.knownAlerts.add(alertKey);
-                            newAlertsFound = true;
                             
                             // Create new alert object
                             const newAlert = {
@@ -3335,18 +3334,54 @@ table {
                             }
                             this.alerts.get(alert.ticker).push(newAlert);
                             
+                            // Create card element (don't insert yet)
+                            const alertCard = this.createAlertCard(newAlert);
+                            newAlertCards.push(alertCard);
+                            
                             // Log new ticker
                             smartLog('info', `New ticker found in alert.json: ${alert.ticker} @ $${alert.price}`);
                         }
                     }
 
                     // Only update display if new alerts were found
-                    if (newAlertsFound) {
-                        this.updateDisplay();
+                    if (newAlertCards.length > 0) {
+                        this.addNewAlertCards(newAlertCards);
                     }
                     
                 } catch (error) {
                     console.error('Failed to check for new alerts:', error);
+                }
+            }
+
+            addNewAlertCards(newCards) {
+                const container = document.getElementById('alerts-container');
+                if (!container) return;
+                
+                // Insert new cards at the top (before existing cards)
+                newCards.forEach(card => {
+                    container.insertBefore(card, container.firstChild);
+                });
+                
+                // Update the active count
+                const activeCount = document.getElementById('active-count');
+                if (activeCount) {
+                    const count = container.querySelectorAll('.alert-card').length;
+                    activeCount.textContent = count;
+                }
+                
+                // Update P/L stats
+                const plStats = this.calculateProfitLoss();
+                const plCount = document.getElementById('pl-count');
+                if (plCount) {
+                    const totalSign = parseFloat(plStats.total) > 0 ? '+' : '';
+                    const longSign = parseFloat(plStats.longStr) > 0 ? '+' : '';
+                    const shortSign = parseFloat(plStats.shortStr) > 0 ? '+' : '';
+                    plCount.innerHTML = `${totalSign}${plStats.total}% <span style="font-size: 11.5px;">(L:${plStats.longCount}/${longSign}${plStats.longStr}% | S:${plStats.shortCount}/${shortSign}${plStats.shortStr}%)</span>`;
+                    plCount.style.color = parseFloat(plStats.total) > 0 ? 
+                        (document.body.classList.contains('dark-mode') ? '#1fff1f' : '#00aa00') : 
+                        parseFloat(plStats.total) < 0 ? 
+                        (document.body.classList.contains('dark-mode') ? '#ff3333' : '#aa0000') : 
+                        '#666';
                 }
             }
 

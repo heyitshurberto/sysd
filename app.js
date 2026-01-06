@@ -1969,7 +1969,7 @@ app.listen(PORT, () => {
               log('INFO', `Links: ${secLink} ${tvLink}`);
               console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, duplicate alert - already alerted in current session\x1b[0m`);
               console.log('');
-              saveAlert(alertData);
+              // Don't save duplicate alerts
             } else {
               // Set skip reason if this alert has borderline characteristics
               if (signalScoreData.score < 0.3) {

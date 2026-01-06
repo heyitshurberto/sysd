@@ -396,6 +396,19 @@ const saveAlert = (alertData) => {
     
     fs.writeFileSync(CONFIG.ALERTS_FILE, JSON.stringify(alerts, null, 2));
     
+    // Determine direction for CSV - check for ANY bearish signals
+    const bearishCategories = ['Reverse Split', 'Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Dilution', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Compliance Issue', 'Product Discontinuation', 'Loss of Major Customer'];
+    const signalKeys = (alertData.intent && Array.isArray(alertData.intent)) ? alertData.intent : (alertData.intent ? String(alertData.intent).split(', ') : []);
+    const hasBearish = signalKeys.some(cat => bearishCategories.includes(cat));
+    const direction = hasBearish ? 'SHORT' : 'LONG';
+    const reason = (alertData.intent && Array.isArray(alertData.intent)) 
+      ? alertData.intent.join('; ').substring(0, 30)
+      : (alertData.intent ? String(alertData.intent).substring(0, 30) : 'Filing');
+    
+    // Update alert data with skip reason showing it was alerted
+    const bonusIndicator = alertData.hasTuesdayBonus ? ' (tues 1.2x score bonus)' : '';
+    alertData.skipReason = `Alert sent: [${direction}] ${reason}${bonusIndicator}`;
+    
     // Save to CSV for analysis
     saveToCSV(alertData);
     
@@ -996,8 +1009,12 @@ const sendPersonalWebhook = (alertData) => {
     
     const countryDisplay = incorporatedCode === locatedCode ? incorporatedCode : `${incorporatedCode}/${locatedCode}`;
     
-    const direction = intent?.toLowerCase().includes('short') || intent?.toLowerCase().includes('bankruptcy') || intent?.toLowerCase().includes('dilution') ? 'SHORT' : 'LONG';
-    const reason = (intent || 'Filing').substring(0, 50).toLowerCase();
+    // Determine direction based on bearish signal categories
+    const bearishCategories = ['Reverse Split', 'Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Dilution', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Compliance Issue', 'Product Discontinuation', 'Loss of Major Customer'];
+    const intentArray = (intent && Array.isArray(intent)) ? intent : (intent ? String(intent).split(', ') : []);
+    const hasBearish = intentArray.some(cat => bearishCategories.includes(cat));
+    const direction = hasBearish ? 'SHORT' : 'LONG';
+    const reason = (intent && Array.isArray(intent)) ? intent.join(', ').substring(0, 50).toLowerCase() : (intent || 'Filing').toString().substring(0, 50).toLowerCase();
     const priceDisplay = price && price !== 'N/A' ? `$${parseFloat(price).toFixed(2)}` : 'N/A';
     const volDisplay = alertData.volume && alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A';
     const avgDisplay = alertData.averageVolume && alertData.averageVolume !== 'N/A' ? (alertData.averageVolume / 1000000).toFixed(2) + 'm' : 'n/a';
@@ -1603,6 +1620,13 @@ app.listen(PORT, () => {
           const numAvgVol = (() => { const v = typeof averageVolume === 'number' ? averageVolume : (typeof averageVolume === 'string' && averageVolume !== 'N/A' ? parseInt(averageVolume) : NaN); return isNaN(v) ? 1 : v; })();
           const numShares = (() => { const v = typeof sharesOutstanding === 'number' ? sharesOutstanding : (typeof sharesOutstanding === 'string' && sharesOutstanding !== 'N/A' ? parseInt(sharesOutstanding) : NaN); return isNaN(v) ? 1 : v; })();
           const signalScoreData = calculatesignalScore(numFloat, numShares, numVolume, numAvgVol);
+          
+          // Apply Tuesday bonus (1.2x multiplier for better market conditions)
+          const dayOfWeek = new Date().getDay(); // 0=Sunday, 2=Tuesday
+          if (dayOfWeek === 2) {
+            signalScoreData.score = parseFloat((signalScoreData.score * 1.2).toFixed(2));
+          }
+          
           const signalScoreDisplay = signalScoreData.score;
           
           if (shortOpportunity || longOpportunity) {
@@ -1918,10 +1942,14 @@ app.listen(PORT, () => {
             continue;
           }
 
+          // Check if Tuesday bonus was applied
+          const hasTuesdayBonus = (new Date().getDay() === 2);
+          
           const alertData = {
             ticker: ticker || filing.cik || 'Unknown',
             price: price,
             signalScore: signalScoreData.score,
+            hasTuesdayBonus: hasTuesdayBonus,
             volume: volume,
             averageVolume: averageVolume,
             float: float,

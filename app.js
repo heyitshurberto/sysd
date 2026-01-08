@@ -20,8 +20,8 @@ const CONFIG = {
   // Alert filtering criteria
   FILE_TIME: 1, // Minutes retro to fetch filings
   MIN_ALERT_VOLUME: 50000, // Min volume threshold
-  MAX_FLOAT: 75000000, // Max float size
-  MAX_SO_RATIO: 50.0,  // Max short interest ratio
+  MAX_FLOAT: 100000000, // Max float size
+  MAX_SO_RATIO: 80.0,  // Max short interest ratio
   ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware'], // Allowed incorporation/located countries
   // Enable optimizations for Raspberry Pi devices
   PI_MODE: true,             // Enable Pi optimizations          
@@ -1033,7 +1033,7 @@ const sendPersonalWebhook = (alertData) => {
     const signalScoreBold = alertData.signalScore ? `**${alertData.signalScore}**` : 'N/A';
     const signalScoreDisplay = alertData.signalScore ? alertData.signalScore : 'N/A';
     
-    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, ${reason}, form: ${alertData.filingType || 'N/A'}, vol/avg: ${volDisplay}/${avgDisplay}${volumeMultiplier}, float: ${floatDisplay}, s/o: ${alertData.soRatio}
+    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, ${reason}, vol/avg: ${volDisplay}/${avgDisplay}${volumeMultiplier}, float: ${floatDisplay}, s/o: ${alertData.soRatio}
     https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
     const personalMsg = { content: personalAlertContent };
     
@@ -1305,6 +1305,14 @@ app.post('/api/clear-alerts', (req, res) => {
     res.json({ success: true, message: 'Alerts cleared' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/ping', (req, res) => {
+  try {
+    res.json({ status: 'online', onlineUsers: 1 });
+  } catch (err) {
+    res.status(500).json({ status: 'error', error: err.message });
   }
 });
 
@@ -1607,9 +1615,13 @@ app.listen(PORT, () => {
           let shortOpportunity = null;
           let longOpportunity = null;
           
-          if (Object.keys(semanticSignals).includes('Going Concern') 
-              && quickRatio !== 'N/A' && quickRatio < 0.5) {
-            shortOpportunity = 'Intent: Imminent Collapse (Going Concern + Insolvency)';
+          // Determine if this is a SHORT or LONG opportunity based on signals
+          const bearishCats = ['Reverse Split', 'Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Dilution', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Compliance Issue', 'Product Discontinuation', 'Loss of Major Customer'];
+          const sigKeys = Object.keys(semanticSignals || {});
+          const hasBearishSignal = sigKeys.some(cat => bearishCats.includes(cat));
+          
+          if (hasBearishSignal) {
+            shortOpportunity = 'Intent: ' + sigKeys.filter(k => bearishCats.includes(k)).join(', ');
           }
           
           const now = new Date();
@@ -2018,7 +2030,13 @@ app.listen(PORT, () => {
                 alertData.skipReason = 'Low Volume';
               }
               
-              saveAlert(alertData);
+              // Only save to alerts if NO skip reason (real alert)
+              if (!alertData.skipReason) {
+                saveAlert(alertData);
+              } else {
+                // Save borderline stocks to CSV only
+                saveToCSV(alertData);
+              }
             }
           } else {
             // Not enough data to process

@@ -4229,6 +4229,7 @@ table {
             loadTheme();
             window.dashboard = new AlertDashboard();
             loadRecentAlerts(); // Initialize notification count from alert.json
+            dashboard.loadInitialAlerts(); // Load main alerts into dashboard
             updateTimeDisplay();
             setInterval(updateTimeDisplay, 1000); // Update every second
 

@@ -227,7 +227,7 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
     // Only apply reduced boost (1.15x) since not verified via text scan
     adrMultiplier = 1.15; // 15% boost for ADR-like structure without custodian verification
     isCustodianVerified = false;
-    custodianName = 'Structure Only (Inc≠Loc)';
+    custodianName = 'Structure Only (Inc≠Ops)';
   }
   
   // S/O Bonus - float tightness matters differently based on custodian control
@@ -334,7 +334,7 @@ const log = (level, message) => {
 const FORM_TYPES = ['6-K', '6-K/A', '8-K', '8-K/A', 'S-1', 'S-3', 'S-4', 'S-8', 'F-1', 'F-3', 'F-4', '424B1', '424B2', '424B3', '424B4', '424B5', '424H8', '20-F', '20-F/A', '13G', '13G/A', '13D', '13D/A', 'Form D', 'EX-99.1', 'EX-99.2', 'EX-10.1', 'EX-10.2', 'EX-3.1', 'EX-3.2', 'EX-4.1', 'EX-4.2', 'EX-10.3', 'EX-1.1', 'Item 1.01', 'Item 1.02', 'Item 1.03', 'Item 1.04', 'Item 1.05', 'Item 2.01', 'Item 2.02', 'Item 2.03', 'Item 2.04', 'Item 2.05', 'Item 2.06', 'Item 3.01', 'Item 3.02', 'Item 3.03', 'Item 4.01', 'Item 5.01', 'Item 5.02', 'Item 5.03', 'Item 5.04', 'Item 5.05', 'Item 5.06', 'Item 5.07', 'Item 5.08', 'Item 5.09', 'Item 5.10', 'Item 5.11', 'Item 5.12', 'Item 5.13', 'Item 5.14', 'Item 5.15', 'Item 6.01', 'Item 7.01', 'Item 8.01', 'Item 9.01'];
 const SEMANTIC_KEYWORDS = {
   'Merger/Acquisition': ['Merger Agreement', 'Acquisition Agreement', 'Agreed To Acquire', 'Merger Consideration', 'Premium Valuation', 'Going Private', 'Take Private'],
-  'FDA Approval': ['FDA Approval', 'FDA Clearance', 'EMA Approval', 'Breakthrough Therapy', 'Fast Track Designation', 'Priority Review'],
+  'FDA Granted': ['FDA Approval', 'FDA Clearance', 'EMA Approval', 'Breakthrough Therapy', 'Fast Track Designation', 'Priority Review'],
   'Clinical Success': ['Positive Trial Results', 'Phase 3 Success', 'Topline Results Beat', 'Efficacy Demonstrated', 'Safety Profile Met'],
   'Capital Raise': ['Oversubscribed', 'Institutional Participation', 'Lead Investor', 'Top-Tier Investor', 'Strategic Investor'],
   'Earnings Beat': ['Earnings Beat', 'Beat Expectations', 'Beat Consensus', 'Exceeded Guidance', 'Record Revenue'],
@@ -1876,7 +1876,7 @@ app.listen(PORT, () => {
           }
           
           // Check for FDA Approvals and Chinese/Cayman reverse splits that bypass time window filter
-          const hasFDAApproval = signalCategories.includes('FDA Approval');
+          const hasFDAApproval = signalCategories.includes('FDA Granted');
           const isChinaOrCaymanReverseSplit = (normalizedIncorporated === 'China' || normalizedLocated === 'China' || normalizedIncorporated === 'Cayman Islands' || normalizedLocated === 'Cayman Islands') && signalCategories.includes('Reverse Split');
           const highScoreOverride = signalScoreData.score > 0.6; // Score above threshold can bypass time window IF it passes all other filters
           

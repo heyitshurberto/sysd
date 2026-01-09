@@ -3554,7 +3554,7 @@ S/O Ratio: ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (
                                     alert.milestoneEvents.push(milestoneEvent);
                                     
                                     // Send notification
-                                    const notificationMsg = `$${alert.ticker} ${direction} ${milestonePercent}% from alert`;
+                                    const notificationMsg = `<b>$${alert.ticker}</b> ${direction} <b>${milestonePercent}%</b> from alert price`;
                                     this.showNotification(notificationMsg, 'success', alert.filingLink);
                                     
                                     // Send to Raspberry Pi
@@ -3585,7 +3585,7 @@ S/O Ratio: ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (
                                     alert.milestoneEvents.push(milestoneEvent);
                                     
                                     // Send notification
-                                    const notificationMsg = `$${alert.ticker} ${direction} ${milestonePercent}% from alert`;
+                                    const notificationMsg = `<b>$${alert.ticker}</b> ${direction} <b>${milestonePercent}%</b> from alert`;
                                     this.showNotification(notificationMsg, 'error', alert.filingLink);
                                     
                                     // Send to Raspberry Pi

@@ -375,7 +375,7 @@ const SEMANTIC_KEYWORDS = {
 };
 
 
-const SEC_CODE_TO_COUNTRY = {'C2':'Shanghai, China','F4':'Shadong, China','6A':'Shanghai, China','D8':'Hong Kong','H0':'Hong Kong','K3':'Kowloon Bay, Hong Kong','S4':'Singapore','U0':'Singapore','C0':'Cayman Islands','K2':'Cayman Islands','E9':'Cayman Islands','1E':'Charlotte Amalie, U.S. Virgin Islands','VI':'Road Town, British Virgin Islands','A1':'Toronto, Canada','A6':'Ottawa, Canada','A9':'Vancouver, Canada','A0':'Calgary, Canada','CA':'Toronto, Canada','C4':'Toronto, Canada','D0':'Hamilton, Canada','D9':'Toronto, Canada','Q0':'Toronto, Canada','L3':'Tel Aviv, Israel','J1':'Tokyo, Japan','M0':'Tokyo, Japan','E5':'Dublin, Ireland','I0':'Dublin, Ireland','L2':'Dublin, Ireland','DE':'Wilmington, Delaware','1T':'Athens, Greece','B2':'Bridgetown, Barbados','B6':'Nassau, Bahamas','B9':'Hamilton, Bermuda','C1':'Buenos Aires, Argentina','C3':'Brisbane, Australia','C7':'St. Helier, Channel Islands','D2':'Hamilton, Bermuda','D4':'Hamilton, Bermuda','D5':'Sao Paulo, Brazil','D6':'Bridgetown, Barbados','E4':'Hamilton, Bermuda','F2':'Frankfurt, Germany','F3':'Paris, France','F5':'Johannesburg, South Africa','G0':'St. Helier, Jersey','G1':'St. Peter Port, Guernsey','G4':'New York, United States','G7':'Copenhagen, Denmark','H1':'St. Helier, Jersey','I1':'Douglas, Isle of Man','J0':'St. Helier, Jersey','J2':'St. Helier, Jersey','J3':'St. Helier, Jersey','K1':'Seoul, South Korea','K7':'New York, United States','L0':'Hamilton, Bermuda','L6':'Milan, Italy','M1':'Majuro, Marshall Islands','N0':'Amsterdam, Netherlands','N2':'Amsterdam, Netherlands','N4':'Amsterdam, Netherlands','O5':'Mexico City, Mexico','P0':'Lisbon, Portugal','P3':'Manila, Philippines','P7':'Madrid, Spain','P8':'Warsaw, Poland','R0':'Milan, Italy','S0':'Madrid, Spain','T0':'Lisbon, Portugal','T3':'Johannesburg, South Africa','U1':'London, United Kingdom','U5':'London, United Kingdom','V0':'Zurich, Switzerland','V8':'Geneva, Switzerland','W0':'Frankfurt, Germany','X0':'London, UK','X1':'Luxembourg City, Luxembourg','Y0':'Nicosia, Cyprus','Y1':'Nicosia, Cyprus','Z0':'Johannesburg, South Africa','Z1':'Johannesburg, South Africa','1A':'Pago Pago, American Samoa','1B':'Saipan, Northern Mariana Islands','1C':'Hagatna, Guam','1D':'San Juan, Puerto Rico','3A':'Sydney, Australia','4A':'Auckland, New Zealand','5A':'Apia, Samoa','7A':'Moscow, Russia','8A':'Mumbai, India','9A':'Jakarta, Indonesia','2M':'Frankfurt, Germany','U3':'Madrid, Spain','Y9':'Nicosia, Cyprus','AL':'Birmingham, UK','Q8':'Oslo, Norway','R1':'Panama City, Panama','V7':'Stockholm, Sweden','K8':'Jakarta, Indonesia','O9':'Monaco','W8':'Istanbul, Turkey','R5':'Lima, Peru','N8':'Kuala Lumpur, Malaysia'};
+const SEC_CODE_TO_COUNTRY = {'C2':'Shanghai, China','F4':'Shadong, China','6A':'Shanghai, China','D8':'Hong Kong','H0':'Hong Kong','K3':'Kowloon Bay, Hong Kong','S4':'Singapore','U0':'Singapore','C0':'Cayman Islands','K2':'Cayman Islands','E9':'Cayman Islands','1E':'Charlotte Amalie, U.S. Virgin Islands','VI':'Road Town, British Virgin Islands','A1':'Toronto, Canada','A2':'Winnipeg, Canada','A6':'Ottawa, Canada','A9':'Vancouver, Canada','A0':'Calgary, Canada','CA':'Toronto, Canada','C4':'Toronto, Canada','D0':'Hamilton, Canada','D9':'Toronto, Canada','Q0':'Toronto, Canada','L3':'Tel Aviv, Israel','J1':'Tokyo, Japan','M0':'Tokyo, Japan','E5':'Dublin, Ireland','I0':'Dublin, Ireland','L2':'Dublin, Ireland','DE':'Wilmington, Delaware','1T':'Athens, Greece','B2':'Bridgetown, Barbados','B6':'Nassau, Bahamas','B9':'Hamilton, Bermuda','C1':'Buenos Aires, Argentina','C3':'Brisbane, Australia','C7':'St. Helier, Channel Islands','D2':'Hamilton, Bermuda','D4':'Hamilton, Bermuda','D5':'Sao Paulo, Brazil','D6':'Bridgetown, Barbados','E4':'Hamilton, Bermuda','F2':'Frankfurt, Germany','F3':'Paris, France','F5':'Johannesburg, South Africa','G0':'St. Helier, Jersey','G1':'St. Peter Port, Guernsey','G4':'New York, United States','G7':'Copenhagen, Denmark','H1':'St. Helier, Jersey','I1':'Douglas, Isle of Man','J0':'St. Helier, Jersey','J2':'St. Helier, Jersey','J3':'St. Helier, Jersey','K1':'Seoul, South Korea','K7':'New York, United States','L0':'Hamilton, Bermuda','L6':'Milan, Italy','M1':'Majuro, Marshall Islands','N0':'Amsterdam, Netherlands','N2':'Amsterdam, Netherlands','N4':'Amsterdam, Netherlands','O5':'Mexico City, Mexico','P0':'Lisbon, Portugal','P3':'Manila, Philippines','P7':'Madrid, Spain','P8':'Warsaw, Poland','R0':'Milan, Italy','S0':'Madrid, Spain','T0':'Lisbon, Portugal','T3':'Johannesburg, South Africa','U1':'London, United Kingdom','U5':'London, United Kingdom','V0':'Zurich, Switzerland','V8':'Geneva, Switzerland','W0':'Frankfurt, Germany','X0':'London, UK','X1':'Luxembourg City, Luxembourg','Y0':'Nicosia, Cyprus','Y1':'Nicosia, Cyprus','Z0':'Johannesburg, South Africa','Z1':'Johannesburg, South Africa','1A':'Pago Pago, American Samoa','1B':'Saipan, Northern Mariana Islands','1C':'Hagatna, Guam','1D':'San Juan, Puerto Rico','3A':'Sydney, Australia','4A':'Auckland, New Zealand','5A':'Apia, Samoa','7A':'Moscow, Russia','8A':'Mumbai, India','9A':'Jakarta, Indonesia','2M':'Frankfurt, Germany','U3':'Madrid, Spain','Y9':'Nicosia, Cyprus','AL':'Birmingham, UK','Q8':'Oslo, Norway','R1':'Panama City, Panama','V7':'Stockholm, Sweden','K8':'Jakarta, Indonesia','O9':'Monaco','W8':'Istanbul, Turkey','R5':'Lima, Peru','N8':'Kuala Lumpur, Malaysia'};
 
 const parseSemanticSignals = (text) => {
   if (!text) return {};
@@ -1475,15 +1475,15 @@ app.get('/api/quote/:ticker', async (req, res) => {
         if (performanceData[ticker]) {
           const currentPrice = quote.regularMarketPrice;
           performanceData[ticker].currentPrice = currentPrice;
-          if (currentPrice > performanceData[ticker].peakPrice) {
-            performanceData[ticker].peakPrice = currentPrice;
+          if (currentPrice > performanceData[ticker].highest) {
+            performanceData[ticker].highest = currentPrice;
           }
-          if (currentPrice < performanceData[ticker].lowPrice) {
-            performanceData[ticker].lowPrice = currentPrice;
+          if (currentPrice < performanceData[ticker].lowest) {
+            performanceData[ticker].lowest = currentPrice;
           }
           
           // Recalculate performance
-          const alertPrice = performanceData[ticker].alertPrice;
+          const alertPrice = performanceData[ticker].alert;
           if (alertPrice > 0) {
             const change = currentPrice - alertPrice;
             const percentChange = (change / alertPrice) * 100;
@@ -1530,6 +1530,70 @@ app.get('/api/ping', (req, res) => {
     res.status(500).json({ status: 'error', error: err.message });
   }
 });
+
+// Background task to update performance data for all tracked stocks
+const updateAllPerformanceData = async () => {
+  try {
+    if (!fs.existsSync(CONFIG.PERFORMANCE_FILE)) return;
+    
+    const perfContent = fs.readFileSync(CONFIG.PERFORMANCE_FILE, 'utf8').trim();
+    if (!perfContent) return;
+    
+    let performanceData = {};
+    try {
+      performanceData = JSON.parse(perfContent);
+      if (!performanceData || typeof performanceData !== 'object') return;
+    } catch (e) {
+      return;
+    }
+    
+    let updated = false;
+    
+    // Update each tracked stock
+    for (const ticker of Object.keys(performanceData)) {
+      try {
+        const quote = await yahooFinance.quote(ticker, {
+          fields: ['regularMarketPrice'],
+        }).catch(() => null);
+        
+        if (quote && quote.regularMarketPrice && quote.regularMarketPrice > 0) {
+          const currentPrice = quote.regularMarketPrice;
+          performanceData[ticker].currentPrice = currentPrice;
+          
+          // Track highest/lowest
+          if (currentPrice > (performanceData[ticker].highest || 0)) {
+            performanceData[ticker].highest = currentPrice;
+          }
+          if (currentPrice < (performanceData[ticker].lowest || currentPrice)) {
+            performanceData[ticker].lowest = currentPrice;
+          }
+          
+          // Recalculate performance
+          const alertPrice = performanceData[ticker].alert;
+          if (alertPrice > 0) {
+            const change = currentPrice - alertPrice;
+            const percentChange = (change / alertPrice) * 100;
+            performanceData[ticker].performance = parseFloat(percentChange.toFixed(2));
+          }
+          
+          updated = true;
+        }
+      } catch (e) {
+        // Silently skip individual ticker errors
+      }
+    }
+    
+    // Write back if any updates were made
+    if (updated) {
+      fs.writeFileSync(CONFIG.PERFORMANCE_FILE, JSON.stringify(performanceData, null, 2));
+    }
+  } catch (e) {
+    // Silently fail background update
+  }
+};
+
+// Run performance update every 30 seconds
+setInterval(updateAllPerformanceData, 30000);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

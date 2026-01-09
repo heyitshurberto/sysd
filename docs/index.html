@@ -2467,8 +2467,11 @@ table {
                 window.activeDropdown = null;
                 window.lastActiveTicker = null;
                 window.dropdownStates = new Map();
-                // Load Recent alerts when opening panel
-                loadRecentAlerts();
+                // Load Recent alerts when opening panel, but preserve any milestone alerts already in the list
+                const notificationList = document.getElementById('notification-list');
+                if (!notificationList || notificationList.children.length === 0) {
+                    loadRecentAlerts();
+                }
             }
 
             // Toggle panel visibility with animation
@@ -2791,14 +2794,14 @@ table {
             
             const item = document.createElement('div');
             item.className = 'notification-item';
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
+            const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
             item.innerHTML = `
                 <div class="notification-content">
                     <div class="title">${message}</div>
-                    <div class="time">${new Date().toLocaleTimeString()}</div>
+                    <div class="time" style="margin-top: 2px; font-size: 10px; opacity: 0.5;">${dateStr} ${timeStr}</div>
                 </div>
-                ${link ? `<div class="actions">
-                    <a href="${link}" class="action-btn" target="_blank">${link.includes('tradingview') ? 'TradingView' : 'Financials'}</a>
-                </div>` : ''}
             `;
             
             notificationList.insertBefore(item, notificationList.firstChild);
@@ -3551,7 +3554,7 @@ S/O Ratio: ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (
                                     alert.milestoneEvents.push(milestoneEvent);
                                     
                                     // Send notification
-                                    const notificationMsg = `${alert.ticker} ${direction} ${milestonePercent}% from alert`;
+                                    const notificationMsg = `$${alert.ticker} ${direction} ${milestonePercent}% from alert`;
                                     this.showNotification(notificationMsg, 'success', alert.filingLink);
                                     
                                     // Send to Raspberry Pi
@@ -3582,7 +3585,7 @@ S/O Ratio: ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (
                                     alert.milestoneEvents.push(milestoneEvent);
                                     
                                     // Send notification
-                                    const notificationMsg = `${alert.ticker} ${direction} ${milestonePercent}% from alert`;
+                                    const notificationMsg = `$${alert.ticker} ${direction} ${milestonePercent}% from alert`;
                                     this.showNotification(notificationMsg, 'error', alert.filingLink);
                                     
                                     // Send to Raspberry Pi
@@ -4733,19 +4736,7 @@ S/O Ratio: ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (
         let notifications = [];
         let notificationCount = 0;
 
-        function addToNotificationHistory(message, type, link) {
-            const notification = {
-                message,
-                type,
-                link,
-                timestamp: new Date(),
-                id: Date.now()
-            };
-            notifications.unshift(notification);
-            updateNotificationCount();
-            updateNotificationPanel();
-        }
-
+        
         function updateNotificationCount() {
             const count = document.getElementById('notification-count');
             count.textContent = notifications.length;

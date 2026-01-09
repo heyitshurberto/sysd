@@ -21,8 +21,8 @@ const CONFIG = {
   FILE_TIME: 1, // Minutes retro to fetch filings
   MIN_ALERT_VOLUME: 50000, // Min volume threshold
   MAX_FLOAT: 100000000, // Max float size
-  MAX_SO_RATIO: 80.0,  // Max short interest ratio
-  ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware'], // Allowed incorporation/located countries
+  MAX_SO_RATIO: 125.0,  // Max short interest ratio - Increased from 80% to 100%
+  ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware', 'massachusetts', 'texas'], // Allowed incorporation/located countries
   // Enable optimizations for Raspberry Pi devices
   PI_MODE: true,             // Enable Pi optimizations          
   REFRESH_PEAK: 10000,       // 10s during trading hours (7am-10am ET)
@@ -99,51 +99,214 @@ const rateLimit = {
   }
 };
 
-// Signal Score Calculator
-const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume) => {
-  // Float Score (smaller is better)
-  let floatScore = 0.5;
-  const floatMillion = float / 1000000;
-  if (floatMillion < 1) floatScore = 1.0;
-  else if (floatMillion < 2.5) floatScore = 0.9;
-  else if (floatMillion < 10) floatScore = 0.8;
-  else if (floatMillion < 25) floatScore = 0.7;
-  else if (floatMillion < 50) floatScore = 0.6;
-  else if (floatMillion < 75) floatScore = 0.55;
+// Custodian Bank Detection - verify actual ADR structures with word boundaries
+// Returns object with custodian name or false if not found
+// Maps real filing language: "JPMorgan" as custodian, Form F-6 sections, ADR program language
+const detectCustodianBanks = (text) => {
+  if (!text) return false;
   
-  // S/O Score (Float / Shares Outstanding percentage)
-  // Lower S/O % means smaller float relative to shares = higher squeeze potential
-  let soScore = 0.5;
+  const lowerText = text.toLowerCase();
+  
+  // Pattern 1: Custodian bank designations (word boundaries prevent false matches)
+  // Looks for "jpmorgan" or "j.p. morgan" as custodian or depositary
+  const custodianPatterns = [
+    { pattern: /\b(jpmorgan|j\.p\.\s*morgan|jp\s*morgan)\s*(chase|bank|services|as\s*custodian|as\s*depositary)/, name: 'JPMorgan Chase' },
+    { pattern: /\b(citibank|citicorp|citi\s*bank)\s*(as\s*custodian|as\s*depositary|bank|n\.a\.)/, name: 'Citibank' },
+    { pattern: /\bcitigroup\s*(inc|bank)/, name: 'Citigroup' },
+    { pattern: /\bbny\s*mellon|bny\s*mellon|bank\s*of\s*new\s*york\s*mellon/, name: 'BNY Mellon' },
+    { pattern: /\bdeutsche\s*bank/, name: 'Deutsche Bank' },
+    { pattern: /\bstate\s*street\s*(bank|corporation)/, name: 'State Street' },
+    { pattern: /\bwilmington\s*trust/, name: 'Wilmington Trust' }
+  ];
+  
+  // Check custodian bank patterns with word boundaries
+  for (const { pattern, name } of custodianPatterns) {
+    if (pattern.test(lowerText)) {
+      return { custodian: name, verified: true };
+    }
+  }
+  
+  // Pattern 2: Form F-6 filing (official ADR registration)
+  // F-6 is specifically for ADR registration with SEC
+  if (/form\s*f-6|f-6\s*registration|depositary\s*form\s*f-6/.test(lowerText)) {
+    return { custodian: 'Form F-6 ADR', verified: true };
+  }
+  
+  // Pattern 3: ADR program language in actual context
+  // "American Depositary Receipt program" or "ADR program established"
+  if (/american\s*depositary\s*receipt\s*(program|shares?|securities?)|adr\s*(program|shares?|securities?)\s*(for|of|issued)/i.test(lowerText)) {
+    return { custodian: 'ADR Program', verified: true };
+  }
+  
+  // Pattern 4: Foreign private issuer + depositary language together
+  // Both must appear - reduces false positives
+  const hasForeignPrivateIssuer = /foreign\s*private\s*issuer/.test(lowerText);
+  const hasDepositaryRef = /depositary|depositary\s*(shares?|bank|agreement)/.test(lowerText);
+  if (hasForeignPrivateIssuer && hasDepositaryRef) {
+    return { custodian: 'Foreign Depositary', verified: true };
+  }
+  
+  return false;
+};
+
+// S/O Bonus Multiplier - tighter float = stronger move potential
+// High S/O (tight float) = 1.0-1.1x bonus based on float percentage
+const getSOBonus = (float, sharesOutstanding) => {
+  if (!float || !sharesOutstanding || isNaN(float) || isNaN(sharesOutstanding)) return 1.0;
+  const soPercent = (float / sharesOutstanding) * 100;
+  
+  if (soPercent >= 50) return 1.1;     // 10% bonus for very tight float (50%+)
+  else if (soPercent >= 30) return 1.08; // 8% bonus for tight (30-50%)
+  else if (soPercent >= 15) return 1.05; // 5% bonus for moderate (15-30%)
+  else return 1.0;                       // No bonus for loose float (<15%)
+};
+
+// Signal Score Calculator - Probabilistic weighted model
+// Volume (50%) + Float (25%) + S/O (25%) with signal multipliers
+const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signalCategories = [], incorporated = null, located = null, filingText = '') => {
+  // Float Score - micro-cap advantage but tempered (smaller is slightly better)
+  let floatScore = 0.3;
+  const floatMillion = float / 1000000;
+  if (floatMillion < 1) floatScore = 0.45;
+  else if (floatMillion < 2.5) floatScore = 0.42;
+  else if (floatMillion < 5) floatScore = 0.40;
+  else if (floatMillion < 10) floatScore = 0.38;
+  else if (floatMillion < 25) floatScore = 0.35;
+  else if (floatMillion < 50) floatScore = 0.32;
+  else if (floatMillion < 100) floatScore = 0.30;
+  else floatScore = 0.25;
+  
+  // S/O Score - lower baseline (float/shares ratio is just one factor)
+  let soScore = 0.35;
   const numFloat = parseFloat(float) || 1;
   const numShares = parseFloat(sharesOutstanding) || 1;
   const soPercent = numShares > 0 ? (numFloat / numShares) * 100 : 50;
 
-  if (soPercent < 1) soScore = 1.0;       // < 1% float = highest potential
-  else if (soPercent < 5) soScore = 0.95; // 1-5% float
-  else if (soPercent < 15) soScore = 0.9; // 5-15% float
-  else if (soPercent < 25) soScore = 0.8; // 15-25% float
-  else if (soPercent < 50) soScore = 0.7; // 25-50% float
-  else soScore = 0.6;                     // >= 50% float = lowest potential
+  if (soPercent < 5) soScore = 0.50;
+  else if (soPercent < 15) soScore = 0.48;
+  else if (soPercent < 30) soScore = 0.45;
+  else if (soPercent < 50) soScore = 0.42;
+  else if (soPercent < 75) soScore = 0.40;
+  else soScore = 0.35;
 
-  // Volume Score (higher volume ratio is better)
-  let volumeScore = 0.5;
+  // Volume Score - MUST show real spike to matter (2x+ average = 0.6, not 1.0)
+  let volumeScore = 0.25;
   const volumeRatio = avgVolume > 0 ? volume / avgVolume : 0.5;
-  if (volumeRatio >= 3.0) volumeScore = 1.0;
-  else if (volumeRatio >= 2.5) volumeScore = 0.9;
-  else if (volumeRatio >= 2.0) volumeScore = 0.8;
-  else if (volumeRatio >= 1.5) volumeScore = 0.7;
-  else if (volumeRatio >= 1.2) volumeScore = 0.6;
-  else if (volumeRatio >= 1.0) volumeScore = 0.55;
+  if (volumeRatio >= 3.0) volumeScore = 0.65;  // Major spike (3x+)
+  else if (volumeRatio >= 2.0) volumeScore = 0.55;  // Significant (2x+)
+  else if (volumeRatio >= 1.5) volumeScore = 0.45;  // Moderate
+  else if (volumeRatio >= 1.0) volumeScore = 0.35;  // Slight increase
+  else if (volumeRatio >= 0.8) volumeScore = 0.25;  // Below average
+  else volumeScore = 0.15;
 
-  // Calculate signal score (multiply all 3 factors)
-  const signalScore = floatScore * soScore * volumeScore;
+  // Signal Strength Multiplier (conservative - only major catalysts get real boost)
+  let signalMultiplier = 1.0;
+  const deathSpiralCats = ['Going Concern', 'Accounting Restatement', 'Bankruptcy Filing', 'Dilution', 'Reverse Split', 'Compliance Issue', 'Insider Selling'];
+  const hasDeathSpiral = signalCategories?.some(cat => deathSpiralCats.includes(cat));
+  const hasSqueeze = signalCategories?.some(cat => cat === 'Reverse Split');
+  
+  if (hasDeathSpiral) signalMultiplier = 1.15;  // 15% boost, not 30%
+  else if (hasSqueeze) signalMultiplier = 1.10;  // 10% boost, not 20%
+  else signalMultiplier = 1.0;
+
+  // ADR Detection - verify actual custodian banks + incorporated != located structure
+  // Checks for custodian keywords OR ADR structure (not just country mismatch)
+  let adrMultiplier = 1.0;
+  let isCustodianVerified = false;
+  let custodianName = null;
+  
+  // First check for actual custodian bank keywords in filing text
+  const custodianResult = detectCustodianBanks(filingText);
+  if (custodianResult) {
+    adrMultiplier = 1.3;  // 30% boost for verified custodian-controlled ADRs
+    isCustodianVerified = true;
+    custodianName = custodianResult.custodian;
+  }
+  // Fallback: ADR structure detection (incorporated != located) if no custodian bank found
+  else if (incorporated && located && incorporated.toLowerCase() !== located.toLowerCase()) {
+    // Only apply reduced boost (1.15x) since not verified via text scan
+    adrMultiplier = 1.15; // 15% boost for ADR-like structure without custodian verification
+    isCustodianVerified = false;
+    custodianName = 'Structure Only (Inc≠Loc)';
+  }
+  
+  // S/O Bonus - float tightness matters differently based on custodian control
+  let soBonus = 1.0;
+  if (numShares > 0) {
+    const soPercent = (numFloat / numShares) * 100;
+    const isADRStructure = adrMultiplier > 1.0;
+    
+    // ADR (custodian-controlled): tight float = suppressed supply = pump potential
+    // Higher float ratio = tighter float = better for ADR
+    if (isADRStructure) {
+      if (soPercent >= 100) soBonus = 1.2;   // Extreme tight (100%+)
+      else if (soPercent >= 50) soBonus = 1.15; // Very tight (50-100%)
+      else if (soPercent >= 30) soBonus = 1.1;  // Tight (30-50%)
+      else if (soPercent >= 15) soBonus = 1.05; // Moderate (15-30%)
+    } else {
+      // Non-ADR: loose float = better momentum without custodian control
+      // Lower float ratio = looser float = better for regular stocks
+      if (soPercent < 5) soBonus = 1.2;      // Extremely loose (<5%)
+      else if (soPercent < 15) soBonus = 1.15; // Very loose (5-15%)
+      else if (soPercent < 30) soBonus = 1.1;  // Loose (15-30%)
+      else if (soPercent < 50) soBonus = 1.05; // Moderate (30-50%)
+    }
+  }
+
+  // Weighted calculation (volume 50%, float 25%, S/O 25%) - but with lower base scores
+  const signalScore = (floatScore * 0.25 + soScore * 0.25 + volumeScore * 0.5) * signalMultiplier * adrMultiplier * soBonus;
   
   return {
-    score: parseFloat(signalScore.toFixed(2)),
+    score: parseFloat(Math.min(1.0, signalScore).toFixed(2)),
     floatScore: parseFloat(floatScore.toFixed(2)),
     soScore: parseFloat(soScore.toFixed(2)),
-    volumeScore: parseFloat(volumeScore.toFixed(2))
+    volumeScore: parseFloat(volumeScore.toFixed(2)),
+    signalMultiplier: parseFloat(signalMultiplier.toFixed(2)),
+    adrMultiplier: parseFloat(adrMultiplier.toFixed(2)),
+    soBonus: parseFloat(soBonus.toFixed(2)),
+    isADR: adrMultiplier > 1.0,
+    isCustodianVerified: isCustodianVerified,
+    custodianName: custodianName
   };
+};
+
+// Filing Time Multiplier - 1.2x boost for 30 mins before/after market open & close (9:30am & 4:00pm ET)
+// 30 mins before/after open = strongest potential for price moves
+const getFilingTimeMultiplier = (filingDateString) => {
+  try {
+    const filingTime = new Date(filingDateString);
+    const etTime = new Date(filingTime.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const hours = etTime.getHours();
+    const minutes = etTime.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    
+    let timeMultiplier = 1.0;
+    
+    // Peak: 9:00-10:00am (540-600) & 3:30-4:30pm (930-1020) = 1.2x (30 mins before/after market open/close)
+    if ((totalMinutes >= 540 && totalMinutes <= 600) || (totalMinutes >= 930 && totalMinutes <= 1020)) {
+      timeMultiplier = 1.2;
+    }
+    // Strong: 8:30-11:00am (510-660) & 2:30-5:00pm (870-1080) = 1.15x
+    else if ((totalMinutes >= 510 && totalMinutes <= 660) || (totalMinutes >= 870 && totalMinutes <= 1080)) {
+      timeMultiplier = 1.15;
+    }
+    // Good: 8:00am-12:00pm (480-720) & 2:00pm-5:30pm (840-1110) = 1.10x
+    else if ((totalMinutes >= 480 && totalMinutes <= 720) || (totalMinutes >= 840 && totalMinutes <= 1110)) {
+      timeMultiplier = 1.10;
+    }
+    // Other trading hours: 4am-6pm (240-1080) = 1.05x
+    else if (totalMinutes >= 240 && totalMinutes <= 1080) {
+      timeMultiplier = 1.05;
+    }
+    // Outside 4am-6pm: no bonus
+    else {
+      timeMultiplier = 1.0;
+    }
+    
+    return timeMultiplier;
+  } catch (e) {
+    return 1.0;
+  }
 };
 
 
@@ -179,14 +342,14 @@ const SEMANTIC_KEYWORDS = {
   'Regulatory Approval': ['Regulatory Approval Granted', 'Patent Approved', 'License Granted', 'Permit Issued'],
   'Revenue Growth': ['Revenue Growth Acceleration', 'Record Quarterly Revenue', 'Guidance Raise', 'Organic Growth'],
   'Insider Buying': ['Director Purchase', 'Executive Purchase', 'CEO Buying', 'CFO Buying', 'Meaningful Accumulation'],
-  'Reverse Split': ['Reverse Stock Split', 'Reverse Split', 'Reversed Split', 'Reverse Split Announced', 'Announced Reverse Split', '1-for-', 'Consolidation Of Shares', 'Share Consolidation', 'Combine Shares', 'Combined Shares', 'Restructuring Of Capital', 'Stock Consolidation', 'Share Combination'],
+  'Reverse Split': ['Reverse Stock Split', 'Reverse Split', 'Reversed Split', 'Reverse Split Announced', 'Announced Reverse Split', '1-for-', 'Consolidation Of Shares', 'Share Consolidation', 'Combine Shares', 'Combined Shares', 'Restructuring Of Capital', 'Stock Consolidation', 'Share Combination', 'Reverse 1:8', 'Reverse 1:10', 'Reverse 1:20', 'Reverse 1:25', 'Reverse 1:50'],
   'Bankruptcy Filing': ['Bankruptcy Protection', 'Chapter 11 Filing', 'Chapter 7 Filing', 'Insolvency Proceedings', 'Creditor Protection'],
-  'Going Concern': ['Going Concern Warning', 'Substantial Doubt Going Concern', 'Auditor Going Concern Note', 'Continued Losses'],
+  'Going Concern': ['Going Concern Warning', 'Substantial Doubt Going Concern', 'Auditor Going Concern Note', 'Continued Losses', 'Operating Loss', 'Net Loss', 'Loss from operations', 'Massive Losses', 'Accumulated Deficit', 'Significant loss', 'Substantial losses', 'Cash burn rate', 'Depleted cash', 'Negative cash flow'],
   'Public Offering': ['Public Offering Announced', 'Secondary Offering', 'Follow-On Offering', 'Shelf Offering', 'At-The-Market Offering'],
-  'Dilution': ['Dilutive Securities', 'New Shares Issued', 'Convertible Notes', 'Warrant Issuance', 'Option Grants Excessive'],
+  'Dilution': ['Dilutive Securities', 'New Shares Issued', 'Convertible Notes', 'Warrant Issuance', 'Option Grants Excessive', 'Shares Outstanding Increased', 'Share Dilution', 'Share Issuance', 'Dilutive issuance', 'Shares increased', 'Share increase', 'Offering shares', 'Issuance of shares', 'Equity incentive plan increase'],
   'Delisting Risk': ['Nasdaq Deficiency', 'Listing Standards Warning', 'Nasdaq Notification', 'Nasdaq Letter', 'Regained Compliance', 'Delisting Risk', 'Minimum Bid Price', 'Delisting Threat'],
   'Warrant Redemption': ['Warrant Redemption Notice', 'Forced Exercise', 'Warrant Call Notice', 'Final Expiration Notice'],
-  'Insider Selling': ['Director Sale', 'Officer Sale', 'CEO Selling', 'CFO Selling', 'Massive Liquidation'],
+  'Insider Selling': ['Director Sale', 'Officer Sale', 'CEO Selling', 'CFO Selling', 'Massive Liquidation', 'Employee Incentive', 'Equity Compensation', 'RSU Grant', 'Restricted Stock Unit', 'General admin expense', 'Stock-based compensation', 'Excessive compensation', 'Compensation increase', 'Executive compensation spike'],
   'Accounting Restatement': ['Financial Restatement', 'Audit Non-Reliance', 'Material Weakness', 'Control Deficiency', 'Audit Adjustment'],
   'Credit Default': ['Loan Default', 'Debt Covenant Breach', 'Event Of Default', 'Credit Agreement Violation'],
   'Debt Issuance': ['Debt Issuance', 'Senior Debt Issued', 'Convertible Bonds', 'Junk Bond Offering', 'High Leverage'],
@@ -203,7 +366,7 @@ const SEMANTIC_KEYWORDS = {
   'Government Contract': ['Government Contract Award', 'Defense Contract', 'Federal Contract', 'DOD Contract', 'GSA Schedule', 'Federal Procurement'],
   'Stock Split': ['Stock Split Announced', 'Forward Split', 'Stock Dividend', 'Share Split'],
   'Dividend Increase': ['Dividend Increase', 'Dividend Hike', 'Special Dividend', 'Increased Dividend', 'Quarterly Dividend Raised', 'Annual Dividend Increase'],
-  'Compliance Issue': ['Regulatory Violation', 'FDA Warning', 'Product Recall', 'Safety Recall', 'Warning Letter', 'Compliance Violation', 'Regulatory Enforcement'],
+  'Compliance Issue': ['Regulatory Violation', 'FDA Warning', 'Product Recall', 'Safety Recall', 'Warning Letter', 'Compliance Violation', 'Regulatory Enforcement', 'VIE structure', 'VIE agreement', 'PRC regulations', 'regulatory risk', 'capital control', 'foreign exchange restriction', 'dividend limitation', 'SAFE Circular', 'Chinese regulatory', 'Subject to risks', 'Uncertainty of interpretation', 'variable interest'],
   'Mining Operations': ['Mining Operation', 'Cryptocurrency Mining', 'Blockchain Mining', 'Bitcoin Mining', 'Ethereum Mining', 'Mining Facility', 'Mining Expansion', 'Hash Rate Growth'],
   'Financing Events': ['IPO Announced', 'Debt Offering', 'Credit Facility', 'Loan Facility', 'Financing Secured', 'Capital Structure', 'Bond Issuance'],
   'Analyst Coverage': ['Analyst Initiation', 'Analyst Upgrade', 'Analyst Initiation Buy', 'Rating Upgrade', 'Price Target Increase', 'Outperform Rating', 'Buy Rating Initiated'],
@@ -245,19 +408,33 @@ const extractReverseSplitRatio = (text) => {
 
 const getExchangePrefix = (ticker) => {
   // Map tickers to their exchanges for TradingView
-  // Default to NASDAQ for most US stocks
-  // OTC stocks typically have 4-5 letters with some patterns
-  // NYSE has different listing requirements
+  // Detect exchange based on ticker format, length, and patterns
   
   if (!ticker || ticker === 'Unknown') return 'NASDAQ';
   
-  // OTC indicators - typically longer tickers or specific patterns
-  if (ticker.length > 4 || ticker.includes('OTC') || /[A-Z]{5}/.test(ticker)) {
+  const upperTicker = ticker.toUpperCase();
+  
+  // OTC/Pink Sheet Indicators:
+  // 1. Ticker length >= 5 characters (ABCDE format)
+  // 2. Contains non-alphabetic characters (XXXX.L, XXXX.V, etc.)
+  // 3. Ends with common OTC suffixes (.OB, .PK, .OTC, .BB)
+  // 4. Explicit OTC mentions
+  if (upperTicker.length >= 5) {
     return 'OTC';
   }
   
-  // For now, default to NASDAQ for 1-4 letter tickers
-  // You can add specific NYSE mappings if needed
+  // Non-alphabetic characters indicate international or OTC
+  if (/[^A-Z]/.test(upperTicker)) {
+    return 'OTC';
+  }
+  
+  // Known NYSE stocks (blue chips) - map specific high-volume tickers
+  const nyseStocks = ['F', 'GM', 'BAC', 'C', 'JPM', 'GE', 'XOM', 'CVX', 'T', 'VZ', 'WMT', 'KO', 'PEP', 'MCD', 'IBM', 'PG', 'JNJ', 'KMB', 'MRK', 'PFE'];
+  if (nyseStocks.includes(upperTicker)) {
+    return 'NYSE';
+  }
+  
+  // Default to NASDAQ for 1-4 letter alphabetic tickers
   return 'NASDAQ';
 };
 
@@ -294,7 +471,7 @@ const cleanupStaleAlerts = () => {
 const saveToCSV = (alertData) => {
   try {
     const csvPath = CONFIG.CSV_FILE;
-    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Price,Score,Float,Shares Outstanding,S/O Ratio,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Skip Reason\n';
+    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Price,Score,Float,Shares Outstanding,S/O Ratio,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Skip Reason\n';
     
     // Create file with headers if it doesn't exist
     if (!fs.existsSync(csvPath)) {
@@ -358,6 +535,9 @@ const saveToCSV = (alertData) => {
       escapeCSV(located || 'N/A'),
       escapeCSV(alertData.filingType || 'N/A'),
       escapeCSV(signals || 'Press/Regulatory Release'),
+      escapeCSV(alertData.custodianControl ? (alertData.custodianVerified ? `1.3x ${alertData.custodianName}` : alertData.custodianName) : 'No'),
+      escapeCSV(alertData.filingTimeBonus ? `${alertData.filingTimeBonus}x Filing Time` : 'No'),
+      escapeCSV(alertData.soBonus && alertData.soBonus > 1.0 ? `${alertData.soBonus}x S/O` : 'No'),
       escapeCSV(alertData.skipReason || ''),
     ];
     
@@ -406,7 +586,15 @@ const saveAlert = (alertData) => {
       : (alertData.intent ? String(alertData.intent) : 'Filing');
     
     // Update alert data with skip reason showing it was alerted
-    const bonusIndicator = alertData.hasTuesdayBonus ? ' (Tuesday 1.2x score bonus)' : '';
+    const bonusItems = [];
+    if (alertData.hasTuesdayBonus) bonusItems.push('Tuesday 1.2x');
+    if (alertData.custodianControl) {
+      const custodianLabel = alertData.custodianVerified ? `${alertData.custodianName} 1.3x` : `${alertData.custodianName} 1.15x`;
+      bonusItems.push(custodianLabel);
+    }
+    if (alertData.filingTimeBonus) bonusItems.push(`Filing Time ${alertData.filingTimeBonus}x`);
+    if (alertData.soBonus && alertData.soBonus > 1.0) bonusItems.push(`S/O ${alertData.soBonus}x`);
+    const bonusIndicator = bonusItems.length > 0 ? ` (${bonusItems.join(' + ')} score bonus)` : '';
     alertData.skipReason = `Alert sent: [${direction}] ${reason}${bonusIndicator}`;
     
     // Save to CSV for analysis
@@ -500,7 +688,10 @@ const updatePerformanceData = (alertData) => {
         highest: currentPrice,
         lowest: currentPrice,
         current: currentPrice,
-        date: new Date().toISOString()
+        currentPrice: currentPrice,  // Live price - gets updated by price fetcher
+        performance: 0,  // Will be calculated when live price is available
+        date: new Date().toISOString(),
+        reverseSplitRatio: null
       };
     } else {
       // Update current price and track peaks/lows
@@ -960,13 +1151,17 @@ async function getFilingText(indexUrl) {
 
 const sendPersonalWebhook = (alertData) => {
   try {
+    // Skip if no webhook URL configured
+    if (!CONFIG.PERSONAL_WEBHOOK_URL) {
+      return;
+    }
+    
     const { ticker, price, intent, incorporated, located } = alertData;
     
     const combinedLocation = (incorporated || '').toLowerCase() + ' ' + (located || '').toLowerCase();
     
     const allowed = CONFIG.ALLOWED_COUNTRIES.some(country => combinedLocation.includes(country));
     if (!allowed) {
-      console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, country not whitelisted (${incorporated}, ${located})\x1b[0m`);
       return;
     }
     
@@ -1039,13 +1234,20 @@ const sendPersonalWebhook = (alertData) => {
     
     log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}, Float: ${alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A'}, Vol/Avg: ${volDisplay}/${avgDisplay}, S/O: ${alertData.soRatio}`);
     
-    fetch(CONFIG.PERSONAL_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(personalMsg)
-    }).catch(err => log('WARN', `Webhook send failed: ${err.message}`));
+    // Non-blocking fetch with timeout
+    Promise.race([
+      fetch(CONFIG.PERSONAL_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(personalMsg),
+        timeout: 5000
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Webhook timeout')), 6000))
+    ]).catch(err => {
+      // Silently fail - don't block on webhook
+    });
   } catch (err) {
-    log('WARN', `Error sending personal webhook: ${err.message}`);
+    // Silently fail - don't block processing
   }
 };
 
@@ -1637,13 +1839,24 @@ app.listen(PORT, () => {
           const numVolume = (() => { const v = typeof volume === 'number' ? volume : (typeof volume === 'string' && volume !== 'N/A' ? parseInt(volume) : NaN); return isNaN(v) ? 0 : v; })();
           const numAvgVol = (() => { const v = typeof averageVolume === 'number' ? averageVolume : (typeof averageVolume === 'string' && averageVolume !== 'N/A' ? parseInt(averageVolume) : NaN); return isNaN(v) ? 1 : v; })();
           const numShares = (() => { const v = typeof sharesOutstanding === 'number' ? sharesOutstanding : (typeof sharesOutstanding === 'string' && sharesOutstanding !== 'N/A' ? parseInt(sharesOutstanding) : NaN); return isNaN(v) ? 1 : v; })();
-          const signalScoreData = calculatesignalScore(numFloat, numShares, numVolume, numAvgVol);
+          
+          // Get signal categories early for scoring function
+          const signalCategories = Object.keys(semanticSignals || {});
+          
+          const signalScoreData = calculatesignalScore(numFloat, numShares, numVolume, numAvgVol, signalCategories, normalizedIncorporated, normalizedLocated);
           
           // Apply Tuesday bonus (1.2x multiplier for better market conditions)
           const dayOfWeek = new Date().getDay(); // 0=Sunday, 2=Tuesday
-          if (dayOfWeek === 2) {
+          const hasTuesdayBonus = dayOfWeek === 2;
+          if (hasTuesdayBonus) {
             signalScoreData.score = parseFloat((signalScoreData.score * 1.2).toFixed(2));
           }
+          
+          // Filing time bonus: 1.2x peak (30 mins before/after open/close), 1.05-1.15x otherwise
+          const filingTimeMultiplier = getFilingTimeMultiplier(filing.updated);
+          signalScoreData.filingTimeMultiplier = filingTimeMultiplier;
+          signalScoreData.score = parseFloat((signalScoreData.score * filingTimeMultiplier).toFixed(2));
+          signalScoreData.score = parseFloat(Math.min(1.0, signalScoreData.score).toFixed(2));
           
           const signalScoreDisplay = signalScoreData.score;
           
@@ -1654,10 +1867,9 @@ app.listen(PORT, () => {
           }
           
           // Check for FDA Approvals and Chinese/Cayman reverse splits that bypass time window filter
-          const signalCategories = Object.keys(semanticSignals || {});
           const hasFDAApproval = signalCategories.includes('FDA Approval');
           const isChinaOrCaymanReverseSplit = (normalizedIncorporated === 'China' || normalizedLocated === 'China' || normalizedIncorporated === 'Cayman Islands' || normalizedLocated === 'Cayman Islands') && signalCategories.includes('Reverse Split');
-          const highScoreOverride = signalScoreData.score > 0.618; // Score above threshold can bypass time window IF it passes all other filters
+          const highScoreOverride = signalScoreData.score > 0.6; // Score above threshold can bypass time window IF it passes all other filters
           
           if (etTotalMin < startMin || etTotalMin > endMin) {
             // Allow exceptions for: FDA Approvals and Chinese/Cayman reverse splits
@@ -1734,11 +1946,12 @@ app.listen(PORT, () => {
             continue;
           }
           
-          // Check if country is whitelisted
-          const combinedLocation = (normalizedIncorporated || '').toLowerCase() + ' ' + (normalizedLocated || '').toLowerCase();
-          const countryWhitelisted = CONFIG.ALLOWED_COUNTRIES.some(country => combinedLocation.includes(country));
+          // Check if country is whitelisted (check both incorporated and located)
+          const incorporatedMatch = CONFIG.ALLOWED_COUNTRIES.some(country => normalizedIncorporated.toLowerCase().includes(country));
+          const locatedMatch = CONFIG.ALLOWED_COUNTRIES.some(country => normalizedLocated.toLowerCase().includes(country));
+          const countryWhitelisted = incorporatedMatch || locatedMatch;
           if (!countryWhitelisted) {
-            skipReason = 'Country not whitelisted';
+            skipReason = `Country not whitelisted (${normalizedIncorporated}, ${normalizedLocated})`;
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
@@ -1830,42 +2043,7 @@ app.listen(PORT, () => {
           const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
           // signalCategories, hasFDAApproval, isChinaOrCaymanReverseSplit already defined above before time window check
 
-          // Skip S/O ratio check for FDA Approval signals
-          if (!hasFDAApproval && soRatioValue !== null && soRatioValue >= CONFIG.MAX_SO_RATIO) {
-            skipReason = `S/O ${soRatioValue.toFixed(2)}% exceeds ${CONFIG.MAX_SO_RATIO.toFixed(0)}% limit`;
-            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
-            const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
-            log('INFO', `Links: ${secLink} ${tvLink}`);
-            console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
-            console.log('');
-            // Save to CSV with skip reason
-            try {
-              const csvData = {
-                ticker,
-                price,
-                signalScore: signalScoreData.score,
-                short: shortOpportunity ? true : false,
-                marketCap: marketCap,
-                float: float,
-                sharesOutstanding: sharesOutstanding,
-                soRatio: soRatio,
-                volume: volume,
-                averageVolume: averageVolume,
-                incorporated: normalizedIncorporated,
-                located: normalizedLocated,
-                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
-                signalScoreData: signalScoreData,
-                filingDate: filing.updated,
-                filingType: formLogMessage,
-                cik: filing.cik,
-                skipReason: skipReason,
-              };
-              saveToCSV(csvData);
-            } catch (csvErr) {
-              log('ERROR', `CSV error: ${csvErr.message}`);
-            }
-            continue;
-          }
+          // S/O ratio now scoring-only (multiplier), not a hard filter. Removed hard filter block.
           
           // Dynamic volume threshold: 20k for biotech signals, 50k for others
           const isBiotechSignal = hasFDAApproval || signalCategories.includes('Clinical Success');
@@ -1909,15 +2087,24 @@ app.listen(PORT, () => {
           }
           
           let validSignals = false;
+          
+          // Death spiral categories always trigger alerts regardless of score
+          const deathSpiralCategories = ['Going Concern', 'Accounting Restatement', 'Bankruptcy Filing', 'Dilution', 'Reverse Split', 'Compliance Issue'];
+          const hasDeathSpiral = nonNeutralSignals.some(cat => deathSpiralCategories.includes(cat));
+          
           if (isChinaOrCaymanReverseSplit) {
             validSignals = true; // China/Cayman Islands reverse splits always trigger
           } else if (hasFDAApproval) {
             validSignals = true; // FDA Approval is strong enough alone
+          } else if (hasDeathSpiral) {
+            validSignals = true; // Death spirals always trigger
           } else if (highScoreOverride && signalCategories.length === 1) {
-            // High score (>0.618) with single signal overrides time window IF it passes all other filters
+            // High score (>0.6) with single signal overrides time window IF it passes all other filters
             validSignals = true;
-          } else if (signalScoreData.score > 0.618 && signalCategories.length === 1) {
-            validSignals = true; // High score (>0.618) with single signal overrides filter
+          } else if (signalScoreData.score > 0.6 && signalCategories.length === 1) {
+            validSignals = true; // Threshold to 0.6 with single signal
+          } else if (signalScoreData.volumeScore >= 0.85 && signalCategories.length >= 1) {
+            validSignals = true; // Strong volume spike (2x+ average) with any signal
           } else if (neutralSignals.length > 0 && signalCategories.length >= 2) {
             validSignals = true; // Has neutral signal + at least 1 other signal
           } else if (nonNeutralSignals.length >= 2) {
@@ -1960,14 +2147,23 @@ app.listen(PORT, () => {
             continue;
           }
 
-          // Check if Tuesday bonus was applied
-          const hasTuesdayBonus = (new Date().getDay() === 2);
+          // Check if custodian control (ADR structure) applies - verified via filing text or structure
+          const custodianControl = signalScoreData.isCustodianVerified || (normalizedIncorporated && normalizedLocated && normalizedIncorporated.toLowerCase() !== normalizedLocated.toLowerCase());
+          
+          // Filing time bonus: stronger when filed near open/close (9:30am & 3:30pm ET)
+          const filingTimeBonus = filingTimeMultiplier > 1.0 ? parseFloat(filingTimeMultiplier.toFixed(2)) : null;
           
           const alertData = {
             ticker: ticker || filing.cik || 'Unknown',
             price: price,
             signalScore: signalScoreData.score,
             hasTuesdayBonus: hasTuesdayBonus,
+            custodianControl: custodianControl,
+            custodianVerified: signalScoreData.isCustodianVerified,
+            custodianName: signalScoreData.custodianName,
+            filingTimeMultiplier: filingTimeMultiplier,
+            filingTimeBonus: filingTimeBonus,
+            soBonus: signalScoreData.soBonus,
             volume: volume,
             averageVolume: averageVolume,
             float: float,
@@ -2024,8 +2220,6 @@ app.listen(PORT, () => {
                 alertData.skipReason = 'Not Enough Signals';
               } else if (float !== 'N/A' && parseFloat(float) > CONFIG.MAX_FLOAT * 0.8) {
                 alertData.skipReason = 'High Float';
-              } else if (soRatio !== 'N/A' && parseFloat(soRatio) > CONFIG.MAX_SO_RATIO * 0.8) {
-                alertData.skipReason = 'High S/O Ratio';
               } else if (volume !== 'N/A' && parseFloat(volume) < 100000) {
                 alertData.skipReason = 'Low Volume';
               }

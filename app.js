@@ -227,7 +227,7 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
     // Only apply reduced boost (1.15x) since not verified via text scan
     adrMultiplier = 1.15; // 15% boost for ADR-like structure without custodian verification
     isCustodianVerified = false;
-    custodianName = 'Structure Only (Inc≠Ops)';
+    custodianName = 'Structure Only';
   }
   
   // S/O Bonus - float tightness matters differently based on custodian control

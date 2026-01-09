@@ -634,9 +634,13 @@ const saveAlert = (alertData) => {
     const soDisplay = alertData.soRatio || 'n/a';
     
     const priceDisplay = alertData.price && alertData.price !== 'N/A' ? `$${alertData.price.toFixed(2)}` : 'N/A';
-    const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${alertData.cik}&type=${alertData.formType}&dateb=&owner=exclude&count=100`;
+    const formTypeStr = Array.isArray(alertData.formType) ? (alertData.formType[0] || '6-K') : (alertData.formType || '6-K');
+    const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${alertData.cik}&type=${formTypeStr}&dateb=&owner=exclude&count=100`;
     const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(alertData.ticker)}:${alertData.ticker}`;
     log('INFO', `Links: ${secLink} ${tvLink}`);
+    
+    // Print ALERT confirmation message for successful alerts
+    console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[92mALERT: $${alertData.ticker}, [${direction}] ${reason}\x1b[0m`);
     console.log('');
     
     try {
@@ -1885,7 +1889,7 @@ app.listen(PORT, () => {
             // High score override will be checked later after all other filters pass
             if (!hasFDAApproval && !isChinaOrCaymanReverseSplit) {
               skipReason = `filing received at ${etHour.toString().padStart(2, '0')}:${etMin.toString().padStart(2, '0')} ET (outside 3:30am-6:00pm window)`;
-              const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+              const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
               const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
               log('INFO', `Links: ${secLink} ${tvLink}`);
               console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
@@ -1921,7 +1925,7 @@ app.listen(PORT, () => {
           }
           if (normalizedLocated === 'Unknown') {
             skipReason = 'no valid country';
-            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
             console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
@@ -1961,7 +1965,7 @@ app.listen(PORT, () => {
           const countryWhitelisted = incorporatedMatch || locatedMatch;
           if (!countryWhitelisted) {
             skipReason = `Country not whitelisted (${normalizedIncorporated}, ${normalizedLocated})`;
-            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
             console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
@@ -1998,7 +2002,7 @@ app.listen(PORT, () => {
           const floatValue = float !== 'N/A' ? parseFloat(float) : null;
           if (floatValue !== null && floatValue > CONFIG.MAX_FLOAT) {
             skipReason = `Float ${floatValue.toLocaleString('en-US')} exceeds ${(CONFIG.MAX_FLOAT / 1000000).toFixed(0)}m limit`;
-            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
             console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
@@ -2061,7 +2065,7 @@ app.listen(PORT, () => {
           // Check volume after knowing signal type
           if (volumeCheckLater !== null && volumeCheckLater < minVolumeThreshold) {
             skipReason = `Volume ${volumeCheckLater.toLocaleString('en-US')} below ${(minVolumeThreshold / 1000).toFixed(0)}k minimum (biotech: ${isBiotechSignal ? 'yes' : 'no'})`;
-            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
             console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
@@ -2122,7 +2126,7 @@ app.listen(PORT, () => {
           
           if (!validSignals) {
             skipReason = 'Not enough signal weight';
-            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
             console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${skipReason}\x1b[0m`);
@@ -2186,7 +2190,7 @@ app.listen(PORT, () => {
             located: normalizedLocated,
             filingDate: periodOfReport,
             signals: semanticSignals,
-            formType: foundForms,
+            formType: Array.from(foundForms),
             filingType: formLogMessage,
             cik: filing.cik,
             skipReason: skipReason
@@ -2216,7 +2220,7 @@ app.listen(PORT, () => {
             
             if (isDuplicate) {
               alertData.skipReason = 'Duplicate Alert';
-              const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+              const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
               const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
               log('INFO', `Links: ${secLink} ${tvLink}`);
               console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, duplicate alert - already alerted in current session\x1b[0m`);
@@ -2240,6 +2244,12 @@ app.listen(PORT, () => {
               } else {
                 // Save borderline stocks to CSV only
                 saveToCSV(alertData);
+                // Log the skip reason for borderline stocks
+                const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
+                const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+                log('INFO', `Links: ${secLink} ${tvLink}`);
+                console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[31mSKIP: $${ticker}, ${alertData.skipReason}\x1b[0m`);
+                console.log('');
               }
             }
           } else {
@@ -2254,7 +2264,7 @@ app.listen(PORT, () => {
               skipReason = 'Incomplete Data';
             }
             
-            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=${filing.formType}&dateb=&owner=exclude&count=100`;
+            const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
             log('INFO', `Quote: Incomplete data for ${ticker} (price: ${price}, float: ${float}, s/o: ${soRatio})`);

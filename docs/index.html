@@ -381,7 +381,7 @@ table {
             document.querySelectorAll('.score-breakdown').forEach(dropdown => {
                 if (dropdown.style.display === 'block') {
                     const button = dropdown.parentElement.querySelector('.score-details-toggle');
-                    if (button) button.textContent = '▼';
+                    // Arrow removed
                     dropdown.style.display = 'none';
                 }
             });
@@ -426,14 +426,14 @@ table {
                 if (d !== dropdown && d.style.display === 'block') {
                     d.style.display = 'none';
                     const btn = d.parentElement.querySelector('.score-details-toggle');
-                    if (btn) btn.textContent = '▼';
+                    // Arrow removed
                 }
             });
 
             // Toggle current dropdown
             if (dropdown.style.display === 'block') {
                 dropdown.style.display = 'none';
-                button.textContent = '▼';
+                // Arrow removed
             } else {
 
                 // Position and show the dropdown
@@ -468,7 +468,7 @@ table {
                 const closeHandler = (e) => {
                     if (e && !container.contains(e.target) && !dropdown.contains(e.target)) {
                         dropdown.style.display = 'none';
-                        button.textContent = '▼';
+                        // Arrow removed
                         document.removeEventListener('click', closeHandler);
                         document.removeEventListener('mouseleave', closeHandler);
                         saveDropdownStates();
@@ -2459,7 +2459,7 @@ table {
                 document.querySelectorAll('.score-breakdown').forEach(dropdown => {
                     const card = dropdown.closest('.alert-card');
                     const button = card.querySelector('.score-details-toggle');
-                    if (button) button.textContent = '▼';
+                    // Arrow removed
                     dropdown.style.display = 'none';
                     dropdown.style.opacity = '0';
                     card.dataset.dropdownOpen = 'false';
@@ -4568,7 +4568,7 @@ S/O Ratio: ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (
                 }
             }, 150);
             
-            button.textContent = '▼';
+            // Arrow removed
             localStorage.removeItem(`dropdown_${ticker}`);
             card.dataset.dropdownOpen = 'false';
             

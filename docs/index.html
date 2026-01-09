@@ -1613,14 +1613,14 @@ table {
 
         .popup-content {
             background: white;
-            padding: 20px;
+            padding: 8px;
             border-radius: 8px;
-            max-width: 500px;
+            max-width: 450px;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
             position: relative;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
         }
 
         body.dark-mode .popup-content {
@@ -1630,10 +1630,10 @@ table {
         }
 
         .popup-content h3 {
-            margin: 0 0 15px;
-            padding-bottom: 10px;
+            margin: 0 0 8px;
+            padding-bottom: 6px;
             border-bottom: 1px solid #eee;
-            font-size: 18px;
+            font-size: 15px;
         }
 
         body.dark-mode .popup-content h3 {
@@ -1642,14 +1642,13 @@ table {
 
         .popup-details {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 6px;
+            margin-bottom: 6px;
         }
 
         .popup-section {
-            padding: 10px;
-            background: #f8f8f8;
+            padding: 4px;
             border-radius: 6px;
         }
 
@@ -1658,9 +1657,13 @@ table {
         }
 
         .popup-section h4 {
-            margin: 0 0 10px;
-            font-size: 14px;
+            margin: 0 0 4px;
+            padding: 2px 4px;
+            font-size: 10px;
             color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
         body.dark-mode .popup-section h4 {
@@ -1675,8 +1678,8 @@ table {
         .popup-footer {
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
-            padding-top: 15px;
+            gap: 6px;
+            padding-top: 6px;
             border-top: 1px solid #eee;
         }
 
@@ -1685,12 +1688,12 @@ table {
         }
 
         .popup-footer button {
-            padding: 6px 12px;
+            padding: 4px 8px;
             border: none;
             border-radius: 4px;
             background: #f0f0f0;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 10px;
             min-width: unset;
             min-height: unset;
         }
@@ -2816,7 +2819,7 @@ table {
         }
 
         const SEC_CODE_TO_COUNTRY = {
-            'A1': 'Toronto, Canada', '1T': 'Athens, Greece', 'A6': 'Toronto, Canada', 'A9': 'Vancouver, Canada', 'B2': 'Bridgetown, Barbados', 'B6': 'Nassau, Bahamas', 'B9': 'Hamilton, Bermuda', 'C0': 'Grand Cayman, Cayman Islands', 'C1': 'Buenos Aires, Argentina', 'C2': 'Shanghai, China', 'C3': 'Brisbane, Australia', 'C4': 'Toronto, Canada', 'C7': 'St. Helier, Channel Islands', 'D0': 'Hamilton, Canada', 'D2': 'Hamilton, Bermuda', 'D4': 'Hamilton, Bermuda', 'D5': 'Sao Paulo, Brazil', 'D6': 'Bridgetown, Barbados', 'D8': 'Hong Kong', 'D9': 'Toronto, Canada', 'DE': 'Wilmington, Delaware', 'E4': 'Hamilton, Bermuda', 'E5': 'Dublin, Ireland', 'F2': 'Frankfurt, Germany', 'F3': 'Paris, France', 'F4': 'Shadong, China', 'F5': 'Johannesburg, South Africa', 'G0': 'St. Helier, Jersey', 'G1': 'St. Peter Port, Guernsey', 'G4': 'New York, United States', 'G7': 'Copenhagen, Denmark', 'H0': 'Hong Kong', 'H1': 'St. Helier, Jersey', 'I0': 'Dublin, Ireland', 'I1': 'Douglas, Isle of Man', 'J0': 'St. Helier, Jersey', 'J1': 'Tokyo, Japan', 'J2': 'St. Helier, Jersey', 'J3': 'St. Helier, Jersey', 'K1': 'Seoul, South Korea', 'K2': 'Grand Cayman, Cayman Islands', 'K7': 'New York, United States', 'L0': 'Hamilton, Bermuda', 'L2': 'Dublin, Ireland', 'L3': 'Tel Aviv, Israel', 'L6': 'Milan, Italy', 'M0': 'Tokyo, Japan', 'M1': 'Majuro, Marshall Islands', 'N0': 'Amsterdam, Netherlands', 'N2': 'Amsterdam, Netherlands', 'N4': 'Amsterdam, Netherlands', 'O5': 'Mexico City, Mexico', 'P0': 'Lisbon, Portugal', 'E9': 'Grand Cayman, Cayman Islands', 'P3': 'Manila, Philippines', 'P7': 'Madrid, Spain', 'P8': 'Warsaw, Poland', 'Q0': 'Toronto, Canada', 'R0': 'Milan, Italy', 'S0': 'Madrid, Spain', 'S4': 'Singapore', 'T0': 'Lisbon, Portugal', 'T3': 'Johannesburg, South Africa', 'U0': 'Singapore', 'U1': 'London, United Kingdom', 'U5': 'London, United Kingdom', 'V0': 'Zurich, Switzerland', 'V8': 'Geneva, Switzerland', 'VI': 'Road Town, British Virgin Islands', 'W0': 'Frankfurt, Germany', 'X0': 'London, UK', 'X1': 'Luxembourg City, Luxembourg', 'Y0': 'Nicosia, Cyprus', 'Y1': 'Nicosia, Cyprus', 'Z0': 'Johannesburg, South Africa', 'Z1': 'Johannesburg, South Africa', '1A': 'Pago Pago, American Samoa', '1B': 'Saipan, Northern Mariana Islands', '1C': 'Hagatna, Guam', '1D': 'San Juan, Puerto Rico', '1E': 'Charlotte Amalie, U.S. Virgin Islands', '3A': 'Sydney, Australia', '4A': 'Auckland, New Zealand', '5A': 'Apia, Samoa', '6A': 'Shanghai, China', '7A': 'Moscow, Russia', '8A': 'Mumbai, India', '9A': 'Jakarta, Indonesia', '2M': 'Frankfurt, Germany', 'U3': 'Madrid, Spain', 'Y9': 'Nicosia, Cyprus', 'CA': 'Toronto, Canada', 'AL': 'Birmingham, UK', 'Q8': 'Oslo, Norway', 'R1': 'Panama City, Panama', 'V7': 'Stockholm, Sweden', 'A0': 'Calgary, Canada', 'K3': 'Kowloon Bay, Hong Kong', 'M5': 'Seoul, South Korea', 'W8': 'Istanbul, Turkey', 'R5': 'Lima, Peru', 'K8': 'Jakarta, Indonesia', 'O9': 'Monte Carlo, Monaco',};
+            'A1': 'Toronto, Canada', '1T': 'Athens, Greece', 'A6': 'Toronto, Canada', 'A9': 'Vancouver, Canada', 'B2': 'Bridgetown, Barbados', 'B6': 'Nassau, Bahamas', 'B9': 'Hamilton, Bermuda', 'C0': 'Cayman Islands', 'C1': 'Buenos Aires, Argentina', 'C2': 'Shanghai, China', 'C3': 'Brisbane, Australia', 'C4': 'Toronto, Canada', 'C7': 'St. Helier, Channel Islands', 'D0': 'Hamilton, Canada', 'D2': 'Hamilton, Bermuda', 'D4': 'Hamilton, Bermuda', 'D5': 'Sao Paulo, Brazil', 'D6': 'Bridgetown, Barbados', 'D8': 'Hong Kong', 'D9': 'Toronto, Canada', 'DE': 'Wilmington, Delaware', 'E4': 'Hamilton, Bermuda', 'E5': 'Dublin, Ireland', 'F2': 'Frankfurt, Germany', 'F3': 'Paris, France', 'F4': 'Shadong, China', 'F5': 'Johannesburg, South Africa', 'G0': 'St. Helier, Jersey', 'G1': 'St. Peter Port, Guernsey', 'G4': 'New York, United States', 'G7': 'Copenhagen, Denmark', 'H0': 'Hong Kong', 'H1': 'St. Helier, Jersey', 'I0': 'Dublin, Ireland', 'I1': 'Douglas, Isle of Man', 'J0': 'St. Helier, Jersey', 'J1': 'Tokyo, Japan', 'J2': 'St. Helier, Jersey', 'J3': 'St. Helier, Jersey', 'K1': 'Seoul, South Korea', 'K2': 'Cayman Islands', 'K7': 'New York, United States', 'L0': 'Hamilton, Bermuda', 'L2': 'Dublin, Ireland', 'L3': 'Tel Aviv, Israel', 'L6': 'Milan, Italy', 'M0': 'Tokyo, Japan', 'M1': 'Majuro, Marshall Islands', 'N0': 'Amsterdam, Netherlands', 'N2': 'Amsterdam, Netherlands', 'N4': 'Amsterdam, Netherlands', 'O5': 'Mexico City, Mexico', 'P0': 'Lisbon, Portugal', 'E9': 'Cayman Islands', 'P3': 'Manila, Philippines', 'P7': 'Madrid, Spain', 'P8': 'Warsaw, Poland', 'Q0': 'Toronto, Canada', 'R0': 'Milan, Italy', 'S0': 'Madrid, Spain', 'S4': 'Singapore', 'T0': 'Lisbon, Portugal', 'T3': 'Johannesburg, South Africa', 'U0': 'Singapore', 'U1': 'London, United Kingdom', 'U5': 'London, United Kingdom', 'V0': 'Zurich, Switzerland', 'V8': 'Geneva, Switzerland', 'VI': 'Road Town, British Virgin Islands', 'W0': 'Frankfurt, Germany', 'X0': 'London, UK', 'X1': 'Luxembourg City, Luxembourg', 'Y0': 'Nicosia, Cyprus', 'Y1': 'Nicosia, Cyprus', 'Z0': 'Johannesburg, South Africa', 'Z1': 'Johannesburg, South Africa', '1A': 'Pago Pago, American Samoa', '1B': 'Saipan, Northern Mariana Islands', '1C': 'Hagatna, Guam', '1D': 'San Juan, Puerto Rico', '1E': 'Charlotte Amalie, U.S. Virgin Islands', '3A': 'Sydney, Australia', '4A': 'Auckland, New Zealand', '5A': 'Apia, Samoa', '6A': 'Shanghai, China', '7A': 'Moscow, Russia', '8A': 'Mumbai, India', '9A': 'Jakarta, Indonesia', '2M': 'Frankfurt, Germany', 'U3': 'Madrid, Spain', 'Y9': 'Nicosia, Cyprus', 'CA': 'Toronto, Canada', 'AL': 'Birmingham, UK', 'Q8': 'Oslo, Norway', 'R1': 'Panama City, Panama', 'V7': 'Stockholm, Sweden', 'A0': 'Calgary, Canada', 'K3': 'Kowloon Bay, Hong Kong', 'M5': 'Seoul, South Korea', 'W8': 'Istanbul, Turkey', 'R5': 'Lima, Peru', 'K8': 'Jakarta, Indonesia', 'O9': 'Monte Carlo, Monaco',};
 
         function getCountryForFlag(countryString) {
             const lower = countryString.toLowerCase();
@@ -2942,7 +2945,7 @@ table {
                                 sharesOutstanding: parseInt(alert.sharesOutstanding) || 0,
                                 soRatio: soRatio,
                                 filingLink: alert.filingLink || '#',
-                                intent: Array.isArray(alert.intent) ? alert.intent : [],
+                                signals: alert.signals || {},
                                 currentVolume: parseInt(alert.volume) || 0,
                                 volume: parseInt(alert.volume) || 0,
                                 averageVolume: parseInt(alert.averageVolume) || 0,
@@ -2952,9 +2955,13 @@ table {
                                 reverseSplitRatio: tickerPerfData.reverseSplitRatio, // Locked in from quote.json, not re-detected
                                 peakPrice: tickerPerfData.peakPrice || price,
                                 lowPrice: tickerPerfData.lowPrice || price,
-                                ftiMetric: alert.ftiMetric || null,
-                                lunarPhase: alert.lunarPhase || null,
-                                priceChange: (price - price) / price || 0
+                                priceChange: (price - price) / price || 0,
+                                hasTuesdayBonus: alert.hasTuesdayBonus || false,
+                                custodianName: alert.custodianName || null,
+                                custodianVerified: alert.custodianVerified || false,
+                                filingTimeBonus: alert.filingTimeBonus || null,
+                                soBonus: alert.soBonus || null,
+                                formType: alert.formType || null,
                             });
 
                             // Mark as known
@@ -3039,30 +3046,39 @@ table {
                 
                 popup.innerHTML = `
                     <div class="popup-content">
-                        <h3>$${alert.ticker} ${isShort ? '[SHORT]' : '[LONG]'}</h3>
+                        <h3 style="font-style: italic; padding-left: 4px;">$${alert.ticker}${alert.title ? ' ' + alert.title : ''} <span style="color: ${isShort ? '#ff0000' : '#00cc00'};">[${isShort ? 'SHORT' : 'LONG'}]</span></h3>
                         <div class="popup-details">
                             <div class="popup-section">
                                 <h4>Alert Details</h4>
-                                <p>Score: ${alert.signalScore.toFixed(1)}/10</p>
-                                <p>Time: ${alertAge}</p>
-                                <p>Form: ${alert.form || 'N/A'}</p>
+                                <pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 10px; line-height: 1.4; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">Score: ${alert.signalScore.toFixed(1)}
+Alert: ${alertAge}
+Date: ${alert.alertTime ? new Date(alert.alertTime).toLocaleDateString() + ' ' + new Date(alert.alertTime).toLocaleTimeString() : 'N/A'}
+Inc: ${alert.incorporated || 'N/A'}
+Ops: ${alert.located || 'N/A'}</pre>
                             </div>
                             <div class="popup-section">
                                 <h4>Price Action</h4>
-                                <p>Alert Price: $${alert.alertPrice.toFixed(4)}</p>
-                                <p>Current: $${alert.currentPrice.toFixed(4)}</p>
-                                <p>Move: ${displayPercentMove}% ($${priceMove})</p>
+                                <pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.4; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">Alert Price: $${alert.alertPrice.toFixed(4)}
+Current: $${alert.currentPrice.toFixed(4)}
+Highest: $${(alert.peakPrice || alert.currentPrice).toFixed(4)}
+Lowest: $${(alert.lowPrice || alert.currentPrice).toFixed(4)}
+Move: ${displayPercentMove}% ($${priceMove})</pre>
                             </div>
                             <div class="popup-section">
-                                <h4>Volume Analysis</h4>
-                                <p>Current: ${alert.currentVolume.toLocaleString()}</p>
-                                <p>Average: ${alert.averageVolume.toLocaleString()}</p>
-                                <p>Ratio: ${volumeRatio}</p>
+                                <h4>Key Indicators</h4>
+                                ${alert.intent ? `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.6; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">Intent:\n${typeof alert.intent === 'string' ? alert.intent : (Array.isArray(alert.intent) ? alert.intent.join(', ') : 'N/A')}</pre>` : ''}
+                                ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signals).length > 0 ? 
+                                    `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.3; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">` + Object.entries(alert.signals).map(([signal, reasons]) => 
+                                        `${signal}:\n${Array.isArray(reasons) ? reasons.join('\n') : reasons}`
+                                    ).join('\n') + (alert.hasTuesdayBonus ? '\nBonus:\nTuesday Window' : '') + `</pre>`
+                                    : (alert.intent ? '' : '<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.3; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">No signals detected</pre>')}
                             </div>
                             <div class="popup-section">
                                 <h4>Extra Info</h4>
-                                <p>Sector: ${alert.sector || 'N/A'}</p>
-                                <p>Notes: ${alert.notes || 'No notes available.'}</p>
+                                <pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.4; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">Market Cap: ${alert.marketCap ? '$' + (alert.marketCap / 1000000).toFixed(2) + 'M' : 'N/A'}
+Shares: ${alert.sharesOutstanding ? alert.sharesOutstanding.toLocaleString() : 'N/A'}
+Float: ${alert.float ? alert.float.toLocaleString() : 'N/A'}
+S/O Ratio: ${alert.soRatio || 'N/A'}${alert.custodianName ? '\nBanks: ' + alert.custodianName : ''}</pre>
                             </div>
                         </div>
                         <div class="popup-footer">
@@ -3175,7 +3191,7 @@ table {
                 // Check for new tickers in alert.json every 2 seconds
                 setInterval(() => {
                     this.checkForNewAlerts();
-                }, 5000); // Check for new alerts every 5 seconds
+                }, 2000); // Check for new alerts every 2 seconds
 
                 // Then start the monitoring interval for price updates
                 setInterval(() => {
@@ -3348,6 +3364,14 @@ table {
                             const alertCard = this.createAlertCard(newAlert);
                             newAlertCards.push(alertCard);
                             
+                            // Show notification for all alerts
+                            if (parseFloat(alert.signalScore) > 0.01) {
+                                const position = Array.isArray(alert.isShort) ? (alert.isShort.length > 0 ? 'SHORT' : 'LONG') : (alert.isShort ? 'SHORT' : 'LONG');
+                                const type = alert.isShort ? 'error' : 'success';
+                                const ticker = `<b>$${alert.ticker}</b>`;
+                                this.showNotification(`${ticker} ${position} (Score: ${parseFloat(alert.signalScore).toFixed(1)})`, type, alert.filingLink || '#');
+                            }
+                            
                             // Log new ticker
                             smartLog('info', `New ticker found in alert.json: ${alert.ticker} @ $${alert.price}`);
                         }
@@ -3494,19 +3518,84 @@ table {
                             if (!this.milestones.has(alert.ticker)) {
                                 this.milestones.set(alert.ticker, { upStep: 0.20, downStep: -0.20 });
                             }
+                            // Initialize milestone tracking
+                            if (!alert.notifiedMilestones) {
+                                alert.notifiedMilestones = new Set();
+                                alert.milestoneEvents = [];
+                            }
                         }
 
-                        // After initial trigger, update milestones silently (no notifications to reduce spam)
+                        // After initial trigger, check and notify on milestone crossings
                         const ms = this.milestones.get(alert.ticker);
-                        if (ms) {
-                            // Upwards milestones - update tracking without notifications
+                        if (ms && alert.triggered) {
+                            // Initialize if needed
+                            if (!alert.notifiedMilestones) {
+                                alert.notifiedMilestones = new Set();
+                                alert.milestoneEvents = [];
+                            }
+                            
+                            // Upwards milestones - notify when crossed
                             while (priceChange >= ms.upStep) {
+                                const milestonePercent = Math.round(ms.upStep * 100);
+                                if (!alert.notifiedMilestones.has(milestonePercent)) {
+                                    alert.notifiedMilestones.add(milestonePercent);
+                                    
+                                    // Create milestone event
+                                    const direction = priceChange > 0 ? 'up' : 'down';
+                                    const milestoneEvent = {
+                                        percent: milestonePercent,
+                                        direction: direction,
+                                        timestamp: new Date(),
+                                        price: currentPrice
+                                    };
+                                    alert.milestoneEvents.push(milestoneEvent);
+                                    
+                                    // Send notification
+                                    const notificationMsg = `${alert.ticker} ${direction} ${milestonePercent}% from alert`;
+                                    this.showNotification(notificationMsg, 'success', alert.filingLink);
+                                    
+                                    // Send to Raspberry Pi
+                                    this.sendToRaspberryPi({
+                                        ...alert,
+                                        priceChange: ms.upStep,
+                                        isMilestone: true,
+                                        milestonePercent: milestonePercent
+                                    });
+                                }
                                 ms.upStep += 0.10;
                             }
-                            // Downwards milestones - update tracking without notifications
+                            
+                            // Downwards milestones - notify when crossed
                             while (priceChange <= ms.downStep) {
+                                const milestonePercent = Math.round(Math.abs(ms.downStep) * 100);
+                                if (!alert.notifiedMilestones.has(-milestonePercent)) {
+                                    alert.notifiedMilestones.add(-milestonePercent);
+                                    
+                                    // Create milestone event
+                                    const direction = 'down';
+                                    const milestoneEvent = {
+                                        percent: -milestonePercent,
+                                        direction: direction,
+                                        timestamp: new Date(),
+                                        price: currentPrice
+                                    };
+                                    alert.milestoneEvents.push(milestoneEvent);
+                                    
+                                    // Send notification
+                                    const notificationMsg = `${alert.ticker} ${direction} ${milestonePercent}% from alert`;
+                                    this.showNotification(notificationMsg, 'error', alert.filingLink);
+                                    
+                                    // Send to Raspberry Pi
+                                    this.sendToRaspberryPi({
+                                        ...alert,
+                                        priceChange: ms.downStep,
+                                        isMilestone: true,
+                                        milestonePercent: milestonePercent
+                                    });
+                                }
                                 ms.downStep -= 0.10;
                             }
+                            
                             // Persist updated steps
                             this.milestones.set(alert.ticker, ms);
                         }
@@ -3949,7 +4038,7 @@ table {
                         <div class="score-breakdown">
                             <div class="score-header">
                                 <span><i style="font-weight: 700;">${alert.title || 'Unknown Company'}</i></span>
-                                <span>${alert.signalScore.toFixed(1)}/10</span>
+                                <span>${alert.signalScore.toFixed(1)}/1</span>
                             </div>
 
                             <div class="section-header">Company Details</div>
@@ -4018,6 +4107,7 @@ table {
                         </div>
                     </div>
                     <div class="ticker ticker-clickable" tabindex="0" style="cursor:pointer;display:inline-block;user-select:none;transition:background 0.15s,border 0.15s; border-radius:4px; padding:2px 6px; margin-bottom:2px; font-size: 8px;">
+                    <button type="button" class="score-details-toggle" style="background: none; border: none; cursor: pointer; padding: 0; margin-right: 4px; font-size: 12px; color: #666;">⋮</button>
                     <div class="ticker" style="transition: all 0.15s ease;">
                         <i>$${alert.ticker}</i> 
                         <span style="color: ${alert.isShort ? '#cc0000' : '#00cc00'}; transition: color 0.15s ease;">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>
@@ -4037,6 +4127,9 @@ table {
                         (this.isDarkMode() ? '#cccccc' : '#333333')                    }">Alert Time: ${alert.alertTime.toLocaleDateString('en-US', { timeZone: 'America/New_York', month: '2-digit', day: '2-digit', year: '2-digit' })} ${alert.alertTime.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })} ET | Updated: ${alert.lastUpdated.toLocaleDateString('en-US', { timeZone: 'America/New_York', month: '2-digit', day: '2-digit', year: '2-digit' })} ${alert.lastUpdated.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })} ET</div>
                     ${alert.triggered || this.milestones.get(alert.ticker) ? `
                     <div class="alerts-container">
+                        ${(alert.milestoneEvents && alert.milestoneEvents.length > 0) ? alert.milestoneEvents.map(event => {
+                            const color = event.direction === 'up' ? '#00cc00' : '#cc0000';
+                        }).join('') : ''}
                     </div>` : ''}
                         <button type="button" class="link-button" onclick="(() => {
                             event.stopPropagation();

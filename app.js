@@ -375,7 +375,7 @@ const SEMANTIC_KEYWORDS = {
 };
 
 
-const SEC_CODE_TO_COUNTRY = {'C2':'Shanghai, China','F4':'Shadong, China','6A':'Shanghai, China','D8':'Hong Kong','H0':'Hong Kong','K3':'Kowloon Bay, Hong Kong','S4':'Singapore','U0':'Singapore','C0':'Grand Cayman, Cayman Islands','K2':'Grand Cayman, Cayman Islands','E9':'Grand Cayman, Cayman Islands','1E':'Charlotte Amalie, U.S. Virgin Islands','VI':'Road Town, British Virgin Islands','A1':'Toronto, Canada','A6':'Ottawa, Canada','A9':'Vancouver, Canada','A0':'Calgary, Canada','CA':'Toronto, Canada','C4':'Toronto, Canada','D0':'Hamilton, Canada','D9':'Toronto, Canada','Q0':'Toronto, Canada','L3':'Tel Aviv, Israel','J1':'Tokyo, Japan','M0':'Tokyo, Japan','E5':'Dublin, Ireland','I0':'Dublin, Ireland','L2':'Dublin, Ireland','DE':'Wilmington, Delaware','1T':'Athens, Greece','B2':'Bridgetown, Barbados','B6':'Nassau, Bahamas','B9':'Hamilton, Bermuda','C1':'Buenos Aires, Argentina','C3':'Brisbane, Australia','C7':'St. Helier, Channel Islands','D2':'Hamilton, Bermuda','D4':'Hamilton, Bermuda','D5':'Sao Paulo, Brazil','D6':'Bridgetown, Barbados','E4':'Hamilton, Bermuda','F2':'Frankfurt, Germany','F3':'Paris, France','F5':'Johannesburg, South Africa','G0':'St. Helier, Jersey','G1':'St. Peter Port, Guernsey','G4':'New York, United States','G7':'Copenhagen, Denmark','H1':'St. Helier, Jersey','I1':'Douglas, Isle of Man','J0':'St. Helier, Jersey','J2':'St. Helier, Jersey','J3':'St. Helier, Jersey','K1':'Seoul, South Korea','K7':'New York, United States','L0':'Hamilton, Bermuda','L6':'Milan, Italy','M1':'Majuro, Marshall Islands','N0':'Amsterdam, Netherlands','N2':'Amsterdam, Netherlands','N4':'Amsterdam, Netherlands','O5':'Mexico City, Mexico','P0':'Lisbon, Portugal','P3':'Manila, Philippines','P7':'Madrid, Spain','P8':'Warsaw, Poland','R0':'Milan, Italy','S0':'Madrid, Spain','T0':'Lisbon, Portugal','T3':'Johannesburg, South Africa','U1':'London, United Kingdom','U5':'London, United Kingdom','V0':'Zurich, Switzerland','V8':'Geneva, Switzerland','W0':'Frankfurt, Germany','X0':'London, UK','X1':'Luxembourg City, Luxembourg','Y0':'Nicosia, Cyprus','Y1':'Nicosia, Cyprus','Z0':'Johannesburg, South Africa','Z1':'Johannesburg, South Africa','1A':'Pago Pago, American Samoa','1B':'Saipan, Northern Mariana Islands','1C':'Hagatna, Guam','1D':'San Juan, Puerto Rico','3A':'Sydney, Australia','4A':'Auckland, New Zealand','5A':'Apia, Samoa','7A':'Moscow, Russia','8A':'Mumbai, India','9A':'Jakarta, Indonesia','2M':'Frankfurt, Germany','U3':'Madrid, Spain','Y9':'Nicosia, Cyprus','AL':'Birmingham, UK','Q8':'Oslo, Norway','R1':'Panama City, Panama','V7':'Stockholm, Sweden','K8':'Jakarta, Indonesia','O9':'Monaco','W8':'Istanbul, Turkey','R5':'Lima, Peru','N8':'Kuala Lumpur, Malaysia'};
+const SEC_CODE_TO_COUNTRY = {'C2':'Shanghai, China','F4':'Shadong, China','6A':'Shanghai, China','D8':'Hong Kong','H0':'Hong Kong','K3':'Kowloon Bay, Hong Kong','S4':'Singapore','U0':'Singapore','C0':'Cayman Islands','K2':'Cayman Islands','E9':'Cayman Islands','1E':'Charlotte Amalie, U.S. Virgin Islands','VI':'Road Town, British Virgin Islands','A1':'Toronto, Canada','A6':'Ottawa, Canada','A9':'Vancouver, Canada','A0':'Calgary, Canada','CA':'Toronto, Canada','C4':'Toronto, Canada','D0':'Hamilton, Canada','D9':'Toronto, Canada','Q0':'Toronto, Canada','L3':'Tel Aviv, Israel','J1':'Tokyo, Japan','M0':'Tokyo, Japan','E5':'Dublin, Ireland','I0':'Dublin, Ireland','L2':'Dublin, Ireland','DE':'Wilmington, Delaware','1T':'Athens, Greece','B2':'Bridgetown, Barbados','B6':'Nassau, Bahamas','B9':'Hamilton, Bermuda','C1':'Buenos Aires, Argentina','C3':'Brisbane, Australia','C7':'St. Helier, Channel Islands','D2':'Hamilton, Bermuda','D4':'Hamilton, Bermuda','D5':'Sao Paulo, Brazil','D6':'Bridgetown, Barbados','E4':'Hamilton, Bermuda','F2':'Frankfurt, Germany','F3':'Paris, France','F5':'Johannesburg, South Africa','G0':'St. Helier, Jersey','G1':'St. Peter Port, Guernsey','G4':'New York, United States','G7':'Copenhagen, Denmark','H1':'St. Helier, Jersey','I1':'Douglas, Isle of Man','J0':'St. Helier, Jersey','J2':'St. Helier, Jersey','J3':'St. Helier, Jersey','K1':'Seoul, South Korea','K7':'New York, United States','L0':'Hamilton, Bermuda','L6':'Milan, Italy','M1':'Majuro, Marshall Islands','N0':'Amsterdam, Netherlands','N2':'Amsterdam, Netherlands','N4':'Amsterdam, Netherlands','O5':'Mexico City, Mexico','P0':'Lisbon, Portugal','P3':'Manila, Philippines','P7':'Madrid, Spain','P8':'Warsaw, Poland','R0':'Milan, Italy','S0':'Madrid, Spain','T0':'Lisbon, Portugal','T3':'Johannesburg, South Africa','U1':'London, United Kingdom','U5':'London, United Kingdom','V0':'Zurich, Switzerland','V8':'Geneva, Switzerland','W0':'Frankfurt, Germany','X0':'London, UK','X1':'Luxembourg City, Luxembourg','Y0':'Nicosia, Cyprus','Y1':'Nicosia, Cyprus','Z0':'Johannesburg, South Africa','Z1':'Johannesburg, South Africa','1A':'Pago Pago, American Samoa','1B':'Saipan, Northern Mariana Islands','1C':'Hagatna, Guam','1D':'San Juan, Puerto Rico','3A':'Sydney, Australia','4A':'Auckland, New Zealand','5A':'Apia, Samoa','7A':'Moscow, Russia','8A':'Mumbai, India','9A':'Jakarta, Indonesia','2M':'Frankfurt, Germany','U3':'Madrid, Spain','Y9':'Nicosia, Cyprus','AL':'Birmingham, UK','Q8':'Oslo, Norway','R1':'Panama City, Panama','V7':'Stockholm, Sweden','K8':'Jakarta, Indonesia','O9':'Monaco','W8':'Istanbul, Turkey','R5':'Lima, Peru','N8':'Kuala Lumpur, Malaysia'};
 
 const parseSemanticSignals = (text) => {
   if (!text) return {};
@@ -723,6 +723,18 @@ const updatePerformanceData = (alertData) => {
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Helper: Fetch with proper timeout using AbortController
+const fetchWithTimeout = async (url, timeoutMs = 5000, options = {}) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
 // Fetch float data from Financial Modeling Prep
 // Get shares outstanding from Alpha Vantage (primary)
 const getSharesFromAlphaVantage = async (ticker) => {
@@ -730,7 +742,7 @@ const getSharesFromAlphaVantage = async (ticker) => {
     const avKey = process.env.ALPHA_VANTAGE_API_KEY;
     if (!avKey) return null;
     
-    const res = await fetch(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${avKey}`, { timeout: 5000 });
+    const res = await fetchWithTimeout(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${avKey}`, 5000);
     if (!res.ok) return null;
     
     const data = await res.json();
@@ -749,7 +761,7 @@ const getSharesFromFinnhub = async (ticker) => {
     const finnhubKey = process.env.FINNHUB_API_KEY;
     if (!finnhubKey) return null;
     
-    const res = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`, { timeout: 5000 });
+    const res = await fetchWithTimeout(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`, 5000);
     if (!res.ok) return null;
     
     const data = await res.json();
@@ -768,7 +780,7 @@ const getSharesOutstanding = async (ticker) => {
   try {
     const finnhubKey = process.env.FINNHUB_API_KEY;
     if (finnhubKey) {
-      const res = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`, { timeout: 3000 });
+      const res = await fetchWithTimeout(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`, 3000);
       if (res.ok) {
         const data = await res.json();
         if (data.shareOutstanding && data.shareOutstanding > 0) {
@@ -787,7 +799,7 @@ const getFloatData = async (ticker) => {
   try {
     const avKey = process.env.ALPHA_VANTAGE_API_KEY;
     if (avKey) {
-      const res = await fetch(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${avKey}`, { timeout: 3000 });
+      const res = await fetchWithTimeout(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${avKey}`, 3000);
       if (res.ok) {
         const data = await res.json();
         if (data.SharesFloat && data.SharesFloat !== 'None') {
@@ -804,7 +816,7 @@ const getFloatData = async (ticker) => {
     if (!fmpKey) return 'N/A';
     
     const url = `https://financialmodelingprep.com/stable/shares-float?symbol=${ticker}&apikey=${fmpKey}`;
-    const res = await fetch(url, { timeout: 3000 });
+    const res = await fetchWithTimeout(url, 3000);
     if (!res.ok) return 'N/A';
     
     const data = await res.json();
@@ -823,7 +835,7 @@ const getFMPQuote = async (ticker) => {
     const fmpKey = process.env.FMP_API_KEY;
     if (!fmpKey) return null;
     
-    const res = await fetch(`https://financialmodelingprep.com/stable/shares-float?symbol=${ticker}&apikey=${fmpKey}`, { timeout: 5000 });
+    const res = await fetchWithTimeout(`https://financialmodelingprep.com/stable/shares-float?symbol=${ticker}&apikey=${fmpKey}`, 5000);
     if (!res.ok) return null;
     
     const data = await res.json();
@@ -849,7 +861,7 @@ async function fetchFilings() {
   
   try {
     await wait(200);
-    const res = await fetch('https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=6-K&count=100&owner=exclude&output=atom', {
+    const res = await fetchWithTimeout('https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=6-K&count=100&owner=exclude&output=atom', CONFIG.SEC_FETCH_TIMEOUT || 10000, {
       headers: {
         'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -910,12 +922,11 @@ async function getCountryAndTicker(cik) {
     try {
       const padded = cik.toString().padStart(10, '0');
       await wait(500);
-      const res = await fetch(`https://data.sec.gov/submissions/CIK${padded}.json`, {
+      const res = await fetchWithTimeout(`https://data.sec.gov/submissions/CIK${padded}.json`, CONFIG.SEC_FETCH_TIMEOUT, {
         headers: {
           'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
           'Accept': 'application/json'
-        },
-        timeout: CONFIG.SEC_FETCH_TIMEOUT
+        }
       });
       if (res.status === 403) {
         await wait(2000);
@@ -976,7 +987,7 @@ async function fetch8Ks() {
   const filings8K = [];
   try {
     await wait(200);
-    const res = await fetch('https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&count=100&owner=exclude&output=atom', {
+    const res = await fetchWithTimeout('https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&count=100&owner=exclude&output=atom', CONFIG.SEC_FETCH_TIMEOUT || 10000, {
       headers: {
         'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
@@ -1357,9 +1368,7 @@ app.get('/api/quote/:ticker', async (req, res) => {
       const finnhubKey = process.env.FINNHUB_API_KEY;
       if (finnhubKey) {
         try {
-          const finnhubRes = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`, {
-            timeout: 5000
-          });
+          const finnhubRes = await fetchWithTimeout(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`, 5000);
           if (finnhubRes.ok) {
             const data = await finnhubRes.json();
             // Finnhub data structure: c=current, v=volume
@@ -1376,7 +1385,7 @@ app.get('/api/quote/:ticker', async (req, res) => {
               
               // Get profile for shares and market cap
               try {
-                const profRes = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`);
+                const profRes = await fetchWithTimeout(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`, 5000);
                 if (profRes.ok) {
                   const prof = await profRes.json();
                   if (prof.shareOutstanding && prof.shareOutstanding > 0) {
@@ -1747,7 +1756,7 @@ app.listen(PORT, () => {
               // If Yahoo didn't work, try Finnhub
               if (!quoteData && finnhubKey) {
                 try {
-                  const fhRes = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`);
+                  const fhRes = await fetchWithTimeout(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`, 5000);
                   if (fhRes.ok) {
                     const fhQuote = await fhRes.json();
                     if (fhQuote.c && fhQuote.c > 0) {
@@ -1761,7 +1770,7 @@ app.listen(PORT, () => {
                       
                       // Get profile for shares and market cap
                       try {
-                        const profRes = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`);
+                        const profRes = await fetchWithTimeout(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`, 5000);
                         if (profRes.ok) {
                           const prof = await profRes.json();
                           if (prof.shareOutstanding && prof.shareOutstanding > 0) {
@@ -2155,6 +2164,7 @@ app.listen(PORT, () => {
           
           const alertData = {
             ticker: ticker || filing.cik || 'Unknown',
+            title: filing.title ? filing.title.replace(/\s*\(\d{10}\)\s*$/, '').trim() : 'Unknown Company',
             price: price,
             signalScore: signalScoreData.score,
             hasTuesdayBonus: hasTuesdayBonus,

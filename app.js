@@ -639,10 +639,6 @@ const saveAlert = (alertData) => {
     const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(alertData.ticker)}:${alertData.ticker}`;
     log('INFO', `Links: ${secLink} ${tvLink}`);
     
-    // Print ALERT confirmation message for successful alerts
-    console.log(`\x1b[90m[${new Date().toISOString()}]\x1b[0m \x1b[92mALERT: $${alertData.ticker}, [${direction}] ${reason}\x1b[0m`);
-    console.log('');
-    
     try {
       if (fs.existsSync(CONFIG.ALERTS_FILE)) {
         const savedAlerts = JSON.parse(fs.readFileSync(CONFIG.ALERTS_FILE, 'utf8'));

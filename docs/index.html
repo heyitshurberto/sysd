@@ -2292,6 +2292,10 @@ table {
     <script>
         // Function to identify short setups
         function isShortSetup(alert) {
+            // First check if alert has isShort or short property set
+            if (alert.isShort === true || alert.short === true) return true;
+            if (alert.isShort === false || alert.short === false) return false;
+            
             if (!alert || !alert.intent) return false;
             
             // Check for primary short signals
@@ -3914,7 +3918,7 @@ S/O Ratio: ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (
             
             createAlertCard(alert) {
                 const card = document.createElement('div');
-                const isShort = alert.isShort;
+                const isShort = alert.isShort === true || alert.short === true;
                 
                 // Determine price movement class - use adjusted price change for reverse splits
                 let effectivePriceChange = alert.priceChange;

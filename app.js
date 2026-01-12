@@ -422,7 +422,7 @@ const getExchangePrefix = (ticker) => {
   if (upperTicker.length >= 5) {
     return 'OTC';
   }
-  
+
   // Non-alphabetic characters indicate international or OTC
   if (/[^A-Z]/.test(upperTicker)) {
     return 'OTC';
@@ -638,6 +638,7 @@ const saveAlert = (alertData) => {
     const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${alertData.cik}&type=${formTypeStr}&dateb=&owner=exclude&count=100`;
     const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(alertData.ticker)}:${alertData.ticker}`;
     log('INFO', `Links: ${secLink} ${tvLink}`);
+    console.log('');
     
     try {
       if (fs.existsSync(CONFIG.ALERTS_FILE)) {
@@ -1891,12 +1892,19 @@ app.listen(PORT, () => {
           let longOpportunity = null;
           
           // Determine if this is a SHORT or LONG opportunity based on signals
-          const bearishCats = ['Reverse Split', 'Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Dilution', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Compliance Issue', 'Product Discontinuation', 'Loss of Major Customer'];
           const sigKeys = Object.keys(semanticSignals || {});
+          
+          // Reverse Split + Dilution = ALWAYS LONG
+          const hasReverseSplit = sigKeys.includes('Reverse Split');
+          const hasDilution = sigKeys.includes('Dilution');
+          const isLongCombo = hasReverseSplit && hasDilution;
+          
+          // Bearish signals = SHORT (but not if it's reverse split + dilution combo)
+          const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Compliance Issue', 'Product Discontinuation', 'Loss of Major Customer'];
           const hasBearishSignal = sigKeys.some(cat => bearishCats.includes(cat));
           
-          if (hasBearishSignal) {
-            shortOpportunity = 'Intent: ' + sigKeys.filter(k => bearishCats.includes(k)).join(', ');
+          if (!isLongCombo && hasBearishSignal) {
+            shortOpportunity = true;
           }
           
           const now = new Date();
@@ -2245,6 +2253,7 @@ app.listen(PORT, () => {
             soRatio: soRatio,
             marketCap: marketCap,
             short: shortOpportunity ? true : false,
+            isShort: shortOpportunity ? true : false,
             intent: intent || 'Regulatory Filing',
             incorporated: normalizedIncorporated,
             located: normalizedLocated,

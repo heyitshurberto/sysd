@@ -887,7 +887,10 @@ async function fetchFilings() {
     }
     await rateLimit.wait();
   } catch (err) {
-    log('WARN', `SEC 6-K fetch failed: ${err.message}`);
+    // Silently skip abort errors (expected timeouts), only log other errors
+    if (err.name !== 'AbortError' && !err.message.includes('aborted')) {
+      log('WARN', `SEC 6-K fetch failed: ${err.message}`);
+    }
   }
 
   allFilings.sort((a, b) => new Date(b.updated) - new Date(a.updated));
@@ -988,7 +991,7 @@ async function fetch8Ks() {
   const filings8K = [];
   try {
     await wait(200);
-    const res = await fetchWithTimeout('https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&count=100&owner=exclude&output=atom', CONFIG.SEC_FETCH_TIMEOUT || 10000, {
+    const res = await fetchWithTimeout('https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&count=100&owner=exclude&output=atom', 15000, {
       headers: {
         'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
@@ -1010,7 +1013,10 @@ async function fetch8Ks() {
     }
     await rateLimit.wait();
   } catch (err) {
-    log('WARN', `SEC 8-K fetch failed: ${err.message}`);
+    // Silently skip abort errors (expected timeouts), only log other errors
+    if (err.name !== 'AbortError' && !err.message.includes('aborted')) {
+      log('WARN', `SEC 8-K fetch failed: ${err.message}`);
+    }
   }
   return filings8K;
 }
@@ -1798,7 +1804,7 @@ app.listen(PORT, () => {
             else formLogMessage = itemsDisplay;
           }
           if (!formLogMessage) formLogMessage = 'None';
-          log('INFO', `Form: ${formLogMessage}`);
+          log('INFO', `Forms: ${formLogMessage}`);
           
           if (signalKeys.length > 0) {
             log('INFO', `${direction}: ${signalKeys.join(', ')}`);

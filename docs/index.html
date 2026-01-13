@@ -981,8 +981,8 @@ table {
         }
 
         body.dark-mode .alert-card[data-position="short"].triggered.up .price-change {
-            color: #00d000cb !important;
-            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) !important;
+            color: #009400c3 !important;
+            text-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.5) !important;
         }
 
         body.dark-mode .alert-card[data-position="long"].triggered.up .price-change {
@@ -1129,14 +1129,14 @@ table {
         body.dark-mode .price-change[data-change="up"],
         body.dark-mode .price-change.positive,
         body.dark-mode .price-change[data-change="up"] {
-            color: #1ec600 !important; /* Brighter neon green for visibility */
-            text-shadow: 0 0 1px rgba(28, 189, 0, 0.727), 0 0 1px #000000;
+            color: #00aa00 !important; /* Green for up/positive */
+            text-shadow: 0 0 1px rgba(0, 170, 0, 0.5);
         }
         
         body.dark-mode .price-change[data-change="down"],
         body.dark-mode .price-change.negative {
-            color: #00ff00 !important;  /* Lighter neutral green for down in dark mode */
-            text-shadow: 0 0 2px rgba(255, 51, 51, 0.25);
+            color: #00aa00 !important;  /* Green for down in dark mode */
+            text-shadow: 0 0 2px rgba(0, 170, 0, 0.3);
         }
 
         body.dark-mode .price-change.neutral {
@@ -1255,22 +1255,22 @@ table {
         
         /* Light mode: black shadow for [LONG]/[SHORT] on triggered green cards */
         body:not(.dark-mode) .alert-card.triggered.up .ticker span {
-            text-shadow: 0px 0px 3px rgba(0, 0, 0, 0.8) !important;
+            text-shadow: 0px 0px 3px rgba(0, 0, 0, 0) !important;
         }
 
         /* Light mode: black shadow for [SHORT] on triggered red cards */
         body:not(.dark-mode) .alert-card.triggered.down .ticker span {
-            text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.75) !important;
+            text-shadow: 0px 0px 2px rgba(0, 0, 0, 0) !important;
         }
 
         /* Dark mode: black shadow for [LONG]/[SHORT] on triggered green cards */
         body.dark-mode .alert-card.triggered.up .ticker span {
-        text-shadow: 0px 0px 2.5px rgba(0, 0, 0, 0.72) !important;
+        text-shadow: 0px 0px 2.5px rgba(0, 0, 0, 0.356) !important;
 }
 
         /* Dark mode: black shadow for [SHORT] on triggered red cards */
         body.dark-mode .alert-card.triggered.down .ticker span {
-            text-shadow: 0px 0px 2.5px rgba(0, 0, 0, 0.7) !important;
+            text-shadow: 0px 0px 2.5px rgba(0, 0, 0, 0.306) !important;
         }
 
         /* Dark mode - brighter colors with transparency */
@@ -3158,9 +3158,7 @@ S/O Ratio: ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (
                 // Mark this alert as known
                 this.knownAlerts.add(alertKey);
 
-
-                // Show notification for new alerts >7.5 score, but only if not recently notified
-                if (alertData.signalScore > 7.5) {
+                if (alertData.signalScore > 0.0) {
                     const alertKey = `${alertData.ticker}-${alertData.alertTime.getTime()}`;
                     const now = Date.now();
                     const isRecent = this.notifiedAlerts.has(alertKey) && (now - this.notifiedAlerts.get(alertKey)) < this.recentThreshold;
@@ -4042,76 +4040,6 @@ S/O Ratio: ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (
                 // Create the initial HTML content
                 card.innerHTML = `
                     <div class="score-details-container">
-                        <div class="score-breakdown">
-                            <div class="score-header">
-                                <span><i style="font-weight: 700;">${alert.title || 'Unknown Company'}</i></span>
-                                <span>${alert.signalScore.toFixed(1)}/1</span>
-                            </div>
-
-                            <div class="section-header">Company Details</div>
-                            <div class="score-item">
-                                <span>Located:</span>
-                                <span>${getLocationDisplay(alert.located)}</span>
-                            </div>
-                            <div class="score-item">
-                                <span>Incorporated:</span>
-                                <span>${getLocationDisplay(alert.incorporated)}</span>
-                            </div>
-                            <div class="score-item">
-                                <span>Filing Date:</span>
-                                <span>${(() => {
-                                    const filingDate = new Date(alert.alertTime);
-                                    const hour = filingDate.getHours();
-                                    const minutes = filingDate.getMinutes();
-                                    const nyString = filingDate.toLocaleString('en-US', {
-                                        month: 'short',
-                                        day: '2-digit',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                        hour12: true,
-                                        timeZone: 'America/New_York'
-                                    });
-                                    const window = getMarketTimeWindow(alert.alertTime);
-                                    return `${nyString} ET (${window})`;
-                                })()}</span>
-                            </div>
-                            ${alert.lunarPhase ? `
-                            <div class="score-item">
-                                <span>Lunar Phase:</span>
-                                <span>${alert.lunarPhase}</span>
-                            </div>` : ''}
-                            ${alert.ftiMetric ? `
-                            <div class="score-item">
-                                <span>LE: ${alert.ftiMetric.layer1_LE} SF: ${alert.ftiMetric.layer2_SF} SIT: ${alert.ftiMetric.layer3_SIT} IC: ${alert.ftiMetric.layer4_IC}</span>
-                                <span>${alert.ftiMetric.cci} (${alert.ftiMetric.ftiRating})</span>
-                            </div>
-                            ` : ''}
-                            <div class="section-header">Key Indicators</div>
-                            <div class="intent-tags">
-                                ${alert.intent && alert.intent.length > 0 ? alert.intent.map(tag => `
-                                    <span class="intent-tag">${tag}</span>
-                                `).join('') : `
-                                    <span class="intent-tag" style="opacity:0.7;font-style:italic;">No key indicators detected</span>
-                                `}
-                            </div>
-                            ${alert.advancedSignals && Object.keys(alert.advancedSignals).some(k => alert.advancedSignals[k]) ? `
-                            <div class="section-header">Advanced Signals</div>
-                            ${Object.entries(alert.advancedSignals)
-                                .filter(([_, value]) => value)
-                                .map(([key]) => `
-                                    <div class="score-item">
-                                        <span><span class="signal-indicator signal-positive"></span>${key.split(/(?=[A-Z])/).join(' ')}</span>
-                                        <span>Active</span>
-                                    </div>
-                                `).join('')}
-                            ` : ''}
-                            </div>
-                            ${alert.nextMilestone ? `
-                            <div class="score-item">
-                                <span>Next Target:</span>
-                                <span>${alert.nextMilestone > 0 ? '+' : ''}${(alert.nextMilestone * 100).toFixed(0)}%</span>
-                            </div>` : ''}
-                        </div>
                     </div>
                     <div class="ticker ticker-clickable" tabindex="0" style="cursor:pointer;display:inline-block;user-select:none;transition:background 0.15s,border 0.15s; border-radius:4px; padding:2px 6px; margin-bottom:2px; font-size: 8px;">
                     <button type="button" class="score-details-toggle" style="background: none; border: none; cursor: pointer; padding: 0; margin-right: 4px; font-size: 12px; color: #666;">⋮</button>

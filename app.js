@@ -1546,7 +1546,7 @@ const updateAllPerformanceData = async () => {
     
     let updated = false;
     
-    // Update each tracked stock
+    // Update each tracked stock with delay to avoid rate limits
     for (const ticker of Object.keys(performanceData)) {
       try {
         const quote = await yahooFinance.quote(ticker, {
@@ -1578,6 +1578,9 @@ const updateAllPerformanceData = async () => {
       } catch (e) {
         // Silently skip individual ticker errors
       }
+      
+      // Add small delay between requests to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
     
     // Write back if any updates were made
@@ -1894,17 +1897,21 @@ app.listen(PORT, () => {
           // Determine if this is a SHORT or LONG opportunity based on signals
           const sigKeys = Object.keys(semanticSignals || {});
           
-          // Reverse Split + Dilution = ALWAYS LONG
+          // Reverse Split + Dilution = ALWAYS SHORT
           const hasReverseSplit = sigKeys.includes('Reverse Split');
           const hasDilution = sigKeys.includes('Dilution');
-          const isLongCombo = hasReverseSplit && hasDilution;
+          const isShortCombo = hasReverseSplit && hasDilution;
           
-          // Bearish signals = SHORT (but not if it's reverse split + dilution combo)
-          const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Compliance Issue', 'Product Discontinuation', 'Loss of Major Customer'];
-          const hasBearishSignal = sigKeys.some(cat => bearishCats.includes(cat));
-          
-          if (!isLongCombo && hasBearishSignal) {
+          if (isShortCombo) {
             shortOpportunity = true;
+          } else {
+            // Bearish signals = SHORT
+            const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Compliance Issue', 'Product Discontinuation', 'Loss of Major Customer'];
+            const hasBearishSignal = sigKeys.some(cat => bearishCats.includes(cat));
+            
+            if (hasBearishSignal) {
+              shortOpportunity = true;
+            }
           }
           
           const now = new Date();

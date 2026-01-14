@@ -22,16 +22,16 @@ const CONFIG = {
   MIN_ALERT_VOLUME: 50000, // Min volume threshold
   MAX_FLOAT: 100000000, // Max float size
   MAX_SO_RATIO: 125.0,  // Max short interest ratio - Increased from 80% to 100%
-  ALLOWED_COUNTRIES: ['israel', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware', 'massachusetts', 'texas'], // Allowed incorporation/located countries
+  ALLOWED_COUNTRIES: ['israel', 'dubai', 'japan', 'china', 'hong kong', 'brazil', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware', 'massachusetts', 'texas', 'australia'], // Allowed incorporation/located countries
   // Enable optimizations for Raspberry Pi devices
   PI_MODE: true,             // Enable Pi optimizations          
-  REFRESH_PEAK: 10000,       // 10s during trading hours (7am-10am ET)
+  REFRESH_PEAK: 1,       // 10s during trading hours (7am-10am ET)
   REFRESH_NORMAL: 30000,     // 30s during trading hours (3:30am-6pm ET)
   REFRESH_NIGHT: 300000,     // 5m outside trading hours (conserve power)
   REFRESH_WEEKEND: 600000,   // 10m on weekends (very low activity)
   YAHOO_TIMEOUT: 10000,      // Reduced from 10s for Pi performance
   SEC_RATE_LIMIT: 5000,      // Minimum 5ms between SEC requests
-  SEC_FETCH_TIMEOUT: 5000,   // Reduced for Pi memory constraints
+  SEC_FETCH_TIMEOUT: 10000,   // Increased to 10s for large SEC filings (was 5s causing timeouts)
   MAX_COMBINED_SIZE: 100000, // Reduced from 150k for Pi RAM
   MAX_RETRY_ATTEMPTS: 7,     // Reduced from 7 for Pi resources
   // Log files
@@ -163,7 +163,7 @@ const getSOBonus = (float, sharesOutstanding) => {
 
 // Signal Score Calculator - Probabilistic weighted model
 // Volume (50%) + Float (25%) + S/O (25%) with signal multipliers
-const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signalCategories = [], incorporated = null, located = null, filingText = '') => {
+const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signalCategories = [], incorporated = null, located = null, filingText = '', companyName = '') => {
   // Float Score - micro-cap advantage but tempered (smaller is slightly better)
   let floatScore = 0.3;
   const floatMillion = float / 1000000;
@@ -215,9 +215,14 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   let isCustodianVerified = false;
   let custodianName = null;
   
+  // MAXIMUM RED FLAG: "Not Applicable" = Ghost company (no origin, pure shell)
+  if ((incorporated && incorporated.includes('Not Applicable')) || (located && located.includes('Not Applicable')) || (companyName && companyName.includes('Not Applicable'))) {
+    adrMultiplier = 1.2;  //  Absolute scam signal
+    isCustodianVerified = false;
+    custodianName = 'Ghost Company (N/A)';
+  }
   // First check for actual custodian bank keywords in filing text
-  const custodianResult = detectCustodianBanks(filingText);
-  if (custodianResult) {
+  else if ((custodianResult = detectCustodianBanks(filingText))) {
     adrMultiplier = 1.3;  // 30% boost for verified custodian-controlled ADRs
     isCustodianVerified = true;
     custodianName = custodianResult.custodian;
@@ -306,6 +311,55 @@ const getFilingTimeMultiplier = (filingDateString) => {
     return timeMultiplier;
   } catch (e) {
     return 1.0;
+  }
+};
+
+// Global Attention Window Bonus - TIER system for max gap-up potential
+// 18:01 (Asian open), 13:21 (Euro close/US lunch), 21:01 (Overnight dark pool)
+const getGlobalAttentionBonus = (filingDateString) => {
+  try {
+    const filingTime = new Date(filingDateString);
+    const etTime = new Date(filingTime.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const hours = etTime.getHours();
+    const minutes = etTime.getMinutes();
+    
+    let bonus = 1.0;
+    let tier = 'None';
+    
+    // TIER 1: GOLDEN HOURS (1.3x) - Asian open catalyst + overnight dark pool
+    // 18:00-19:00 ET (Asia waking up at 7am+)
+    // 21:00-22:00 ET (whole night for accumulation, Asia at 10am+ midday)
+    if ((hours === 18 && minutes <= 59) || (hours === 21 && minutes <= 59)) {
+      bonus = 1.3;
+      tier = 'Golden';
+      // Closeness bonus: exact :01 = 1.05x multiplier, :59 = 1.01x
+      const closenessBonus = 1.0 + (Math.max(0, 60 - Math.abs(minutes - 1)) / 1200);
+      bonus = bonus * closenessBonus;
+    }
+    // TIER 2: SILVER HOURS (1.15x) - Pre/post golden windows
+    // 17:00-18:00 ET (pre-Asian open prep)
+    // 20:00-21:00 ET (pre-overnight accumulation)
+    // 13:00-14:00 ET (post-lunch dead zone, Europe 6pm)
+    // 12:00-13:00 ET (lunch start)
+    else if ((hours === 17) || (hours === 20) || (hours === 13) || (hours === 12)) {
+      bonus = 1.15;
+      tier = 'Silver';
+      // Closeness bonus for tier 2
+      const closenessBonus = 1.0 + (Math.max(0, 60 - Math.abs(minutes - 1)) / 1500);
+      bonus = bonus * closenessBonus;
+    }
+    // TIER 3: BRONZE HOURS (1.05x) - Extended after-hours window
+    // 22:00-04:00 ET (dark pool extended hours)
+    // 16:00-17:00 ET (afternoon slump before prep)
+    // 09:30-12:00 ET (morning session weaker)
+    else if ((hours >= 22 || hours <= 4) || (hours === 16) || (hours >= 9 && hours <= 11)) {
+      bonus = 1.05;
+      tier = 'Bronze';
+    }
+    
+    return { bonus: parseFloat(bonus.toFixed(4)), tier };
+  } catch (e) {
+    return { bonus: 1.0, tier: 'None' };
   }
 };
 
@@ -540,7 +594,7 @@ const saveToCSV = (alertData) => {
       escapeCSV(alertData.soBonus && alertData.soBonus > 1.0 ? `${alertData.soBonus}x S/O` : 'No'),
       escapeCSV(alertData.skipReason || ''),
     ];
-    
+
     // Convert to CSV string
     const csvRow = row.join(',') + '\n';
     fs.appendFileSync(csvPath, csvRow);
@@ -1937,7 +1991,7 @@ app.listen(PORT, () => {
           // Get signal categories early for scoring function
           const signalCategories = Object.keys(semanticSignals || {});
           
-          const signalScoreData = calculatesignalScore(numFloat, numShares, numVolume, numAvgVol, signalCategories, normalizedIncorporated, normalizedLocated);
+          const signalScoreData = calculatesignalScore(numFloat, numShares, numVolume, numAvgVol, signalCategories, normalizedIncorporated, normalizedLocated, text, filing.title);
           
           // Apply Tuesday bonus (1.2x multiplier for better market conditions)
           const dayOfWeek = new Date().getDay(); // 0=Sunday, 2=Tuesday
@@ -1950,6 +2004,13 @@ app.listen(PORT, () => {
           const filingTimeMultiplier = getFilingTimeMultiplier(filing.updated);
           signalScoreData.filingTimeMultiplier = filingTimeMultiplier;
           signalScoreData.score = parseFloat((signalScoreData.score * filingTimeMultiplier).toFixed(2));
+          
+          // Global attention window bonus (ADDITIONAL - stacks on top)
+          const globalAttentionData = getGlobalAttentionBonus(filing.updated);
+          signalScoreData.globalAttentionBonus = globalAttentionData.bonus;
+          signalScoreData.globalAttentionTier = globalAttentionData.tier;
+          signalScoreData.score = parseFloat((signalScoreData.score * globalAttentionData.bonus).toFixed(2));
+          
           signalScoreData.score = parseFloat(Math.min(1.0, signalScoreData.score).toFixed(2));
           
           const signalScoreDisplay = signalScoreData.score;
@@ -2322,7 +2383,20 @@ app.listen(PORT, () => {
               
               // Only save to alerts if NO skip reason (real alert)
               if (!alertData.skipReason) {
-                saveAlert(alertData);
+                // NEW FILTER: Only alert on Structure Only + (S/O Bonus OR Filing Time Bonus)
+                const hasStructureOnly = signalScoreData.adrMultiplier > 1.0; // Structure Only gives ADR multiplier
+                const hasSoBonus = signalScoreData.soBonus > 1.0;
+                const hasFilingBonus = filingTimeMultiplier > 1.0 || globalAttentionData.bonus > 1.0;
+                
+                const meetsWinningPattern = hasStructureOnly && (hasSoBonus || hasFilingBonus);
+                
+                if (meetsWinningPattern) {
+                  saveAlert(alertData);
+                } else {
+                  // Doesn't meet winning pattern - save to CSV only for tracking
+                  alertData.skipReason = 'Pattern Filter (no Structure Only + Bonuses)';
+                  saveToCSV(alertData);
+                }
               } else {
                 // Save borderline stocks to CSV only
                 saveToCSV(alertData);

@@ -2326,7 +2326,6 @@ app.listen(PORT, () => {
             sharesOutstanding: sharesOutstanding,
             soRatio: soRatio,
             marketCap: marketCap,
-            short: shortOpportunity ? true : false,
             isShort: shortOpportunity ? true : false,
             intent: intent || 'Regulatory Filing',
             incorporated: normalizedIncorporated,

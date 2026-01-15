@@ -3074,19 +3074,20 @@ Move: ${displayPercentMove}% ($${priceMove})</pre>
                             </div>
                             <div class="popup-section">
                                 <h4>Key Indicators</h4>
-                                ${alert.intent ? `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.6; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">Intent:\n${typeof alert.intent === 'string' ? alert.intent : (Array.isArray(alert.intent) ? alert.intent.join(', ') : 'N/A')}</pre>` : ''}
+                                ${alert.intent ? `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.6; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">Intent: ${typeof alert.intent === 'string' ? alert.intent : (Array.isArray(alert.intent) ? alert.intent.join(', ') : 'N/A')}</pre>` : ''}
                                 ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signals).length > 0 ? 
-                                    `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.3; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">` + Object.entries(alert.signals).map(([signal, reasons]) => 
+                                    `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.3; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">` + Object.entries(alert.signals).map(([signal, reasons]) => 
                                         `${signal}:\n${Array.isArray(reasons) ? reasons.join('\n') : reasons}`
                                     ).join('\n') + (alert.hasTuesdayBonus ? '\nBonus:\nTuesday Window' : '') + `</pre>`
-                                    : (alert.intent ? '' : '<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.3; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">No signals detected</pre>')}
+                                    : (alert.intent ? '' : '<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.3; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">No signals detected</pre>')}
                             </div>
                             <div class="popup-section">
                                 <h4>Extra Info</h4>
                                 <pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.4; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">Market Cap: ${alert.marketCap ? '$' + (alert.marketCap / 1000000).toFixed(2) + 'M' : 'N/A'}
 Shares: ${alert.sharesOutstanding ? alert.sharesOutstanding.toLocaleString() : 'N/A'}
 Float: ${alert.float ? alert.float.toLocaleString() : 'N/A'}
-S/O Ratio: ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (' + alert.soBonus.toFixed(2) + 'x)' : ''}${alert.custodianName ? '\nBanks: ' + alert.custodianName : ''}</pre>
+S/O Ratio: ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (' + alert.soBonus.toFixed(2) + 'x)' : ''}
+FTD: ${alert.ftd ? alert.ftd.toLocaleString() + (alert.ftdPercent ? ' (' + alert.ftdPercent + '%)' : '') : 'false'}${alert.custodianName ? '\nBanks: ' + alert.custodianName : ''}</pre>
                             </div>
                         </div>
                         <div class="popup-footer">

@@ -18,27 +18,27 @@ if (fs.existsSync('.env')) {
 
 const CONFIG = {
   // Alert filtering criteria
-  FILE_TIME: 1, // Minutes retro to fetch filings
-  MIN_ALERT_VOLUME: 50000, // Min volume threshold
-  MAX_FLOAT: 100000000, // Max float size
-  MAX_SO_RATIO: 125.0,  // Max short interest ratio - Increased from 80% to 100%
+  FILE_TIME: 1,               // Minutes retro to fetch filings
+  MIN_ALERT_VOLUME: 50000,    // Min volume threshold
+  MAX_FLOAT: 100000000,       // Max float size
+  MAX_SO_RATIO: 125.0,        // Max short interest ratio - Increased from 80% to 100%
   ALLOWED_COUNTRIES: ['israel', 'dubai', 'japan', 'china', 'hong kong', 'brazil', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware', 'massachusetts', 'texas', 'australia'], // Allowed incorporation/located countries
   // Enable optimizations for Raspberry Pi devices
-  PI_MODE: true,             // Enable Pi optimizations          
-  REFRESH_PEAK: 1,       // 10s during trading hours (7am-10am ET)
-  REFRESH_NORMAL: 30000,     // 30s during trading hours (3:30am-6pm ET)
-  REFRESH_NIGHT: 300000,     // 5m outside trading hours (conserve power)
-  REFRESH_WEEKEND: 600000,   // 10m on weekends (very low activity)
-  YAHOO_TIMEOUT: 10000,      // Reduced from 10s for Pi performance
-  SEC_RATE_LIMIT: 5000,      // Minimum 5ms between SEC requests
+  PI_MODE: true,              // Enable Pi optimizations          
+  REFRESH_PEAK: 1,            // 10s during trading hours (7am-10am ET)
+  REFRESH_NORMAL: 30000,      // 30s during trading hours (3:30am-6pm ET)
+  REFRESH_NIGHT: 300000,      // 5m outside trading hours (conserve power)
+  REFRESH_WEEKEND: 600000,    // 10m on weekends (very low activity)
+  YAHOO_TIMEOUT: 10000,       // Reduced from 10s for Pi performance
+  SEC_RATE_LIMIT: 5000,       // Minimum 5ms between SEC requests
   SEC_FETCH_TIMEOUT: 10000,   // Increased to 10s for large SEC filings (was 5s causing timeouts)
-  MAX_COMBINED_SIZE: 100000, // Reduced from 150k for Pi RAM
-  MAX_RETRY_ATTEMPTS: 7,     // Reduced from 7 for Pi resources
+  MAX_COMBINED_SIZE: 100000,  // Reduced from 150k for Pi RAM
+  MAX_RETRY_ATTEMPTS: 7,      // Reduced from 7 for Pi resources
   // Log files
-  ALERTS_FILE: 'logs/alert.json', // File to store recent alerts
-  STOCKS_FILE: 'logs/stocks.json', // File to store all alerts
+  ALERTS_FILE: 'logs/alert.json',      // File to store recent alerts
+  STOCKS_FILE: 'logs/stocks.json',     // File to store all alerts
   PERFORMANCE_FILE: 'logs/quote.json', // File to store performance data
-  CSV_FILE: 'logs/backtest.csv', // File to store CSV export of all alerts
+  CSV_FILE: 'logs/track.csv',       // File to store CSV export of all alerts
   // GitHub & Webhook settings
   GITHUB_REPO_PATH: process.env.GITHUB_REPO_PATH || '/home/user/Documents/sysd', // Local path to GitHub repo
   GITHUB_USERNAME: process.env.GITHUB_USERNAME || 'your-github-username', // GitHub username
@@ -528,7 +528,7 @@ const cleanupStaleAlerts = () => {
 const saveToCSV = (alertData) => {
   try {
     const csvPath = CONFIG.CSV_FILE;
-    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Price,Score,Float,Shares Outstanding,S/O Ratio,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Skip Reason\n';
+    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Price,Score,Float,Shares Outstanding,S/O Ratio,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Skip Reason\n';
     
     // Create file with headers if it doesn't exist
     if (!fs.existsSync(csvPath)) {
@@ -586,6 +586,8 @@ const saveToCSV = (alertData) => {
       escapeCSV(alertData.float || 'N/A'),
       escapeCSV(alertData.sharesOutstanding || 'N/A'),
       escapeCSV(alertData.soRatio || 'N/A'),
+      escapeCSV(alertData.ftd || 'false'),
+      escapeCSV(alertData.ftdPercent || 'N/A'),
       escapeCSV(alertData.volume || 'N/A'),
       escapeCSV(alertData.averageVolume || 'N/A'),
       escapeCSV(incorporated || 'N/A'),
@@ -790,6 +792,28 @@ const fetchWithTimeout = async (url, timeoutMs = 5000, options = {}) => {
     return res;
   } finally {
     clearTimeout(timeout);
+  }
+};
+// Get FTD (Failed to Deliver) data from docs/ftd.txt - returns SUM of ALL entries
+const getFTDData = (ticker) => {
+  try {
+    if (!fs.existsSync('docs/ftd.txt')) return false;
+    const ftdContent = fs.readFileSync('docs/ftd.txt', 'utf8');
+    const lines = ftdContent.split('\n');
+    let totalFTD = 0;
+    
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const parts = line.split('|');
+      if (parts.length >= 4 && parts[2].toUpperCase() === ticker.toUpperCase()) {
+        const ftdQty = parseInt(parts[3]) || 0;
+        totalFTD += ftdQty; // Sum all FTD entries
+      }
+    }
+    
+    return totalFTD > 0 ? totalFTD : false;
+  } catch (e) {
+    return false;
   }
 };
 
@@ -1948,6 +1972,17 @@ app.listen(PORT, () => {
           const avgDisplay = averageVolume && averageVolume > 0 ? averageVolume.toLocaleString('en-US', { maximumFractionDigits: 0 }) : 'N/A';
           const mcDisplay = marketCap !== 'N/A' && marketCap > 0 ? '$' + Math.round(marketCap).toLocaleString('en-US') : 'N/A';
           const floatDisplay = float !== 'N/A' ? float.toLocaleString('en-US', { maximumFractionDigits: 0 }) : 'N/A';
+          
+          // Get FTD data EARLY - before any skips
+          const ftdData = getFTDData(ticker);
+          let ftdPercent = null;
+          if (ftdData && float !== 'N/A') {
+            const floatNum = parseFloat(float);
+            if (floatNum > 0) {
+              ftdPercent = ((ftdData / floatNum) * 100).toFixed(2);
+            }
+          }
+          
           let soRatio = 'N/A';
           if (sharesOutstanding !== 'N/A' && float !== 'N/A' && sharesOutstanding > 0 && !isNaN(float) && !isNaN(sharesOutstanding)) {
             const ratio = (float / sharesOutstanding) * 100;
@@ -1960,22 +1995,26 @@ app.listen(PORT, () => {
           // Determine if this is a SHORT or LONG opportunity based on signals
           const sigKeys = Object.keys(semanticSignals || {});
           
-          // Reverse Split + Dilution = ALWAYS SHORT
+          // Deterministic SHORT signals
           const hasReverseSplit = sigKeys.includes('Reverse Split');
           const hasDilution = sigKeys.includes('Dilution');
-          const isShortCombo = hasReverseSplit && hasDilution;
+          const hasStockSplit = sigKeys.includes('Stock Split');
           
-          if (isShortCombo) {
+          // ONLY SHORT if: Reverse Split + Dilution/Stock Split (structural destruction)
+          const isShortCombo = hasReverseSplit && (hasDilution || hasStockSplit);
+          
+          // Bearish signals that force SHORT regardless
+          const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Product Discontinuation', 'Loss of Major Customer'];
+          const hasBearishSignal = sigKeys.some(cat => bearishCats.includes(cat));
+          
+          // Determine SHORT or LONG
+          if (isShortCombo || hasBearishSignal) {
             shortOpportunity = true;
-          } else {
-            // Bearish signals = SHORT
-            const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Compliance Issue', 'Product Discontinuation', 'Loss of Major Customer'];
-            const hasBearishSignal = sigKeys.some(cat => bearishCats.includes(cat));
-            
-            if (hasBearishSignal) {
-              shortOpportunity = true;
-            }
+          } else if (sigKeys.length > 0) {
+            // Has signals but they're not bearish/short signals = LONG
+            longOpportunity = true;
           }
+          // If sigKeys.length === 0 (pure Press Release), leave both null for "N/A"
           
           const now = new Date();
           const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
@@ -2018,10 +2057,21 @@ app.listen(PORT, () => {
           
           const signalScoreDisplay = signalScoreData.score;
           
+          // FTD display with percentage
+          let ftdDisplay = 'false';
+          if (ftdData) {
+            ftdDisplay = ftdData.toLocaleString('en-US');
+            if (ftdPercent) {
+              ftdDisplay += ` (${ftdPercent}%)`;
+            }
+          }
+          
+          const directionLabel = shortOpportunity ? 'SHORT' : (longOpportunity ? 'LONG' : 'N/A');
+          
           if (shortOpportunity || longOpportunity) {
-            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, ${shortOpportunity || longOpportunity}`);
+            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, FTD: ${ftdDisplay}, ${directionLabel}`);
           } else {
-            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}`);
+            log('INFO', `Stock: ${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, FTD: ${ftdDisplay}`);
           }
           
           // Check for FDA Approvals and Chinese/Cayman reverse splits that bypass time window filter
@@ -2050,6 +2100,8 @@ app.listen(PORT, () => {
                   float: float,
                   sharesOutstanding: sharesOutstanding,
                   soRatio: soRatio,
+                  ftd: ftdData || false,
+                  ftdPercent: ftdPercent || null,
                   volume: volume,
                   averageVolume: averageVolume,
                   incorporated: normalizedIncorporated,
@@ -2086,6 +2138,8 @@ app.listen(PORT, () => {
                 float: float,
                 sharesOutstanding: sharesOutstanding,
                 soRatio: soRatio,
+                ftd: ftdData || false,
+                ftdPercent: ftdPercent || null,
                 volume: volume,
                 averageVolume: averageVolume,
                 incorporated: normalizedIncorporated,
@@ -2126,6 +2180,8 @@ app.listen(PORT, () => {
                 float: float,
                 sharesOutstanding: sharesOutstanding,
                 soRatio: soRatio,
+                ftd: ftdData || false,
+                ftdPercent: ftdPercent || null,
                 volume: volume,
                 averageVolume: averageVolume,
                 incorporated: normalizedIncorporated,
@@ -2163,6 +2219,8 @@ app.listen(PORT, () => {
                 float: float,
                 sharesOutstanding: sharesOutstanding,
                 soRatio: soRatio,
+                ftd: ftdData || false,
+                ftdPercent: ftdPercent || null,
                 volume: volume,
                 averageVolume: averageVolume,
                 incorporated: normalizedIncorporated,
@@ -2226,6 +2284,8 @@ app.listen(PORT, () => {
                 float: float,
                 sharesOutstanding: sharesOutstanding,
                 soRatio: soRatio,
+                ftd: ftdData || false,
+                ftdPercent: ftdPercent || null,
                 volume: volume,
                 averageVolume: averageVolume,
                 incorporated: normalizedIncorporated,
@@ -2287,6 +2347,8 @@ app.listen(PORT, () => {
                 float: float,
                 sharesOutstanding: sharesOutstanding,
                 soRatio: soRatio,
+                ftd: ftdData || false,
+                ftdPercent: ftdPercent || null,
                 volume: volume,
                 averageVolume: averageVolume,
                 incorporated: normalizedIncorporated,
@@ -2330,6 +2392,8 @@ app.listen(PORT, () => {
             soRatio: soRatio,
             marketCap: marketCap,
             isShort: shortOpportunity ? true : false,
+            ftd: ftdData || false,
+            ftdPercent: ftdPercent || null,
             intent: intent || 'Regulatory Filing',
             incorporated: normalizedIncorporated,
             located: normalizedLocated,
@@ -2439,6 +2503,8 @@ app.listen(PORT, () => {
                 float: float,
                 sharesOutstanding: sharesOutstanding,
                 soRatio: soRatio,
+                ftd: ftdData || false,
+                ftdPercent: ftdPercent || null,
                 volume: volume,
                 averageVolume: averageVolume,
                 incorporated: normalizedIncorporated,

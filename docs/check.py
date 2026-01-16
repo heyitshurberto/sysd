@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Check alert performance - tracks peak price since alert
+Check alert performance - fetches live prices for tickers
 Run: python3 check.py
 """
 
@@ -8,8 +8,18 @@ import csv
 import json
 import sys
 import os
+import urllib.request
 
 PEAKS_FILE = 'logs/peaks.json'
+
+# Load API key from .env
+FINNHUB_API_KEY = None
+if os.path.exists('.env'):
+    with open('.env', 'r') as f:
+        for line in f:
+            if line.startswith('FINNHUB_API_KEY='):
+                FINNHUB_API_KEY = line.split('=', 1)[1].strip()
+                break
 
 def load_peaks():
     """Load stored peak prices"""
@@ -26,12 +36,27 @@ def save_peaks(peaks):
     with open(PEAKS_FILE, 'w') as f:
         json.dump(peaks, f, indent=2)
 
+def fetch_stock_price(ticker):
+    """Fetch live stock price from Finnhub"""
+    if not FINNHUB_API_KEY:
+        return None
+    try:
+        url = f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_API_KEY}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode())
+            if 'c' in data:  # c = current price
+                return float(data['c'])
+    except:
+        pass
+    return None
+
 def main():
     try:
         with open('logs/track.csv', 'r') as f:
             rows = list(csv.DictReader(f))
     except FileNotFoundError:
-        print("ERROR: No track.csv found. Run app.js first.")
+        print("ERROR: No track.csv found.")
         sys.exit(1)
     
     if not rows:
@@ -40,18 +65,6 @@ def main():
     
     # Load existing peak prices
     peaks = load_peaks()
-    
-    # Try to read alert.json for current prices
-    alerts = {}
-    try:
-        with open('logs/alert.json', 'r') as f:
-            alert_list = json.load(f)
-            for alert in alert_list:
-                ticker = alert.get('ticker')
-                current_price = alert.get('price')
-                alerts[ticker] = current_price
-    except FileNotFoundError:
-        pass
     
     # Get unique tickers from track.csv
     tickers = set()
@@ -83,8 +96,8 @@ def main():
         except ValueError:
             continue
         
-        # Get current price from alerts
-        current = alerts.get(ticker)
+        # Fetch current live price
+        current = fetch_stock_price(ticker)
         current_str = f"${current:.2f}" if current else "N/A"
         
         # Initialize peak if not exists

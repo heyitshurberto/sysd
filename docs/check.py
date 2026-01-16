@@ -134,7 +134,7 @@ def main():
     
     print("-" * 70)
     avg_move = total_move / count if count > 0 else 0
-    print(f"{winners}/{count} winners  |  Avg: {avg_move:+.1f}%\n")
+    print(f"Average: {avg_move:+.1f}%\n")
 
 if __name__ == '__main__':
     main()

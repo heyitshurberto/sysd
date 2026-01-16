@@ -16,15 +16,11 @@
     "yahoo-finance2": "^3.11.2"
   },
   "scripts": {
-    "start": "node --no-warnings --max-old-space-size=512 main.js",
-    "pi": "node --no-warnings --max-old-space-size=384 main.js",
-    "pm2-start": "pm2 start ecosystem.config.js --env production",
-    "pm2-logs": "pm2 logs",
-    "pm2-restart": "pm2 restart eugene-bot",
-    "pm2-stop": "pm2 stop eugene-bot"
+    "start": "node --no-warnings --max-old-space-size=512 app.js",
+    "pi": "node --no-warnings --max-old-space-size=384 app.js"
   },
   "version": "1.0.0",
-  "main": "main.js",
+  "main": "app.js",
   "keywords": [],
   "author": "",
   "license": "ISC",

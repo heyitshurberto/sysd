@@ -59,6 +59,28 @@ const suppressPatterns = [
   'Circuit open', 'returning cached quote', 'Opening circuit', 'attempt', 'Unexpected token',
   'Using cached quote', 'Quote fetch failed', 'Failed to fetch quote'
 ];
+const isSuppressed = (msg) => {
+  if (!msg) return false;
+  const str = msg.toString ? msg.toString() : String(msg);
+  if (str.startsWith('fetch ')) return true;
+  return suppressPatterns.some(pattern => str.includes(pattern));
+};
+console.log = (...args) => {
+  const msg = args[0]?.toString() || '';
+  if (!isSuppressed(msg)) originalLog(...args);
+};
+console.warn = (...args) => {
+  const msg = args[0]?.toString() || '';
+  if (!isSuppressed(msg)) originalWarn(...args);
+};
+console.error = (...args) => {
+  const msg = args[0]?.toString() || '';
+  if (!isSuppressed(msg)) originalError(...args);
+};
+process.stdout.write = function(str) {
+  if (!isSuppressed(str)) return originalWrite.call(process.stdout, str);
+  return true;
+};
 
 const require = createRequire(import.meta.url);
 const YahooFinance = require('yahoo-finance2').default;

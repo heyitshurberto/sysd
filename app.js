@@ -210,14 +210,13 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   else if (volumeRatio >= 0.8) volumeScore = 0.25;  // Below average
   else volumeScore = 0.15;
 
-  // Signal Strength Multiplier (conservative - only major catalysts get real boost)
   let signalMultiplier = 1.0;
-  const deathSpiralCats = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Loss', 'Net Loss', 'Cash Burn', 'Accumulated Deficit', 'Share Dilution', 'Convertible Dilution', 'Warrant Dilution', 'Regulatory Violation', 'Executive Liquidation'];
+  const deathSpiralCats = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Loss', 'Net Loss', 'Cash Burn', 'Accumulated Deficit', 'Share Dilution', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Accounting Restatement', 'Regulatory Violation', 'Executive Liquidation', 'Credit Default'];
   const hasDeathSpiral = signalCategories?.some(cat => deathSpiralCats.includes(cat));
   const hasSqueeze = signalCategories?.some(cat => cat === 'Artificial Inflation');
   
-  if (hasDeathSpiral) signalMultiplier = 1.15;  // 15% boost, not 30%
-  else if (hasSqueeze) signalMultiplier = 1.10;  // 10% boost, not 20%
+  if (hasDeathSpiral) signalMultiplier = 1.15;
+  else if (hasSqueeze) signalMultiplier = 1.10;
   else signalMultiplier = 1.0;
 
   // ADR Detection - verify actual custodian banks + incorporated != located structure

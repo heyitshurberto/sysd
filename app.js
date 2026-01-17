@@ -777,6 +777,7 @@ const updatePerformanceData = (alertData) => {
       };
     } else {
       // Update current price and track peaks/lows
+      performanceData[ticker].short = alertData.short ? true : false;
       performanceData[ticker].current = currentPrice;
       if (currentPrice > performanceData[ticker].highest) {
         performanceData[ticker].highest = currentPrice;
@@ -790,12 +791,9 @@ const updatePerformanceData = (alertData) => {
     const alertPrice = performanceData[ticker].alert || 0;
     if (alertPrice > 0) {
       const change = currentPrice - alertPrice;
-      let percentChange = (change / alertPrice) * 100;
-      if (performanceData[ticker].short) {
-        percentChange = -percentChange;
-      }
+      const percentChange = (change / alertPrice) * 100;
       performanceData[ticker].performance = parseFloat(percentChange.toFixed(2));
-      performanceData[ticker].reverseSplitRatio = null;
+      performanceData[ticker].reverseSplitRatio = null; // Can be updated if needed
     }
     
     // Write updated performance data

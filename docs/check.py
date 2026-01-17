@@ -10,8 +10,6 @@ import sys
 import os
 import urllib.request
 
-PEAKS_FILE = 'logs/peaks.json'
-
 # Load API key from .env
 FINNHUB_API_KEY = None
 if os.path.exists('.env'):
@@ -20,21 +18,6 @@ if os.path.exists('.env'):
             if line.startswith('FINNHUB_API_KEY='):
                 FINNHUB_API_KEY = line.split('=', 1)[1].strip()
                 break
-
-def load_peaks():
-    """Load stored peak prices"""
-    if os.path.exists(PEAKS_FILE):
-        try:
-            with open(PEAKS_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            return {}
-    return {}
-
-def save_peaks(peaks):
-    """Save peak prices"""
-    with open(PEAKS_FILE, 'w') as f:
-        json.dump(peaks, f, indent=2)
 
 def fetch_stock_price(ticker):
     """Fetch live stock price from Finnhub"""
@@ -63,9 +46,6 @@ def main():
         print("ERROR: track.csv is empty")
         sys.exit(1)
     
-    # Load existing peak prices
-    peaks = load_peaks()
-    
     # Get unique tickers from track.csv
     tickers = set()
     for row in rows:
@@ -78,9 +58,9 @@ def main():
         sys.exit(1)
     
     print(f"\nAlerts ({len(tickers)})")
-    print("-" * 70)
-    print(f"{'Ticker':<8} {'Alert':<10} {'Current':<10} {'Peak':<10} {'Change':<10}")
-    print("-" * 70)
+    print("-" * 60)
+    print(f"{'Ticker':<8} {'Alert':<10} {'Current':<10} {'Change':<10}")
+    print("-" * 60)
     
     total_move = 0
     winners = 0
@@ -100,39 +80,30 @@ def main():
         current = fetch_stock_price(ticker)
         current_str = f"${current:.2f}" if current else "N/A"
         
-        # Initialize peak if not exists
-        if ticker not in peaks:
-            peaks[ticker] = alert_price
+        if current:
+            move_pct = ((current - alert_price) / alert_price) * 100
+            
+            if current > alert_price:
+                count += 1
+                total_move += move_pct
+                if move_pct > 50:
+                    winners += 1
+                elif move_pct > 20:
+                    winners += 1
+                elif move_pct > 0:
+                    winners += 1
+            elif current < alert_price:
+                count += 1
+                total_move += move_pct
+            
+            move_str = f"{move_pct:+.1f}%"
+        else:
+            move_str = "N/A"
         
-        # Update peak if current price is higher
-        if current and current > peaks[ticker]:
-            peaks[ticker] = current
-        
-        peak_price = peaks[ticker]
-        move_pct = ((peak_price - alert_price) / alert_price) * 100
-        
-        if peak_price > alert_price:
-            count += 1
-            total_move += move_pct
-            if move_pct > 50:
-                winners += 1
-            elif move_pct > 20:
-                winners += 1
-            elif move_pct > 0:
-                winners += 1
-        elif peak_price < alert_price:
-            count += 1
-            total_move += move_pct
-        
-        peak_str = f"${peak_price:.2f}"
-        move_str = f"{move_pct:+.1f}%"
         alert_str = f"${alert_price:.2f}"
-        print(f"{ticker:<8} {alert_str:<10} {current_str:<10} {peak_str:<10} {move_str:<10}")
+        print(f"{ticker:<8} {alert_str:<10} {current_str:<10} {move_str:<10}")
     
-    # Save updated peaks
-    save_peaks(peaks)
-    
-    print("-" * 70)
+    print("-" * 60)
     avg_move = total_move / count if count > 0 else 0
     print(f"Average: {avg_move:+.1f}%\n")
 

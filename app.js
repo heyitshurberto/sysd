@@ -19,10 +19,13 @@ if (fs.existsSync('.env')) {
 const CONFIG = {
   // Alert filtering criteria
   FILE_TIME: 1,               // Minutes retro to fetch filings
-  MIN_ALERT_VOLUME: 50000,    // Min volume threshold
-  MAX_FLOAT: 100000000,       // Max float size
+  MIN_ALERT_VOLUME: 20000,     // Lower base, conditional on signal strength
+  STRONG_SIGNAL_MIN_VOLUME: 1000, // Very low for penny stocks with extreme S/O
+  EXTREME_SO_RATIO: 80,       // >80% S/O = tight float (primary volatility driver)
+  MAX_FLOAT_6K: 100000000,    // Max float size for 6-K
+  MAX_FLOAT_8K: 250000000,    // Max float size for 8-K (higher threshold - less reliable)
   MAX_SO_RATIO: 125.0,        // Max short interest ratio - Increased from 80% to 100%
-  ALLOWED_COUNTRIES: ['israel', 'dubai', 'japan', 'china', 'hong kong', 'brazil', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'ireland', 'california', 'delaware', 'massachusetts', 'texas', 'australia'], // Allowed incorporation/located countries
+  ALLOWED_COUNTRIES: ['israel', 'dubai', 'japan', 'china', 'hong kong', 'brazil', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'new york', 'nevada', 'ireland', 'california', 'delaware', 'massachusetts', 'texas', 'australia'], // Allowed incorporation/located countries
   // Enable optimizations for Raspberry Pi devices
   PI_MODE: true,              // Enable Pi optimizations          
   REFRESH_PEAK: 1,            // 10s during trading hours (7am-10am ET)
@@ -151,6 +154,14 @@ const detectCustodianBanks = (text) => {
 
 // S/O Bonus Multiplier - tighter float = stronger move potential
 // High S/O (tight float) = 1.0-1.1x bonus based on float percentage
+// Calculate VWAP - estimated from price and volume
+const calculateVWAP = (price, volume) => {
+  if (!price || !volume || isNaN(price) || isNaN(volume) || price === 'N/A' || volume === 'N/A') return 'N/A';
+  const numPrice = typeof price === 'number' ? price : parseFloat(price);
+  if (isNaN(numPrice) || numPrice <= 0) return 'N/A';
+  return numPrice; // Current price is VWAP estimate for single-point data
+};
+
 const getSOBonus = (float, sharesOutstanding) => {
   if (!float || !sharesOutstanding || isNaN(float) || isNaN(sharesOutstanding)) return 1.0;
   const soPercent = (float / sharesOutstanding) * 100;
@@ -201,9 +212,9 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
 
   // Signal Strength Multiplier (conservative - only major catalysts get real boost)
   let signalMultiplier = 1.0;
-  const deathSpiralCats = ['Going Concern', 'Accounting Restatement', 'Bankruptcy Filing', 'Dilution', 'Reverse Split', 'Compliance Issue', 'Insider Selling'];
+  const deathSpiralCats = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Loss', 'Net Loss', 'Cash Burn', 'Accumulated Deficit', 'Share Dilution', 'Convertible Dilution', 'Warrant Dilution', 'Regulatory Violation', 'Executive Liquidation'];
   const hasDeathSpiral = signalCategories?.some(cat => deathSpiralCats.includes(cat));
-  const hasSqueeze = signalCategories?.some(cat => cat === 'Reverse Split');
+  const hasSqueeze = signalCategories?.some(cat => cat === 'Artificial Inflation');
   
   if (hasDeathSpiral) signalMultiplier = 1.15;  // 15% boost, not 30%
   else if (hasSqueeze) signalMultiplier = 1.10;  // 10% boost, not 20%
@@ -399,17 +410,25 @@ const SEMANTIC_KEYWORDS = {
   'Regulatory Approval': ['Regulatory Approval Granted', 'Patent Approved', 'License Granted', 'Permit Issued'],
   'Revenue Growth': ['Revenue Growth Acceleration', 'Record Quarterly Revenue', 'Guidance Raise', 'Organic Growth'],
   'Insider Buying': ['Director Purchase', 'Executive Purchase', 'CEO Buying', 'CFO Buying', 'Meaningful Accumulation'],
-  'Reverse Split': ['Reverse Stock Split', 'Reverse Split', 'Reversed Split', 'Reverse Split Announced', 'Announced Reverse Split', '1-for-', 'Consolidation Of Shares', 'Share Consolidation', 'Combine Shares', 'Combined Shares', 'Restructuring Of Capital', 'Stock Consolidation', 'Share Combination', 'Reverse 1:8', 'Reverse 1:10', 'Reverse 1:20', 'Reverse 1:25', 'Reverse 1:50'],
+  'Artificial Inflation': ['Reverse Stock Split', 'Reverse Split', 'Reversed Split', 'Reverse Split Announced', 'Announced Reverse Split', 'Consolidation Of Shares', 'Share Consolidation', 'Combine Shares', 'Combined Shares', 'Stock Consolidation', 'Share Combination', 'Reverse 1:8', 'Reverse 1:10', 'Reverse 1:20', 'Reverse 1:25', 'Reverse 1:50'],
   'Bankruptcy Filing': ['Bankruptcy Protection', 'Chapter 11 Filing', 'Chapter 7 Filing', 'Insolvency Proceedings', 'Creditor Protection'],
-  'Going Concern': ['Going Concern Warning', 'Substantial Doubt Going Concern', 'Auditor Going Concern Note', 'Continued Losses', 'Operating Loss', 'Net Loss', 'Loss from operations', 'Massive Losses', 'Accumulated Deficit', 'Significant loss', 'Substantial losses', 'Cash burn rate', 'Depleted cash', 'Negative cash flow'],
+  'Operating Loss': ['Operating Loss', 'Loss from operations', 'Operational Loss'],
+  'Net Loss': ['Net Loss', 'Continued Losses', 'Massive Losses'],
+  'Cash Burn': ['Cash burn rate', 'Depleted cash', 'Negative cash flow', 'Cash depletion'],
+  'Accumulated Deficit': ['Accumulated Deficit', 'Going Concern Warning', 'Substantial Doubt Going Concern', 'Auditor Going Concern Note'],
   'Public Offering': ['Public Offering Announced', 'Secondary Offering', 'Follow-On Offering', 'Shelf Offering', 'At-The-Market Offering'],
-  'Dilution': ['Dilutive Securities', 'New Shares Issued', 'Convertible Notes', 'Warrant Issuance', 'Option Grants Excessive', 'Shares Outstanding Increased', 'Share Dilution', 'Share Issuance', 'Dilutive issuance', 'Shares increased', 'Share increase', 'Offering shares', 'Issuance of shares', 'Equity incentive plan increase'],
-  'Delisting Risk': ['Nasdaq Deficiency', 'Listing Standards Warning', 'Nasdaq Notification', 'Nasdaq Letter', 'Regained Compliance', 'Delisting Risk', 'Minimum Bid Price', 'Delisting Threat'],
-  'Warrant Redemption': ['Warrant Redemption Notice', 'Forced Exercise', 'Warrant Call Notice', 'Final Expiration Notice'],
-  'Insider Selling': ['Director Sale', 'Officer Sale', 'CEO Selling', 'CFO Selling', 'Massive Liquidation', 'Employee Incentive', 'Equity Compensation', 'RSU Grant', 'Restricted Stock Unit', 'General admin expense', 'Stock-based compensation', 'Excessive compensation', 'Compensation increase', 'Executive compensation spike'],
+  'Share Dilution': ['Share Dilution', 'New Shares Issued', 'Shares Outstanding Increased', 'Share Issuance', 'Dilutive issuance', 'Shares increased', 'Share increase', 'Offering shares', 'Issuance of shares'],
+  'Convertible Dilution': ['Convertible Notes', 'Convertible Bonds', 'Convertible Securities'],
+  'Warrant Dilution': ['Warrant Issuance', 'Warrant Redemption Notice', 'Forced Exercise', 'Warrant Call Notice'],
+  'Compensation Dilution': ['Option Grants Excessive', 'Employee Incentive', 'Equity Compensation', 'RSU Grant', 'Restricted Stock Unit', 'Equity incentive plan increase'],
+  'Nasdaq Delisting': ['Nasdaq Deficiency', 'Listing Standards Warning', 'Nasdaq Notification', 'Nasdaq Letter', 'Delisting Risk', 'Delisting Threat'],
+  'Bid Price Delisting': ['Minimum Bid Price', 'Regained Compliance'],
+  'Executive Liquidation': ['Director Sale', 'Officer Sale', 'CEO Selling', 'CFO Selling', 'Massive Liquidation'],
   'Accounting Restatement': ['Financial Restatement', 'Audit Non-Reliance', 'Material Weakness', 'Control Deficiency', 'Audit Adjustment'],
   'Credit Default': ['Loan Default', 'Debt Covenant Breach', 'Event Of Default', 'Credit Agreement Violation'],
-  'Debt Issuance': ['Debt Issuance', 'Senior Debt Issued', 'Convertible Bonds', 'Junk Bond Offering', 'High Leverage'],
+  'Senior Debt': ['Senior Debt Issued', 'High Leverage'],
+  'Convertible Debt': ['Convertible Bonds'],
+  'Junk Debt': ['Junk Bond Offering'],
   'Material Lawsuit': ['Material Litigation', 'Lawsuit Filed', 'Major Lawsuit', 'SEC Investigation', 'DOJ Investigation'],
   'Supply Chain Crisis': ['Supply Chain Disruption', 'Production Halt', 'Factory Closure', 'Supplier Bankruptcy', 'Shipping Delays'],
   'Executive Departure': ['CEO Departed', 'CFO Departed', 'CEO Resigned', 'Board Resignation', 'Chief Officer Left'],
@@ -423,7 +442,9 @@ const SEMANTIC_KEYWORDS = {
   'Government Contract': ['Government Contract Award', 'Defense Contract', 'Federal Contract', 'DOD Contract', 'GSA Schedule', 'Federal Procurement'],
   'Stock Split': ['Stock Split Announced', 'Forward Split', 'Stock Dividend', 'Share Split'],
   'Dividend Increase': ['Dividend Increase', 'Dividend Hike', 'Special Dividend', 'Increased Dividend', 'Quarterly Dividend Raised', 'Annual Dividend Increase'],
-  'Compliance Issue': ['Regulatory Violation', 'FDA Warning', 'Product Recall', 'Safety Recall', 'Warning Letter', 'Compliance Violation', 'Regulatory Enforcement', 'VIE structure', 'VIE agreement', 'PRC regulations', 'regulatory risk', 'capital control', 'foreign exchange restriction', 'dividend limitation', 'SAFE Circular', 'Chinese regulatory', 'Subject to risks', 'Uncertainty of interpretation', 'variable interest'],
+  'Regulatory Violation': ['Regulatory Violation', 'FDA Warning', 'Product Recall', 'Safety Recall', 'Warning Letter'],
+  'VIE Structure': ['VIE structure', 'VIE agreement', 'variable interest'],
+  'China Risk': ['PRC regulations', 'regulatory risk', 'Chinese regulatory', 'capital control', 'foreign exchange restriction', 'dividend limitation', 'SAFE Circular', 'Subject to risks', 'Uncertainty of interpretation'],
   'Mining Operations': ['Mining Operation', 'Cryptocurrency Mining', 'Blockchain Mining', 'Bitcoin Mining', 'Ethereum Mining', 'Mining Facility', 'Mining Expansion', 'Hash Rate Growth'],
   'Financing Events': ['IPO Announced', 'Debt Offering', 'Credit Facility', 'Loan Facility', 'Financing Secured', 'Capital Structure', 'Bond Issuance'],
   'Analyst Coverage': ['Analyst Initiation', 'Analyst Upgrade', 'Analyst Initiation Buy', 'Rating Upgrade', 'Price Target Increase', 'Outperform Rating', 'Buy Rating Initiated'],
@@ -528,7 +549,7 @@ const cleanupStaleAlerts = () => {
 const saveToCSV = (alertData) => {
   try {
     const csvPath = CONFIG.CSV_FILE;
-    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Price,Score,Float,Shares Outstanding,S/O Ratio,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Skip Reason\n';
+    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Price,Score,Float,Shares Outstanding,S/O Ratio,VWAP,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Skip Reason\n';
     
     // Create file with headers if it doesn't exist
     if (!fs.existsSync(csvPath)) {
@@ -574,6 +595,7 @@ const saveToCSV = (alertData) => {
     };
     
     // Build CSV row with data
+    const csvVWAP = calculateVWAP(alertData.price, alertData.volume);
     const row = [
       escapeCSV(filedDate),
       escapeCSV(filedTime),
@@ -586,6 +608,7 @@ const saveToCSV = (alertData) => {
       escapeCSV(alertData.float || 'N/A'),
       escapeCSV(alertData.sharesOutstanding || 'N/A'),
       escapeCSV(alertData.soRatio || 'N/A'),
+      escapeCSV(csvVWAP !== 'N/A' ? parseFloat(csvVWAP).toFixed(2) : 'N/A'),
       escapeCSV(alertData.ftd || 'false'),
       escapeCSV(alertData.ftdPercent || 'N/A'),
       escapeCSV(alertData.volume || 'N/A'),
@@ -636,7 +659,7 @@ const saveAlert = (alertData) => {
     fs.writeFileSync(CONFIG.ALERTS_FILE, JSON.stringify(alerts, null, 2));
     
     // Determine direction for CSV - check for ANY bearish signals
-    const bearishCategories = ['Reverse Split', 'Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Dilution', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Compliance Issue', 'Product Discontinuation', 'Loss of Major Customer'];
+    const bearishCategories = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Loss', 'Net Loss', 'Cash Burn', 'Accumulated Deficit', 'Public Offering', 'Share Dilution', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Nasdaq Delisting', 'Bid Price Delisting', 'Executive Liquidation', 'Accounting Restatement', 'Credit Default', 'Senior Debt', 'Convertible Debt', 'Junk Debt', 'Material Lawsuit', 'Supply Chain Crisis', 'Regulatory Violation', 'VIE Structure', 'China Risk', 'Product Discontinuation', 'Loss of Major Customer'];
     const signalKeys = (alertData.intent && Array.isArray(alertData.intent)) ? alertData.intent : (alertData.intent ? String(alertData.intent).split(', ') : []);
     const hasBearish = signalKeys.some(cat => bearishCategories.includes(cat));
     const direction = hasBearish ? 'SHORT' : 'LONG';
@@ -1305,7 +1328,7 @@ const sendPersonalWebhook = (alertData) => {
     const countryDisplay = incorporatedCode === locatedCode ? incorporatedCode : `${incorporatedCode}/${locatedCode}`;
     
     // Determine direction based on bearish signal categories
-    const bearishCategories = ['Reverse Split', 'Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Dilution', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Compliance Issue', 'Product Discontinuation', 'Loss of Major Customer'];
+    const bearishCategories = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Loss', 'Net Loss', 'Cash Burn', 'Accumulated Deficit', 'Public Offering', 'Share Dilution', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Nasdaq Delisting', 'Bid Price Delisting', 'Executive Liquidation', 'Accounting Restatement', 'Credit Default', 'Senior Debt', 'Convertible Debt', 'Junk Debt', 'Material Lawsuit', 'Supply Chain Crisis', 'Regulatory Violation', 'VIE Structure', 'China Risk', 'Product Discontinuation', 'Loss of Major Customer'];
     const intentArray = (intent && Array.isArray(intent)) ? intent : (intent ? String(intent).split(', ') : []);
     const hasBearish = intentArray.some(cat => bearishCategories.includes(cat));
     const direction = hasBearish ? 'SHORT' : 'LONG';
@@ -1326,12 +1349,15 @@ const sendPersonalWebhook = (alertData) => {
     const floatDisplay = alertData.float && alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A';
     const signalScoreBold = alertData.signalScore ? `**${alertData.signalScore}**` : 'N/A';
     const signalScoreDisplay = alertData.signalScore ? alertData.signalScore : 'N/A';
+    const vwap = calculateVWAP(alertData.price, alertData.volume);
+    const vwapDisplay = vwap !== 'N/A' ? `$${vwap.toFixed(2)}` : 'N/A';
     
-    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, ${reason}, vol/avg: ${volDisplay}/${avgDisplay}${volumeMultiplier}, float: ${floatDisplay}, s/o: ${alertData.soRatio}
+    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, ${reason}, vol/avg: ${volDisplay}/${avgDisplay}${volumeMultiplier}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, vwap: ${vwapDisplay}
     https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
     const personalMsg = { content: personalAlertContent };
     
-    log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}, Float: ${alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A'}, Vol/Avg: ${volDisplay}/${avgDisplay}, S/O: ${alertData.soRatio}`);
+    const vwapLog = vwap !== 'N/A' ? `$${vwap.toFixed(2)}` : 'N/A';
+    log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}, Float: ${alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A'}, Vol/Avg: ${volDisplay}/${avgDisplay}, S/O: ${alertData.soRatio}, VWAP: ${vwapLog}`);
     
     // Non-blocking fetch with timeout
     Promise.race([
@@ -1526,16 +1552,21 @@ app.get('/api/quote/:ticker', async (req, res) => {
       fundamentals.sharesOutstanding = quote?.sharesOutstanding || await getSharesOutstanding(ticker);
     }
     
+    const quotePrice = quote?.regularMarketPrice || 'N/A';
+    const quoteVolume = quote?.regularMarketVolume || 0;
+    const quoteVWAP = calculateVWAP(quotePrice, quoteVolume);
+    
     res.json({
       symbol: ticker,
-      price: quote?.regularMarketPrice || 'N/A',
-      volume: quote?.regularMarketVolume || 0,
+      price: quotePrice,
+      volume: quoteVolume,
       averageVolume: fundamentals.averageVolume || quote?.averageDailyVolume3Month || 0,
       marketCap: quote?.marketCap || 'N/A',
       exchange: quote?.exchange || 'UNKNOWN',
       float: fundamentals.float || 'N/A',
       sharesOutstanding: fundamentals.sharesOutstanding || 'N/A',
       soRatio: fundamentals.soRatio || 'N/A',
+      vwap: quoteVWAP
     });
     
     // Update performance data if price is available
@@ -1812,6 +1843,15 @@ app.listen(PORT, () => {
             normalizedLocated = secData.located || 'Unknown';
           }
           
+          // Better jurisdiction parsing - Cayman/BVI often show as "Unknown" in normalized data
+          // If incorporated is Unknown, check for Cayman/BVI patterns in filing title/text
+          if (normalizedIncorporated === 'Unknown' && (text.includes('Cayman') || text.includes('BVI') || text.includes('Virgin Islands'))) {
+            normalizedIncorporated = 'Cayman Islands';
+          }
+          if (normalizedLocated === 'Unknown' && (text.includes('Cayman') || text.includes('BVI') || text.includes('Virgin Islands'))) {
+            normalizedLocated = 'Cayman Islands';
+          }
+          
           if (normalizedIncorporated !== normalizedLocated) {
             log('INFO', `Incorporated: ${normalizedIncorporated}, Located: ${normalizedLocated}`);
           } else {
@@ -1826,14 +1866,14 @@ app.listen(PORT, () => {
             }
             let newsDisplay = allKeywords.join(', ');
             
-            // If "Reverse Split" is detected, try to extract the ratio
-            if (Object.keys(semanticSignals).includes('Reverse Split')) {
+            // If "Artificial Inflation" is detected, try to extract the ratio
+            if (Object.keys(semanticSignals).includes('Artificial Inflation')) {
               const ratio = extractReverseSplitRatio(text);
               if (ratio) {
                 // Replace in both the display and the actual signals array
                 newsDisplay = newsDisplay.replace(/1-for-/i, ratio + ' ');
                 // Also update the semanticSignals array to replace incomplete '1-for-' with complete ratio
-                semanticSignals['Reverse Split'] = semanticSignals['Reverse Split'].map(kw => 
+                semanticSignals['Artificial Inflation'] = semanticSignals['Artificial Inflation'].map(kw => 
                   kw === '1-for-' ? ratio : kw
                 );
               }
@@ -1871,7 +1911,7 @@ app.listen(PORT, () => {
           const formsDisplay = otherForms.length > 0 ? otherForms.join(', ') : '';
           const itemsDisplay = otherItems.length > 0 ? otherItems.sort((a, b) => parseFloat(a) - parseFloat(b)).map(item => `Item ${item}`).join(', ') : '';
           
-          const bearishCategories = ['Reverse Split', 'Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Dilution', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Compliance Issue', 'Product Discontinuation', 'Loss of Major Customer'];
+          const bearishCategories = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Loss', 'Net Loss', 'Cash Burn', 'Accumulated Deficit', 'Public Offering', 'Share Dilution', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Nasdaq Delisting', 'Bid Price Delisting', 'Executive Liquidation', 'Accounting Restatement', 'Credit Default', 'Senior Debt', 'Convertible Debt', 'Junk Debt', 'Material Lawsuit', 'Supply Chain Crisis', 'Regulatory Violation', 'VIE Structure', 'China Risk', 'Product Discontinuation', 'Loss of Major Customer'];
           const signalKeys = Object.keys(semanticSignals);
           const hasBearish = signalKeys.some(cat => bearishCategories.includes(cat));
           const direction = hasBearish ? 'Short' : 'Long';
@@ -2076,7 +2116,7 @@ app.listen(PORT, () => {
           
           // Check for FDA Approvals and Chinese/Cayman reverse splits that bypass time window filter
           const hasFDAApproval = signalCategories.includes('FDA Granted');
-          const isChinaOrCaymanReverseSplit = (normalizedIncorporated === 'China' || normalizedLocated === 'China' || normalizedIncorporated === 'Cayman Islands' || normalizedLocated === 'Cayman Islands') && signalCategories.includes('Reverse Split');
+          const isChinaOrCaymanReverseSplit = (normalizedIncorporated === 'China' || normalizedLocated === 'China' || normalizedIncorporated === 'Cayman Islands' || normalizedLocated === 'Cayman Islands') && signalCategories.includes('Artificial Inflation');
           const highScoreOverride = signalScoreData.score > 0.6; // Score above threshold can bypass time window IF it passes all other filters
           
           if (etTotalMin < startMin || etTotalMin > endMin) {
@@ -2106,7 +2146,7 @@ app.listen(PORT, () => {
                   averageVolume: averageVolume,
                   incorporated: normalizedIncorporated,
                   located: normalizedLocated,
-                  intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                  intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals)[0] : null,
                   signalScoreData: signalScoreData,
                   filingDate: filing.updated,
                   filingType: formLogMessage,
@@ -2144,7 +2184,7 @@ app.listen(PORT, () => {
                 averageVolume: averageVolume,
                 incorporated: normalizedIncorporated,
                 located: normalizedLocated,
-                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals)[0] : null,
                 signalScoreData: signalScoreData,
                 filingDate: filing.updated,
                 filingType: formLogMessage,
@@ -2158,10 +2198,26 @@ app.listen(PORT, () => {
             continue;
           }
           
-          // Check if country is whitelisted (check both incorporated and located)
+          // Calculate S/O ratio for use in multiple filters
+          let soRatioValue = null;
+          if (sharesOutstanding !== 'N/A' && float !== 'N/A' && sharesOutstanding > 0) {
+            const so = parseFloat(sharesOutstanding);
+            const fl = parseFloat(float);
+            if (!isNaN(fl) && !isNaN(so)) {
+              soRatioValue = (fl / so) * 100;
+            }
+          }
+          
+          // Check if country is whitelisted - BUT BYPASS if: Cayman/BVI with extreme S/O or death spiral signals
           const incorporatedMatch = CONFIG.ALLOWED_COUNTRIES.some(country => normalizedIncorporated.toLowerCase().includes(country));
           const locatedMatch = CONFIG.ALLOWED_COUNTRIES.some(country => normalizedLocated.toLowerCase().includes(country));
-          const countryWhitelisted = incorporatedMatch || locatedMatch;
+          const isCaymanOrBVI = normalizedIncorporated.toLowerCase().includes('cayman') || normalizedLocated.toLowerCase().includes('cayman') || 
+                                normalizedIncorporated.toLowerCase().includes('virgin') || normalizedLocated.toLowerCase().includes('virgin');
+          const hasSPSignal = signalCategories.includes('Artificial Inflation') || signalCategories.includes('Delisting Risk') || signalCategories.includes('Bid Price Delisting') || signalCategories.includes('Nasdaq Delisting');
+          const hasExtremeSOOrStrongSignal = (soRatioValue !== null && soRatioValue > CONFIG.EXTREME_SO_RATIO) || nonNeutralSignals.length >= 2;
+          
+          // Allow Cayman/BVI if: extreme S/O (>80%) OR death spiral signals
+          const countryWhitelisted = incorporatedMatch || locatedMatch || (isCaymanOrBVI && (hasExtremeSOOrStrongSignal || hasSPSignal));
           if (!countryWhitelisted) {
             skipReason = `Country not whitelisted (${normalizedIncorporated}, ${normalizedLocated})`;
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
@@ -2186,7 +2242,7 @@ app.listen(PORT, () => {
                 averageVolume: averageVolume,
                 incorporated: normalizedIncorporated,
                 located: normalizedLocated,
-                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals)[0] : null,
                 signalScoreData: signalScoreData,
                 filingDate: filing.updated,
                 filingType: formLogMessage,
@@ -2201,8 +2257,9 @@ app.listen(PORT, () => {
           }
           
           const floatValue = float !== 'N/A' ? parseFloat(float) : null;
-          if (floatValue !== null && floatValue > CONFIG.MAX_FLOAT) {
-            skipReason = `Float ${floatValue.toLocaleString('en-US')} exceeds ${(CONFIG.MAX_FLOAT / 1000000).toFixed(0)}m limit`;
+          const maxFloatThreshold = filing.formType === '8-K' || filing.formType === '8-K/A' ? CONFIG.MAX_FLOAT_8K : CONFIG.MAX_FLOAT_6K;
+          if (floatValue !== null && floatValue > maxFloatThreshold) {
+            skipReason = `Float ${floatValue.toLocaleString('en-US')} exceeds ${(maxFloatThreshold / 1000000).toFixed(0)}m limit for ${filing.formType}`;
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
@@ -2225,7 +2282,7 @@ app.listen(PORT, () => {
                 averageVolume: averageVolume,
                 incorporated: normalizedIncorporated,
                 located: normalizedLocated,
-                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals)[0] : null,
                 signalScoreData: signalScoreData,
                 filingDate: filing.updated,
                 filingType: formLogMessage,
@@ -2245,29 +2302,18 @@ app.listen(PORT, () => {
           // Store volume value for later threshold check after signal detection
           const volumeCheckLater = volumeValue;
           
-                    let soRatioValue = null;
-          if (sharesOutstanding !== 'N/A' && float !== 'N/A' && sharesOutstanding > 0) {
-            const so = parseFloat(sharesOutstanding);
-            const fl = parseFloat(float);
-            if (!isNaN(fl) && !isNaN(so)) {
-              soRatioValue = (fl / so) * 100;
-            }
-          }
-          
           const neutralCategories = ['Executive Departure', 'Asset Impairment', 'Restructuring', 'Stock Buyback', 'Licensing Deal', 'Partnership', 'Facility Expansion', 'Blockchain Initiative', 'Government Contract', 'Stock Split', 'Dividend Increase', 'Mining Operations', 'Financing Events', 'Analyst Coverage'];
           const neutralSignals = signalCategories.filter(cat => neutralCategories.includes(cat));
           const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
-          // signalCategories, hasFDAApproval, isChinaOrCaymanReverseSplit already defined above before time window check
-
-          // S/O ratio now scoring-only (multiplier), not a hard filter. Removed hard filter block.
           
-          // Dynamic volume threshold: 20k for biotech signals, 50k for others
+          // Dynamic volume threshold based on signal strength
+          // If S/O ratio >80% OR strong non-neutral signals, allow much lower volume
           const isBiotechSignal = hasFDAApproval || signalCategories.includes('Clinical Success');
-          const minVolumeThreshold = isBiotechSignal ? 20000 : CONFIG.MIN_ALERT_VOLUME;
+          const minVolumeThreshold = isBiotechSignal ? 20000 : (hasExtremeSOOrStrongSignal ? CONFIG.STRONG_SIGNAL_MIN_VOLUME : CONFIG.MIN_ALERT_VOLUME);
           
           // Check volume after knowing signal type
           if (volumeCheckLater !== null && volumeCheckLater < minVolumeThreshold) {
-            skipReason = `Volume ${volumeCheckLater.toLocaleString('en-US')} below ${(minVolumeThreshold / 1000).toFixed(0)}k minimum (biotech: ${isBiotechSignal ? 'yes' : 'no'})`;
+            skipReason = `Volume ${volumeCheckLater.toLocaleString('en-US')} below ${(minVolumeThreshold / 1000).toFixed(0)}k minimum (extreme S/O or strong signal: ${hasExtremeSOOrStrongSignal ? 'yes' : 'no'}, biotech: ${isBiotechSignal ? 'yes' : 'no'})`;
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);
@@ -2290,7 +2336,7 @@ app.listen(PORT, () => {
                 averageVolume: averageVolume,
                 incorporated: normalizedIncorporated,
                 located: normalizedLocated,
-                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals)[0] : null,
                 signalScoreData: signalScoreData,
                 filingDate: filing.updated,
                 filingType: formLogMessage,
@@ -2308,13 +2354,13 @@ app.listen(PORT, () => {
           
           // Death spiral categories always trigger alerts regardless of score
           const deathSpiralCategories = ['Going Concern', 'Accounting Restatement', 'Bankruptcy Filing', 'Dilution', 'Reverse Split', 'Compliance Issue'];
-          const hasDeathSpiral = nonNeutralSignals.some(cat => deathSpiralCategories.includes(cat));
+          const hasDeathSpiralSignal = nonNeutralSignals.some(cat => deathSpiralCategories.includes(cat));
           
           if (isChinaOrCaymanReverseSplit) {
             validSignals = true; // China/Cayman Islands reverse splits always trigger
           } else if (hasFDAApproval) {
             validSignals = true; // FDA Approval is strong enough alone
-          } else if (hasDeathSpiral) {
+          } else if (hasDeathSpiralSignal) {
             validSignals = true; // Death spirals always trigger
           } else if (highScoreOverride && signalCategories.length === 1) {
             // High score (>0.6) with single signal overrides time window IF it passes all other filters
@@ -2353,7 +2399,7 @@ app.listen(PORT, () => {
                 averageVolume: averageVolume,
                 incorporated: normalizedIncorporated,
                 located: normalizedLocated,
-                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals)[0] : null,
                 signalScoreData: signalScoreData,
                 filingDate: filing.updated,
                 filingType: formLogMessage,
@@ -2373,10 +2419,12 @@ app.listen(PORT, () => {
           // Filing time bonus: stronger when filed near open/close (9:30am & 3:30pm ET)
           const filingTimeBonus = filingTimeMultiplier > 1.0 ? parseFloat(filingTimeMultiplier.toFixed(2)) : null;
           
+          const vwapValue = calculateVWAP(price, volume);
           const alertData = {
             ticker: ticker || filing.cik || 'Unknown',
             title: filing.title ? filing.title.replace(/\s*\(\d{10}\)\s*$/, '').trim() : 'Unknown Company',
             price: price,
+            vwap: vwapValue,
             signalScore: signalScoreData.score,
             hasTuesdayBonus: hasTuesdayBonus,
             custodianControl: custodianControl,
@@ -2509,7 +2557,7 @@ app.listen(PORT, () => {
                 averageVolume: averageVolume,
                 incorporated: normalizedIncorporated,
                 located: normalizedLocated,
-                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals) : [],
+                intent: semanticSignals && Object.keys(semanticSignals).length > 0 ? Object.keys(semanticSignals)[0] : null,
                 signalScoreData: signalScoreData,
                 filingDate: filing.updated,
                 filingType: formLogMessage,

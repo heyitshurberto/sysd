@@ -790,9 +790,12 @@ const updatePerformanceData = (alertData) => {
     const alertPrice = performanceData[ticker].alert || 0;
     if (alertPrice > 0) {
       const change = currentPrice - alertPrice;
-      const percentChange = (change / alertPrice) * 100;
+      let percentChange = (change / alertPrice) * 100;
+      if (performanceData[ticker].short) {
+        percentChange = -percentChange;
+      }
       performanceData[ticker].performance = parseFloat(percentChange.toFixed(2));
-      performanceData[ticker].reverseSplitRatio = null; // Can be updated if needed
+      performanceData[ticker].reverseSplitRatio = null;
     }
     
     // Write updated performance data

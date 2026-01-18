@@ -2420,32 +2420,32 @@ app.listen(PORT, () => {
                     
           // DTC Chill Lift
           if (bonusSignals['DTC Chill Lift']) {
-            signalScoreData.score = 0.95;
+            signalScoreData.score = 0.75;
             signalScoreData.bonusSignal = 'DTC Chill Lift';
             log('INFO', `Bonus: DTC Chill Lift detected`);
           }
           
           // Shell Recycling (Form 15 + Name Change)
           if (bonusSignals['Shell Recycling']) {
-            signalScoreData.score = parseFloat((signalScoreData.score * 1.5).toFixed(2));
+            signalScoreData.score = parseFloat((signalScoreData.score * 1.15).toFixed(2));
             signalScoreData.bonusSignal = 'Shell Recycling';
             log('INFO', `Bonus: Shell Recycling detected`);
           }
           
           // VStock Transfer Agent
           if (bonusSignals['VStock']) {
-            signalScoreData.score = parseFloat((signalScoreData.score * 1.5).toFixed(2));
+            signalScoreData.score = parseFloat((signalScoreData.score * 1.15).toFixed(2));
             signalScoreData.bonusSignal = 'VStock Pump Setup';
             log('INFO', `Bonus: VStock Transfer Agent detected`);
           }
           
           // NT 10-K Cycle (Chinese ADRs)
           if (bonusSignals['NT 10K'] === 'NT 10K Filed') {
-            signalScoreData.score = parseFloat((signalScoreData.score * 0.7).toFixed(2));
+            signalScoreData.score = parseFloat((signalScoreData.score * 0.85).toFixed(2));
             signalScoreData.bonusSignal = 'NT 10-K Dump';
             log('INFO', `Bonus: NT 10-K Filed`);
           } else if (bonusSignals['NT 10K'] === 'Actual 10K Filed') {
-            signalScoreData.score = parseFloat((signalScoreData.score * 1.8).toFixed(2));
+            signalScoreData.score = parseFloat((signalScoreData.score * 1.3).toFixed(2));
             signalScoreData.bonusSignal = 'Actual 10-K Pump';
             log('INFO', `Bonus: Actual 10-K Filed`);
           }

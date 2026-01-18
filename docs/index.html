@@ -3084,6 +3084,18 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
         `${signal}:\n${Array.isArray(reasons) ? reasons.join('\n') : reasons}`
     ).join('\n') + (alert.hasTuesdayBonus ? '\nBonus:\nTuesday Window' : '') + `</pre>`
     : (alert.intent ? '' : '<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.3; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">No signals detected</pre>')}
+${alert.bonusSignals && typeof alert.bonusSignals === 'object' && Object.keys(alert.bonusSignals).length > 0 ? 
+    `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.3; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">Bonus:` + 
+    Object.entries(alert.bonusSignals).map(([bonus, value]) => {
+        if (bonus === 'DTC Chill Lift' && value) return '\nDTC Chill Lift';
+        if (bonus === 'Shell Recycling' && value) return '\nShell Recycling';
+        if (bonus === 'VStock' && value) return '\nVStock Setup';
+        if (bonus === 'NT 10K' && value === 'NT 10K Filed') return '\nNT 10-K Filed';
+        if (bonus === 'NT 10K' && value === 'Actual 10K Filed') return '\nActual 10-K';
+        if (bonus === 'Third Party' && Array.isArray(value) && value.length > 0) return '\nServices: ' + value.join(', ');
+        return '';
+    }).filter(x => x).join('') + `</pre>` 
+    : ''}
 </div>
 <div class="popup-section">
                                 <h4>Fundamentals</h4>

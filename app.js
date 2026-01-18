@@ -174,7 +174,7 @@ const getSOBonus = (float, sharesOutstanding) => {
 
 // Signal Score Calculator - Probabilistic weighted model
 // Volume (50%) + Float (25%) + S/O (25%) with signal multipliers
-const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signalCategories = [], incorporated = null, located = null, filingText = '', companyName = '') => {
+const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signalCategories = [], incorporated = null, located = null, filingText = '', companyName = '', itemCode = null, financingType = null, maClosureData = null) => {
   // Float Score - micro-cap advantage but tempered (smaller is slightly better)
   let floatScore = 0.3;
   const floatMillion = float / 1000000;
@@ -200,7 +200,6 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   else if (soPercent < 75) soScore = 0.40;
   else soScore = 0.35;
 
-  // Volume Score - MUST show real spike to matter (2x+ average = 0.6, not 1.0)
   let volumeScore = 0.25;
   const volumeRatio = avgVolume > 0 ? volume / avgVolume : 0.5;
   if (volumeRatio >= 3.0) volumeScore = 0.65;  // Major spike (3x+)
@@ -271,8 +270,32 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
     }
   }
 
+  // Layer 3: Financing Type Multiplier (Bought Deal > Registered Direct + Insider > Registered Direct > ATM)
+  let financingMultiplier = 1.0;
+  if (financingType) {
+    financingMultiplier = financingType.multiplier || 1.0;
+  }
+  
+  // Layer 4: M&A Close + Rebrand Multiplier (structural catalyst)
+  let maMultiplier = 1.0;
+  if (maClosureData) {
+    maMultiplier = maClosureData.multiplier || 1.0;
+  }
+  
+  // Layer 1: Item 8.01 context (patent loss = Material Lawsuit signal boost)
+  let item801Multiplier = 1.0;
+  if (itemCode === '8.01' && filingText) {
+    const item801Context = getItem801Context(filingText);
+    if (item801Context === 'Patent Loss' || item801Context === 'Material Lawsuit') {
+      // Boost "Material Lawsuit" signal if detected in Item 8.01 context
+      if (signalCategories?.includes('Material Lawsuit')) {
+        item801Multiplier = 1.10; // 10% boost for Item 8.01 buried lawsuit
+      }
+    }
+  }
+
   // Weighted calculation (volume 50%, float 25%, S/O 25%) - but with lower base scores
-  const signalScore = (floatScore * 0.25 + soScore * 0.25 + volumeScore * 0.5) * signalMultiplier * adrMultiplier * soBonus;
+  const signalScore = (floatScore * 0.25 + soScore * 0.25 + volumeScore * 0.5) * signalMultiplier * adrMultiplier * soBonus * financingMultiplier * maMultiplier * item801Multiplier;
   
   return {
     score: parseFloat(Math.min(1.0, signalScore).toFixed(2)),
@@ -400,15 +423,18 @@ const log = (level, message) => {
 
 const FORM_TYPES = ['6-K', '6-K/A', '8-K', '8-K/A', 'S-1', 'S-3', 'S-4', 'S-8', 'F-1', 'F-3', 'F-4', '424B1', '424B2', '424B3', '424B4', '424B5', '424H8', '20-F', '20-F/A', '13G', '13G/A', '13D', '13D/A', 'Form D', 'EX-99.1', 'EX-99.2', 'EX-10.1', 'EX-10.2', 'EX-3.1', 'EX-3.2', 'EX-4.1', 'EX-4.2', 'EX-10.3', 'EX-1.1', 'Item 1.01', 'Item 1.02', 'Item 1.03', 'Item 1.04', 'Item 1.05', 'Item 2.01', 'Item 2.02', 'Item 2.03', 'Item 2.04', 'Item 2.05', 'Item 2.06', 'Item 3.01', 'Item 3.02', 'Item 3.03', 'Item 4.01', 'Item 5.01', 'Item 5.02', 'Item 5.03', 'Item 5.04', 'Item 5.05', 'Item 5.06', 'Item 5.07', 'Item 5.08', 'Item 5.09', 'Item 5.10', 'Item 5.11', 'Item 5.12', 'Item 5.13', 'Item 5.14', 'Item 5.15', 'Item 6.01', 'Item 7.01', 'Item 8.01', 'Item 9.01'];
 const SEMANTIC_KEYWORDS = {
-  'Merger/Acquisition': ['Merger Agreement', 'Acquisition Agreement', 'Agreed To Acquire', 'Merger Consideration', 'Premium Valuation', 'Going Private', 'Take Private'],
+  'Merger/Acquisition': ['Merger Agreement', 'Acquisition Agreement', 'Agreed To Acquire', 'Merger Consideration', 'Premium Valuation', 'Going Private', 'Take Private', 'Acquisition Closing', 'Closing Of Acquisition', 'Completed Acquisition'],
+  'M&A Rebrand': ['Name Change', 'Corporate Name Change', 'Ticker Change', 'Trading Name Change', 'Change Of Company Name'],
   'FDA Granted': ['FDA Approval', 'FDA Clearance', 'EMA Approval', 'Breakthrough Therapy', 'Fast Track Designation', 'Priority Review'],
   'Clinical Success': ['Positive Trial Results', 'Phase 3 Success', 'Topline Results Beat', 'Efficacy Demonstrated', 'Safety Profile Met'],
   'Capital Raise': ['Oversubscribed', 'Institutional Participation', 'Lead Investor', 'Top-Tier Investor', 'Strategic Investor'],
+  'Bought Deal': ['Bought Deal', 'Underwritten Offering', 'Underwriter Commitment', 'Underwritten Bought Deal'],
   'Earnings Beat': ['Earnings Beat', 'Beat Expectations', 'Beat Consensus', 'Exceeded Guidance', 'Record Revenue'],
   'Major Contract': ['Contract Award', 'Major Customer Win', 'Strategic Partnership', '$100 Million Contract', 'Exclusive License'],
   'Regulatory Approval': ['Regulatory Approval Granted', 'Patent Approved', 'License Granted', 'Permit Issued'],
   'Revenue Growth': ['Revenue Growth Acceleration', 'Record Quarterly Revenue', 'Guidance Raise', 'Organic Growth'],
-  'Insider Buying': ['Director Purchase', 'Executive Purchase', 'CEO Buying', 'CFO Buying', 'Meaningful Accumulation'],
+  'Insider Buying': ['Director Purchase', 'Executive Purchase', 'CEO Buying', 'CFO Buying', 'Meaningful Accumulation', 'CEO Purchased', 'Chairman Bought', 'Director Purchased', 'Officer Purchased'],
+  'Insider Confidence': ['CEO Co-Investment', 'Management Co-Investment', 'Board Co-Investment', 'Insider Co-Investing'],
   'Artificial Inflation': ['Reverse Stock Split', 'Reverse Split', 'Reversed Split', 'Reverse Split Announced', 'Announced Reverse Split', 'Consolidation Of Shares', 'Share Consolidation', 'Combine Shares', 'Combined Shares', 'Stock Consolidation', 'Share Combination', 'Reverse 1:8', 'Reverse 1:10', 'Reverse 1:20', 'Reverse 1:25', 'Reverse 1:50'],
   'Bankruptcy Filing': ['Bankruptcy Protection', 'Chapter 11 Filing', 'Chapter 7 Filing', 'Insolvency Proceedings', 'Creditor Protection'],
   'Operating Loss': ['Operating Loss', 'Loss from operations', 'Operational Loss'],
@@ -426,7 +452,7 @@ const SEMANTIC_KEYWORDS = {
   'Accounting Restatement': ['Financial Restatement', 'Audit Non-Reliance', 'Material Weakness', 'Control Deficiency', 'Audit Adjustment'],
   'Credit Default': ['Loan Default', 'Debt Covenant Breach', 'Event Of Default', 'Credit Agreement Violation'],
   'Senior Debt': ['Senior Debt Issued', 'High Leverage'],
-  'Convertible Debt': ['Convertible Bonds'],
+  'Convertible Debt': ['Convertible Bonds', 'Convertible Notes'],
   'Junk Debt': ['Junk Bond Offering'],
   'Material Lawsuit': ['Material Litigation', 'Lawsuit Filed', 'Major Lawsuit', 'SEC Investigation', 'DOJ Investigation'],
   'Supply Chain Crisis': ['Supply Chain Disruption', 'Production Halt', 'Factory Closure', 'Supplier Bankruptcy', 'Shipping Delays'],
@@ -451,6 +477,143 @@ const SEMANTIC_KEYWORDS = {
   'Loss of Major Customer': ['Major Customer Loss', 'Lost Major Customer', 'Customer Concentration Risk', 'Significant Customer Left', 'Key Customer Departure', 'Primary Customer Loss']
 };
 
+
+// 1. DTC Chill Lift Detector
+const detectDTCChillLift = (text) => {
+  if (!text) return null;
+  const lowerText = text.toLowerCase();
+  const liftPatterns = ['dtc chill lifted', 'dtc eligibility restored', 'dtc eligible', 'shares are now dtc eligible', 'dtc has restored'];
+  return liftPatterns.some(p => lowerText.includes(p)) ? 'DTC_CHILL_LIFT' : null;
+};
+
+// 2. Batch Filing Detector - Same lawyer + same items + 60min window = coordinated
+const detectBatchFiling = (allFilings) => {
+  if (!allFilings || allFilings.length < 2) return [];
+  
+  const batchClusters = [];
+  const lawyerClusters = {};
+  
+  // Group by law firm
+  for (const filing of allFilings) {
+    const title = (filing.title || '').toLowerCase();
+    let firm = null;
+    
+    if (title.includes('hunter taubman') || title.includes('hunter')) {
+      firm = 'Hunter Taubman';
+    } else if (title.includes('ellenoff')) {
+      firm = 'Ellenoff';
+    } else if (title.includes('sichenzia')) {
+      firm = 'Sichenzia';
+    }
+    
+    if (firm) {
+      if (!lawyerClusters[firm]) lawyerClusters[firm] = [];
+      lawyerClusters[firm].push(filing);
+    }
+  }
+  
+  // Check for batches: same firm + 3+ filings within 60 minutes
+  for (const [firm, filings] of Object.entries(lawyerClusters)) {
+    if (filings.length >= 3) {
+      const times = filings.map(f => new Date(f.updated).getTime());
+      const minTime = Math.min(...times);
+      const maxTime = Math.max(...times);
+      const diffMin = (maxTime - minTime) / 60000;
+      
+      if (diffMin <= 60) {
+        batchClusters.push({
+          firm,
+          count: filings.length,
+          minuteSpan: Math.round(diffMin),
+          tickers: filings.map(f => f.title.match(/\b[A-Z]{1,5}\b/)?.[0]).filter(Boolean)
+        });
+      }
+    }
+  }
+  
+  return batchClusters;
+};
+
+// 3. Form 15 + Name Change Together - Shell recycling pattern
+const detectShellRecycling = (text) => {
+  if (!text) return null;
+  const lowerText = text.toLowerCase();
+  
+  const hasForm15 = lowerText.includes('form 15') || lowerText.includes('going dark');
+  const hasNameChange = lowerText.includes('name change') || lowerText.includes('certificate of amendment') || 
+                        lowerText.includes('change of company name') || lowerText.includes('formerly known as');
+  
+  return (hasForm15 && hasNameChange) ? 'Shell Recycling' : null;
+};
+
+// 4. VStock Transfer Agent Detection - Pump setup indicator
+const detectVStockTransferAgent = (text) => {
+  if (!text) return null;
+  const lowerText = text.toLowerCase();
+  
+  const patterns = [
+    { from: /equity stock transfer/i, to: /vstock transfer/i, signal: 'VStock Setup' },
+    { from: /continental stock/i, to: /vstock transfer/i, signal: 'VStock Setup' },
+    { from: /[\w\s]+/i, to: /vstock transfer|island stock transfer/i, signal: 'VStock Setup' }
+  ];
+  
+  const hasVStock = /vstock|island stock transfer/i.test(lowerText);
+  const hasTransferAgent = /transfer agent|stock transfer/i.test(lowerText);
+  
+  return (hasVStock && hasTransferAgent) ? 'VStock Setup' : null;
+};
+
+// 5. NT 10-K → Actual 10-K Cycle (Chinese ADRs) - Dump then pump pattern
+const detectNT10KCycle = (text, filingType) => {
+  if (!text) return null;
+  const lowerText = text.toLowerCase();
+  
+  const isChinese = lowerText.includes('prc') || lowerText.includes('china') || 
+                    lowerText.includes('cayman') || lowerText.includes('bvi') ||
+                    lowerText.includes('shanghai') || lowerText.includes('beijing');
+  
+  if (!isChinese) return null;
+  
+  // Check if it's an NT 10-K (late filing notification)
+  if (lowerText.includes('nt 10-k') || lowerText.includes('notification of late') || 
+      lowerText.includes('we are unable to file') || lowerText.includes('form 12b-25')) {
+    return 'NT 10K Filed';
+  }
+  
+  // Check if it's the actual 10-K after NT
+  if (filingType && filingType.includes('10-K') && !lowerText.includes('nt 10-k')) {
+    return 'Actual 10K Filed';
+  }
+  
+  return null;
+};
+
+// 6. Third-Party Services Detection - Proxy solicitors, M&A advisors, transfer agents
+const detectThirdPartyServices = (text) => {
+  if (!text) return null;
+  const lowerText = text.toLowerCase();
+  
+  const services = {
+    'D.F. King': /d\.f\.\s*king|df king/i,
+    'MacKenzie Partners': /mackenzie partners/i,
+    'Innisfree M&A': /innisfree/i,
+    'Okapi Partners': /okapi partners/i,
+    'Sard Verbinnen': /sard verbinnen/i,
+    'Weinstein PR': /weinstein/i,
+    'PCG Advisory': /pcg advisory/i,
+    'American Stock Transfer': /american stock transfer/i,
+    'VStock Transfer': /vstock|island stock transfer/i
+  };
+  
+  const detected = [];
+  for (const [name, pattern] of Object.entries(services)) {
+    if (pattern.test(lowerText)) {
+      detected.push(name);
+    }
+  }
+  
+  return detected.length > 0 ? detected : null;
+};
 
 const SEC_CODE_TO_COUNTRY = {'C2':'Shanghai, China','F4':'Shadong, China','6A':'Shanghai, China','D8':'Hong Kong','H0':'Hong Kong','K3':'Kowloon Bay, Hong Kong','S4':'Singapore','U0':'Singapore','C0':'Cayman Islands','K2':'Cayman Islands','E9':'Cayman Islands','1E':'Charlotte Amalie, U.S. Virgin Islands','VI':'Road Town, British Virgin Islands','A1':'Toronto, Canada','A2':'Winnipeg, Canada','A6':'Ottawa, Canada','A9':'Vancouver, Canada','A0':'Calgary, Canada','CA':'Toronto, Canada','C4':'Toronto, Canada','D0':'Hamilton, Canada','D9':'Toronto, Canada','Q0':'Toronto, Canada','L3':'Tel Aviv, Israel','J1':'Tokyo, Japan','M0':'Tokyo, Japan','E5':'Dublin, Ireland','I0':'Dublin, Ireland','L2':'Dublin, Ireland','DE':'Wilmington, Delaware','1T':'Athens, Greece','B2':'Bridgetown, Barbados','B6':'Nassau, Bahamas','B9':'Hamilton, Bermuda','C1':'Buenos Aires, Argentina','C3':'Brisbane, Australia','C7':'St. Helier, Channel Islands','D2':'Hamilton, Bermuda','D4':'Hamilton, Bermuda','D5':'Sao Paulo, Brazil','D6':'Bridgetown, Barbados','E4':'Hamilton, Bermuda','F2':'Frankfurt, Germany','F3':'Paris, France','F5':'Johannesburg, South Africa','G0':'St. Helier, Jersey','G1':'St. Peter Port, Guernsey','G4':'New York, United States','G7':'Copenhagen, Denmark','H1':'St. Helier, Jersey','I1':'Douglas, Isle of Man','J0':'St. Helier, Jersey','J2':'St. Helier, Jersey','J3':'St. Helier, Jersey','K1':'Seoul, South Korea','K7':'New York, United States','L0':'Hamilton, Bermuda','L6':'Milan, Italy','M1':'Majuro, Marshall Islands','N0':'Amsterdam, Netherlands','N2':'Amsterdam, Netherlands','N4':'Amsterdam, Netherlands','O5':'Mexico City, Mexico','P0':'Lisbon, Portugal','P3':'Manila, Philippines','P7':'Madrid, Spain','P8':'Warsaw, Poland','R0':'Milan, Italy','S0':'Madrid, Spain','T0':'Lisbon, Portugal','T3':'Johannesburg, South Africa','U1':'London, United Kingdom','U5':'London, United Kingdom','V0':'Zurich, Switzerland','V8':'Geneva, Switzerland','W0':'Frankfurt, Germany','X0':'London, UK','X1':'Luxembourg City, Luxembourg','Y0':'Nicosia, Cyprus','Y1':'Nicosia, Cyprus','Z0':'Johannesburg, South Africa','Z1':'Johannesburg, South Africa','Z4':'Vancouver, British Columbia, Canada','1A':'Pago Pago, American Samoa','1B':'Saipan, Northern Mariana Islands','1C':'Hagatna, Guam','1D':'San Juan, Puerto Rico','3A':'Sydney, Australia','4A':'Auckland, New Zealand','5A':'Apia, Samoa','7A':'Moscow, Russia','8A':'Mumbai, India','9A':'Jakarta, Indonesia','2M':'Frankfurt, Germany','U3':'Madrid, Spain','Y9':'Nicosia, Cyprus','AL':'Birmingham, UK','Q8':'Oslo, Norway','R1':'Panama City, Panama','V7':'Stockholm, Sweden','K8':'Jakarta, Indonesia','O9':'Monaco','W8':'Istanbul, Turkey','R5':'Lima, Peru','N8':'Kuala Lumpur, Malaysia'};
 
@@ -481,6 +644,128 @@ const extractReverseSplitRatio = (text) => {
     return `1-for-${ratioMatch[1]}`;
   }
   return null;
+};
+
+// Extract Item Code context from filing (e.g., "Item 8.01", "Item 6.01")
+const extractItemCode = (text) => {
+  if (!text) return null;
+  // Match "Item X.XX" patterns
+  const itemMatch = text.match(/\bItem\s+([1-9]\.\d{2})\b/i);
+  return itemMatch ? itemMatch[1] : null;
+};
+
+// Detect if Item 8.01 contains specific context (patent loss, lawsuit, etc.)
+const getItem801Context = (text) => {
+  if (!text) return null;
+  const lowerText = text.toLowerCase();
+  
+  if (lowerText.includes('patent') && (lowerText.includes('revoked') || lowerText.includes('lost') || lowerText.includes('invalidated'))) {
+    return 'Patent Loss';
+  }
+  if (lowerText.includes('lawsuit') || lowerText.includes('litigation') || lowerText.includes('settlement')) {
+    return 'Material Lawsuit';
+  }
+  if (lowerText.includes('regulatory') && (lowerText.includes('violation') || lowerText.includes('investigation'))) {
+    return 'Regulatory Loss';
+  }
+  return null;
+};
+
+// Extract insider buying amounts: CEO bought X shares @ $Y/share
+const extractInsiderBuyingAmount = (text) => {
+  if (!text) return { insiderAmount: null, insiderShares: null, participants: [] };
+  
+  const lowerText = text.toLowerCase();
+  const result = { insiderAmount: null, insiderShares: null, participants: [] };
+  
+  // Match patterns like "CEO purchased 2,400,000 shares" or "2.4 million shares"
+  const sharePatterns = [
+    /(?:ceo|chairman|director|officer)\s+(?:purchased|bought|acquired)\s+([\d,]+)\s*(?:shares)?/gi,
+    /(?:CEO|Chairman|Director|Officer).*?(\d+[\d,]*)\s*(?:shares|common stock)/gi
+  ];
+  
+  let totalShares = 0;
+  const participantSet = new Set();
+  
+  for (const pattern of sharePatterns) {
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      const shares = parseInt(match[1].replace(/,/g, ''));
+      if (!isNaN(shares) && shares > 0) {
+        totalShares += shares;
+        const title = match[0].match(/(?:CEO|Chairman|Director|Officer)/i);
+        if (title) participantSet.add(title[0].toLowerCase());
+      }
+    }
+  }
+  
+  // Try to extract price/amount: "at $X.XX per share" or "at $1.25/share"
+  const priceMatch = text.match(/(?:at|@)\s*\$?([\d.]+)\s*(?:per\s+share|\/share|\s+share)/i);
+  if (priceMatch && totalShares > 0) {
+    const pricePerShare = parseFloat(priceMatch[1]);
+    result.insiderAmount = (totalShares * pricePerShare).toFixed(0);
+  }
+  
+  result.insiderShares = totalShares > 0 ? totalShares : null;
+  result.participants = Array.from(participantSet);
+  
+  return result;
+};
+
+// Detect financing type: bought deal, registered direct, ATM, etc.
+const detectFinancingType = (text) => {
+  if (!text) return { type: 'Generic', multiplier: 1.0 };
+  
+  const lowerText = text.toLowerCase();
+  
+  // Bought Deal (underwriter-backed = confidence signal)
+  if ((lowerText.includes('bought deal') || lowerText.includes('underwriter') || lowerText.includes('underwritten')) && lowerText.includes('offering')) {
+    return { type: 'Bought Deal', multiplier: 1.20 };
+  }
+  
+  // Registered Direct + insider buying = high confidence
+  if (lowerText.includes('registered direct') && (lowerText.includes('ceo') || lowerText.includes('chairman') || lowerText.includes('director'))) {
+    return { type: 'Registered Direct + Insider', multiplier: 1.25 };
+  }
+  
+  // Registered Direct (no insider co-investment)
+  if (lowerText.includes('registered direct')) {
+    return { type: 'Registered Direct', multiplier: 1.10 };
+  }
+  
+  // At-The-Market (opportunistic, dilutive)
+  if (lowerText.includes('at-the-market') || lowerText.includes('atm offering')) {
+    return { type: 'ATM Offering', multiplier: 0.95 };
+  }
+  
+  // Generic public offering
+  if (lowerText.includes('public offering') || lowerText.includes('secondary offering')) {
+    return { type: 'Public Offering', multiplier: 0.98 };
+  }
+  
+  return { type: 'Generic Raise', multiplier: 1.0 };
+};
+
+// Detect M&A close + rebrand as structural catalyst
+const detectMACloseRebrand = (text) => {
+  if (!text) return { isMAClosed: false, hasRebrand: false, multiplier: 1.0 };
+  
+  const lowerText = text.toLowerCase();
+  
+  const isMAClosed = (lowerText.includes('acquisition') || lowerText.includes('merger')) &&
+                      (lowerText.includes('closing') || lowerText.includes('completed') || lowerText.includes('closed'));
+  
+  const hasRebrand = (lowerText.includes('name change') || lowerText.includes('company name') || lowerText.includes('ticker change')) &&
+                     (lowerText.includes('formerly') || lowerText.includes('change to') || lowerText.includes('will be'));
+  
+  let multiplier = 1.0;
+  if (isMAClosed && hasRebrand) {
+    multiplier = 1.30; // Full M&A + rebrand = rebranding pump signal
+  } else if (isMAClosed) {
+    multiplier = 1.15; // M&A closed = structural change
+  }
+  
+  return { isMAClosed, hasRebrand, multiplier };
 };
 
 const getExchangePrefix = (ticker) => {
@@ -675,7 +960,17 @@ const saveAlert = (alertData) => {
     }
     if (alertData.filingTimeBonus) bonusItems.push(`Filing Time ${alertData.filingTimeBonus}x`);
     if (alertData.soBonus && alertData.soBonus > 1.0) bonusItems.push(`S/O ${alertData.soBonus}x`);
-    const bonusIndicator = bonusItems.length > 0 ? ` (${bonusItems.join(' + ')} score bonus)` : '';
+    if (alertData.bonusSignals) {
+      if (alertData.bonusSignals['DTC Chill Lift']) bonusItems.push('DTC Chill Lift');
+      if (alertData.bonusSignals['Shell Recycling']) bonusItems.push('Shell Recycling');
+      if (alertData.bonusSignals['VStock']) bonusItems.push('VStock Setup');
+      if (alertData.bonusSignals['NT 10K'] === 'NT 10K Filed') bonusItems.push('NT 10-K Filed');
+      if (alertData.bonusSignals['NT 10K'] === 'Actual 10K Filed') bonusItems.push('Actual 10-K');
+      if (alertData.bonusSignals['Third Party'] && Array.isArray(alertData.bonusSignals['Third Party'])) {
+        bonusItems.push(`Services: ${alertData.bonusSignals['Third Party'].join(', ')}`);
+      }
+    }
+    const bonusIndicator = bonusItems.length > 0 ? ` (Bonus: ${bonusItems.join(' + ')})` : '';
     alertData.skipReason = `Alert sent: [${direction}] ${reason}${bonusIndicator}`;
     
     // Save to CSV for analysis
@@ -1790,6 +2085,28 @@ app.listen(PORT, () => {
           
           let semanticSignals = parseSemanticSignals(text);
           
+          let bonusSignals = {};
+          
+          // Check DTC chill lift (100% mechanical)
+          const dtcLift = detectDTCChillLift(text);
+          if (dtcLift) bonusSignals['DTC Chill Lift'] = dtcLift;
+          
+          // Check shell recycling (Form 15 + name change)
+          const shellRecycle = detectShellRecycling(text);
+          if (shellRecycle) bonusSignals['Shell Recycling'] = shellRecycle;
+          
+          // Check VStock transfer agent (pump setup)
+          const vstock = detectVStockTransferAgent(text);
+          if (vstock) bonusSignals['VStock'] = vstock;
+          
+          // Check NT 10-K cycle (Chinese ADRs)
+          const nt10k = detectNT10KCycle(text, filing.formType);
+          if (nt10k) bonusSignals['NT 10K'] = nt10k;
+          
+          // Check third-party services (proxy solicitors, M&A advisors, transfer agents)
+          const thirdPartyServices = detectThirdPartyServices(text);
+          if (thirdPartyServices) bonusSignals['Third Party'] = thirdPartyServices;
+          
           let source = 'SEC';
           let intent = Object.keys(semanticSignals).join(', ') || null;
           
@@ -2035,7 +2352,7 @@ app.listen(PORT, () => {
           // Determine if this is a SHORT or LONG opportunity based on signals
           const sigKeys = Object.keys(semanticSignals || {});
           
-          // Deterministic SHORT signals
+          // bonus SHORT signals
           const hasReverseSplit = sigKeys.includes('Reverse Split');
           const hasDilution = sigKeys.includes('Dilution');
           const hasStockSplit = sigKeys.includes('Stock Split');
@@ -2073,13 +2390,80 @@ app.listen(PORT, () => {
           // Get signal categories early for scoring function
           const signalCategories = Object.keys(semanticSignals || {});
           
-          const signalScoreData = calculatesignalScore(numFloat, numShares, numVolume, numAvgVol, signalCategories, normalizedIncorporated, normalizedLocated, text, filing.title);
+          // Layer 1: Extract Item Code for context (Item 8.01, 6.01, etc.)
+          const itemCode = extractItemCode(text);
           
-          // Apply Tuesday bonus (1.2x multiplier for better market conditions)
+          // Layer 2: Extract insider buying amounts
+          const insiderBuyingData = extractInsiderBuyingAmount(text);
+          
+          // Layer 3: Detect financing type (Bought Deal, Registered Direct, ATM, etc.)
+          const financingType = detectFinancingType(text);
+          
+          // Layer 4: Detect M&A close + rebrand as structural catalyst
+          const maClosureData = detectMACloseRebrand(text);
+          
+          // Apply insider buying confidence multiplier
+          let insiderConfidenceMultiplier = 1.0;
+          if (insiderBuyingData && insiderBuyingData.insiderShares > 0) {
+            if (insiderBuyingData.participants.includes('ceo') && insiderBuyingData.participants.includes('chairman')) {
+              insiderConfidenceMultiplier = 1.3; // CEO + Chairman co-investing = death spiral reversal
+            } else if (insiderBuyingData.participants.includes('ceo')) {
+              insiderConfidenceMultiplier = 1.25; // CEO buying alone = strong validation
+            } else if (insiderBuyingData.participants.length > 1) {
+              insiderConfidenceMultiplier = 1.20; // Multiple insiders
+            } else {
+              insiderConfidenceMultiplier = 1.10; // Generic insider buying
+            }
+          }
+          
+          const signalScoreData = calculatesignalScore(numFloat, numShares, numVolume, numAvgVol, signalCategories, normalizedIncorporated, normalizedLocated, text, filing.title, itemCode, financingType, maClosureData);
+                    
+          // DTC Chill Lift
+          if (bonusSignals['DTC Chill Lift']) {
+            signalScoreData.score = 0.95;
+            signalScoreData.bonusSignal = 'DTC Chill Lift';
+            log('INFO', `Bonus: DTC Chill Lift detected`);
+          }
+          
+          // Shell Recycling (Form 15 + Name Change)
+          if (bonusSignals['Shell Recycling']) {
+            signalScoreData.score = parseFloat((signalScoreData.score * 1.5).toFixed(2));
+            signalScoreData.bonusSignal = 'Shell Recycling';
+            log('INFO', `Bonus: Shell Recycling detected`);
+          }
+          
+          // VStock Transfer Agent
+          if (bonusSignals['VStock']) {
+            signalScoreData.score = parseFloat((signalScoreData.score * 1.5).toFixed(2));
+            signalScoreData.bonusSignal = 'VStock Pump Setup';
+            log('INFO', `Bonus: VStock Transfer Agent detected`);
+          }
+          
+          // NT 10-K Cycle (Chinese ADRs)
+          if (bonusSignals['NT 10K'] === 'NT 10K Filed') {
+            signalScoreData.score = parseFloat((signalScoreData.score * 0.7).toFixed(2));
+            signalScoreData.bonusSignal = 'NT 10-K Dump';
+            log('INFO', `Bonus: NT 10-K Filed`);
+          } else if (bonusSignals['NT 10K'] === 'Actual 10K Filed') {
+            signalScoreData.score = parseFloat((signalScoreData.score * 1.8).toFixed(2));
+            signalScoreData.bonusSignal = 'Actual 10-K Pump';
+            log('INFO', `Bonus: Actual 10-K Filed`);
+          }
+          
+          // Cap final score at 1.0
+          signalScoreData.score = parseFloat(Math.min(1.0, signalScoreData.score).toFixed(2));
+          
+          // Apply insider confidence multiplier (stacks with other bonuses)
+          if (insiderConfidenceMultiplier > 1.0 && signalCategories?.includes('Insider Buying')) {
+            signalScoreData.score = parseFloat((signalScoreData.score * insiderConfidenceMultiplier).toFixed(2));
+            signalScoreData.insiderConfidenceMultiplier = insiderConfidenceMultiplier;
+          }
+          
+          // Apply Tuesday bonus (1.1x multiplier for better market conditions)
           const dayOfWeek = new Date().getDay(); // 0=Sunday, 2=Tuesday
           const hasTuesdayBonus = dayOfWeek === 2;
           if (hasTuesdayBonus) {
-            signalScoreData.score = parseFloat((signalScoreData.score * 1.2).toFixed(2));
+            signalScoreData.score = parseFloat((signalScoreData.score * 1.1).toFixed(2));
           }
           
           // Filing time bonus: 1.2x peak (30 mins before/after open/close), 1.05-1.15x otherwise
@@ -2117,7 +2501,7 @@ app.listen(PORT, () => {
           // Check for FDA Approvals and Chinese/Cayman reverse splits that bypass time window filter
           const hasFDAApproval = signalCategories.includes('FDA Granted');
           const isChinaOrCaymanReverseSplit = (normalizedIncorporated === 'China' || normalizedLocated === 'China' || normalizedIncorporated === 'Cayman Islands' || normalizedLocated === 'Cayman Islands') && signalCategories.includes('Artificial Inflation');
-          const highScoreOverride = signalScoreData.score > 0.6; // Score above threshold can bypass time window IF it passes all other filters
+          const highScoreOverride = signalScoreData.score > 0.7; // Score above threshold can bypass time window IF it passes all other filters
           
           if (etTotalMin < startMin || etTotalMin > endMin) {
             // Allow exceptions for: FDA Approvals and Chinese/Cayman reverse splits
@@ -2208,16 +2592,21 @@ app.listen(PORT, () => {
             }
           }
           
-          // Check if country is whitelisted - BUT BYPASS if: Cayman/BVI with extreme S/O or death spiral signals
-          const incorporatedMatch = CONFIG.ALLOWED_COUNTRIES.some(country => normalizedIncorporated.toLowerCase().includes(country));
-          const locatedMatch = CONFIG.ALLOWED_COUNTRIES.some(country => normalizedLocated.toLowerCase().includes(country));
-          const isCaymanOrBVI = normalizedIncorporated.toLowerCase().includes('cayman') || normalizedLocated.toLowerCase().includes('cayman') || 
-                                normalizedIncorporated.toLowerCase().includes('virgin') || normalizedLocated.toLowerCase().includes('virgin');
-          const hasSPSignal = signalCategories.includes('Artificial Inflation') || signalCategories.includes('Delisting Risk') || signalCategories.includes('Bid Price Delisting') || signalCategories.includes('Nasdaq Delisting');
-          const hasExtremeSOOrStrongSignal = (soRatioValue !== null && soRatioValue > CONFIG.EXTREME_SO_RATIO) || nonNeutralSignals.length >= 2;
+          // Check if country is whitelisted - ONLY for 6-K filings (8-K can be Delaware/US states)
+          let countryWhitelisted = true;
+          if (filing.formType === '6-K' || filing.formType === '6-K/A') {
+            const incorporatedMatch = CONFIG.ALLOWED_COUNTRIES.some(country => normalizedIncorporated.toLowerCase().includes(country));
+            const locatedMatch = CONFIG.ALLOWED_COUNTRIES.some(country => normalizedLocated.toLowerCase().includes(country));
+            const isCaymanOrBVI = normalizedIncorporated.toLowerCase().includes('cayman') || normalizedLocated.toLowerCase().includes('cayman') || 
+                                  normalizedIncorporated.toLowerCase().includes('virgin') || normalizedLocated.toLowerCase().includes('virgin');
+            const hasSPSignal = signalCategories.includes('Artificial Inflation') || signalCategories.includes('Delisting Risk') || signalCategories.includes('Bid Price Delisting') || signalCategories.includes('Nasdaq Delisting');
+            const hasExtremeSOOrStrongSignal = (soRatioValue !== null && soRatioValue > CONFIG.EXTREME_SO_RATIO) || nonNeutralSignals.length >= 2;
+            
+            // Allow Cayman/BVI if: extreme S/O (>80%) OR death spiral signals
+            countryWhitelisted = incorporatedMatch || locatedMatch || (isCaymanOrBVI && (hasExtremeSOOrStrongSignal || hasSPSignal));
+          }
+          // 8-K filings skip country check entirely (Delaware/US allowed)
           
-          // Allow Cayman/BVI if: extreme S/O (>80%) OR death spiral signals
-          const countryWhitelisted = incorporatedMatch || locatedMatch || (isCaymanOrBVI && (hasExtremeSOOrStrongSignal || hasSPSignal));
           if (!countryWhitelisted) {
             skipReason = `Country not whitelisted (${normalizedIncorporated}, ${normalizedLocated})`;
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
@@ -2363,10 +2752,10 @@ app.listen(PORT, () => {
           } else if (hasDeathSpiralSignal) {
             validSignals = true; // Death spirals always trigger
           } else if (highScoreOverride && signalCategories.length === 1) {
-            // High score (>0.6) with single signal overrides time window IF it passes all other filters
+            // High score (>0.7) with single signal overrides time window IF it passes all other filters
             validSignals = true;
-          } else if (signalScoreData.score > 0.6 && signalCategories.length === 1) {
-            validSignals = true; // Threshold to 0.6 with single signal
+          } else if (signalScoreData.score > 0.7 && signalCategories.length === 1) {
+            validSignals = true; // Threshold to 0.7 with single signal
           } else if (signalScoreData.volumeScore >= 0.85 && signalCategories.length >= 1) {
             validSignals = true; // Strong volume spike (2x+ average) with any signal
           } else if (neutralSignals.length > 0 && signalCategories.length >= 2) {
@@ -2447,6 +2836,7 @@ app.listen(PORT, () => {
             located: normalizedLocated,
             filingDate: periodOfReport,
             signals: semanticSignals,
+            bonusSignals: bonusSignals,
             formType: Array.from(foundForms),
             filingType: formLogMessage,
             cik: filing.cik,

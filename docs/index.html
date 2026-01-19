@@ -4154,6 +4154,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             createAlertCard(alert) {
                 const card = document.createElement('div');
                 const isShort = alert.isShort === true || alert.short === true;
+                console.log('Creating card for:', { ticker: alert.ticker, exchange: alert.exchange, allKeys: Object.keys(alert) });
                 
                 // Determine price movement class - use priceChange (already calculated correctly for all cases)
                 let effectivePriceChange = alert.priceChange;

@@ -3489,18 +3489,52 @@ FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && a
 
             async checkStockPrice(ticker) {
                 try {
-                    const response = await fetch(`/api/quote/${ticker}`);
-                    if (!response.ok) {
-                        console.error(`Failed to fetch quote for ${ticker}: ${response.status}`);
-                        return false;
-                    }
+                    // Check if viewing from localhost (has local API server)
+                    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                     
                     let quote;
-                    try {
-                        quote = await response.json();
-                    } catch (parseError) {
-                        console.error(`Failed to parse JSON for ${ticker}:`, parseError);
-                        return false;
+                    
+                    if (isLocalhost) {
+                        // Use local API endpoint for real-time prices
+                        const response = await fetch(`/api/quote/${ticker}`);
+                        if (!response.ok) {
+                            console.error(`Failed to fetch quote for ${ticker}: ${response.status}`);
+                            return false;
+                        }
+                        
+                        try {
+                            quote = await response.json();
+                        } catch (parseError) {
+                            console.error(`Failed to parse JSON for ${ticker}:`, parseError);
+                            return false;
+                        }
+                    } else {
+                        // On GitHub Pages - fetch from quote.json which is updated by the bot
+                        try {
+                            const quoteUrl = '/logs/quote.json';
+                            const response = await fetch(quoteUrl);
+                            if (response.ok) {
+                                const quoteData = await response.json();
+                                if (quoteData[ticker] && quoteData[ticker].currentPrice) {
+                                    // Create a quote object matching the API format
+                                    quote = {
+                                        price: quoteData[ticker].currentPrice,
+                                        volume: quoteData[ticker].volume || 0,
+                                        averageVolume: quoteData[ticker].averageVolume || 0,
+                                        marketCap: quoteData[ticker].marketCap || 'N/A'
+                                    };
+                                } else {
+                                    console.warn(`No price data for ${ticker} in quote.json`);
+                                    return false;
+                                }
+                            } else {
+                                console.error(`Failed to fetch quote.json: ${response.status}`);
+                                return false;
+                            }
+                        } catch (err) {
+                            console.error(`Error fetching quote.json for ${ticker}:`, err);
+                            return false;
+                        }
                     }
 
                     if (!quote || typeof quote.price === 'undefined' || quote.price <= 0) {

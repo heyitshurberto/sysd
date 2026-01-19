@@ -1,59 +1,5 @@
 [
   {
-    "ticker": "ASBP",
-    "price": 0.1202,
-    "signalScore": 0.29,
-    "hasTuesdayBonus": true,
-    "volume": 17413679,
-    "averageVolume": 29344398,
-    "float": 34520591,
-    "sharesOutstanding": 138446102,
-    "soRatio": "24.93%",
-    "marketCap": 16641221,
-    "short": false,
-    "intent": "Credit Default, Partnership, Financing Events",
-    "incorporated": "Grand Cayman, Cayman Islands",
-    "located": "Florida",
-    "filingDate": "2026-01-06",
-    "alertDate": "2026-01-19T10:00:00Z",
-    "alertPrice": 0.1180,
-    "currentPrice": 0.1202,
-    "peakPrice": 0.1350,
-    "lowPrice": 0.1050,
-    "alertTime": "2026-01-06T13:36:29.146Z",
-    "signals": {
-      "Credit Default": [
-        "Event Of Default"
-      ],
-      "Partnership": [
-        "Joint Venture"
-      ],
-      "Financing Events": [
-        "Credit Facility"
-      ]
-    },
-    "formType": {},
-    "filingType": "6-K, 8-K, F-1, 13G, 13D, EX-10.1, Item 1.01, Item 2.03, Item 3.02, Item 9.01",
-    "cik": "1847345",
-    "recordedAt": "2026-01-06T13:36:29.146Z",
-    "recordId": "ASBP-1767706589146",
-    "expiresAt": "2026-01-11T13:36:29.146Z",
-    "exchange": "OTC",
-    "isShort": false,
-    "currentVolume": 17413679,
-    "vwap": 0.1195,
-    "ftd": false,
-    "reverseSplitRatio": 40,
-    "reverseSplitReason": "Nasdaq minimum bid price requirement",
-    "bonusSignals": {
-      "DTC Chill Lift": false,
-      "Shell Recycling": false,
-      "VStock": false,
-      "NT 10K": false,
-      "Third Party": []
-    }
-  },
-  {
     "ticker": "RGNT",
     "price": 6.81,
     "signalScore": 0.46,

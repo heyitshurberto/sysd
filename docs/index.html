@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=0.75, maximum-scale=5, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, user-scalable=yes">
 <style>
 
 /* Just make tables horizontally scrollable */
@@ -911,6 +911,43 @@ table {
             .stats {
                 grid-template-columns: 1fr;
                 gap: 8px;
+            }
+            
+            /* Mobile adjustments for time display */
+            .time-display {
+                position: relative;
+                top: 0;
+                right: 0;
+                font-size: 9px;
+                gap: 8px;
+                margin-top: 10px;
+                text-align: left;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .header-top {
+                width: 100%;
+                gap: 10px;
+            }
+            
+            .dashboard-title {
+                margin-left: 0 !important;
+                margin-top: 0 !important;
+                font-size: 16px !important;
+            }
+            
+            .logo {
+                height: 60px !important;
+            }
+            
+            /* Disable horizontal scrolling on mobile */
+            html, body {
+                overflow-x: hidden;
+                width: 100%;
             }
         }
         .stat-box > div:first-child {
@@ -3129,6 +3166,7 @@ table {
                 // Convert data for display
                 const alertAge = formatAlertAge(alert.alertTime);
                 const volumeRatio = alert.averageVolume > 0 ? (alert.currentVolume / alert.averageVolume).toFixed(1) + 'x' : 'N/A';
+                const exchange = alert.exchange && alert.exchange !== 'N/A' ? alert.exchange : 'NASDAQ';
                 
                 // Calculate correct percentage move - USE PEAK for best possible profit
                 const isShort = Array.isArray(alert.isShort) ? alert.isShort.length > 0 : (alert.position === 'short' || alert.isShort === true);
@@ -3216,7 +3254,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         <div class="popup-footer">
                             <button onclick="(() => {
                                 const ticker = '${alert.ticker}';
-                                const exchange = '${alert.exchange || 'NASDAQ'}';
+                                const exchange = '${exchange}';
                                 console.log('Popup TradingView button clicked:', { ticker, exchange });
                                 const tvSymbol = getTradingViewSymbol(ticker, exchange);
                                 console.log('Generated tvSymbol:', tvSymbol);
@@ -4254,7 +4292,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         <button type="button" class="link-button" onclick="(() => {
                             event.stopPropagation();
                             const ticker = '${alert.ticker}';
-                            const exchange = '${alert.exchange || 'NASDAQ'}';
+                            const exchange = '${exchange}';
                             console.log('Card TradingView button clicked:', { ticker, exchange });
                             const tvSymbol = getTradingViewSymbol(ticker, exchange);
                             console.log('Generated tvSymbol:', tvSymbol);

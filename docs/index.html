@@ -3021,13 +3021,18 @@ table {
                                 ftdPercent: alert.ftdPercent || null,
                                 filingLink: alert.filingLink || '#',
                                 signals: alert.signals || {},
+                                bonusSignals: alert.bonusSignals || {},
+                                intent: alert.intent || null,
                                 currentVolume: parseInt(alert.volume) || 0,
                                 volume: parseInt(alert.volume) || 0,
                                 averageVolume: parseInt(alert.averageVolume) || 0,
                                 marketCap: mcap > 0 ? mcap : null,
                                 fiveDChange: !isNaN(fiveDay) ? fiveDay : null,
+                                intent: alert.intent || null,
+                                bonusSignals: alert.bonusSignals || {},
                                 performance: tickerPerfData.performance,
-                                reverseSplitRatio: tickerPerfData.reverseSplitRatio, // Locked in from quote.json, not re-detected
+                                reverseSplitRatio: tickerPerfData.reverseSplitRatio || alert.reverseSplitRatio || null, // From quote.json or alert.json
+                                reverseSplitReason: alert.reverseSplitReason || null, // From alert.json
                                 peakPrice: tickerPerfData.peakPrice || price,
                                 lowPrice: tickerPerfData.lowPrice || price,
                                 priceChange: (price - price) / price || 0,

@@ -975,19 +975,31 @@ table {
                 position: static !important;
                 top: auto !important;
                 right: auto !important;
-                font-size: 10px !important;
-                gap: 8px !important;
+                font-size: 7px !important;
+                gap: 3px !important;
                 margin: 0 !important;
                 text-align: left;
                 justify-content: flex-start;
                 flex-wrap: nowrap;
                 order: unset;
+                white-space: nowrap;
+                overflow: hidden;
             }
             
             .notification-history-icon {
-                display: block !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
                 font-size: 16px !important;
                 order: unset;
+                width: 28px !important;
+                height: 28px !important;
+                flex-shrink: 0;
+            }
+            
+            .notification-history-icon svg {
+                width: 18px !important;
+                height: 18px !important;
             }
             
             .stat-box {
@@ -1023,7 +1035,7 @@ table {
                 width: 75px !important;
                 max-width: 75vw !important;
                 padding: 2px 2px !important;
-                font-size: 3.5px !important;
+                font-size: 2.8px !important;
                 right: 6px !important;
                 top: 40px !important;
                 max-height: 150px !important;
@@ -1031,6 +1043,14 @@ table {
                 overflow-y: hidden !important;
                 position: absolute !important;
                 z-index: 1002 !important;
+                line-height: 1.1 !important;
+            }
+            
+            .score-breakdown .score-item,
+            .score-breakdown .score-header,
+            .score-breakdown .section-header,
+            .score-breakdown .intent-tag {
+                font-size: 2.8px !important;
             }
             
             .score-details-container {

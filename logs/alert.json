@@ -46,6 +46,64 @@
     }
   },
   {
+    "ticker": "AGEN",
+    "title": "8-K - AGENUS INC (0001098972) (Filer)",
+    "price": 3.68,
+    "signalScore": 0.83,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1.15,
+    "volume": 3159862,
+    "averageVolume": 629672,
+    "float": 33417624,
+    "sharesOutstanding": 34008349,
+    "soRatio": "98.26%",
+    "marketCap": 125150720,
+    "isShort": true,
+    "ftd": 2506,
+    "ftdPercent": "0.01",
+    "intent": "Major Contract, Going Concern, Licensing Deal, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Massachusetts",
+    "filingDate": "2026-01-16",
+    "signals": {
+      "Major Contract": [
+        "Exclusive License"
+      ],
+      "Going Concern": [
+        "Operating Loss",
+        "Net Loss",
+        "Accumulated Deficit"
+      ],
+      "Licensing Deal": [
+        "Exclusive License",
+        "License Agreement"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "EX-99.2",
+      "Item 2.01",
+      "Item 3.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, EX-99.2, Item 2.01, Item 3.02, Item 7.01, Item 9.01",
+    "cik": "1098972",
+    "skipReason": "",
+    "recordedAt": "2026-01-16T13:26:14.214Z",
+    "recordId": "AGEN-1768569974214",
+    "expiresAt": "2026-01-21T13:26:14.214Z"
+  },
+  {
     "ticker": "MRSN",
     "price": 29.08,
     "signalScore": 0.58,

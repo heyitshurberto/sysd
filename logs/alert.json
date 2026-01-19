@@ -46,52 +46,6 @@
     }
   },
   {
-    "ticker": "RGNT",
-    "price": 7.1000,
-    "signalScore": 0.46,
-    "hasTuesdayBonus": true,
-    "volume": 39478,
-    "averageVolume": 30657,
-    "float": 2371812,
-    "sharesOutstanding": 5179378,
-    "soRatio": "45.79%",
-    "marketCap": 35271564,
-    "short": false,
-    "intent": "FDA Approval",
-    "incorporated": "Tel Aviv, Israel",
-    "located": "Israel",
-    "filingDate": "2026-01-06",
-    "alertDate": "2026-01-19T12:00:00Z",
-    "alertPrice": 6.75,
-    "currentPrice": 7.1000,
-    "peakPrice": 7.12,
-    "lowPrice": 6.40,
-    "alertTime": "2026-01-06T13:51:32.539Z",
-    "signals": {
-      "FDA Approval": [
-        "Orphan Drug Designation"
-      ]
-    },
-    "formType": {},
-    "filingType": "6-K, 20-F, EX-99.1",
-    "cik": "1912966",
-    "recordedAt": "2026-01-06T13:51:32.539Z",
-    "recordId": "RGNT-1767707492539",
-    "expiresAt": "2026-01-11T13:51:32.539Z",
-    "exchange": "OTC",
-    "isShort": false,
-    "currentVolume": 39478,
-    "vwap": 6.85,
-    "ftd": false,
-    "bonusSignals": {
-      "DTC Chill Lift": false,
-      "Shell Recycling": false,
-      "VStock": false,
-      "NT 10K": false,
-      "Third Party": []
-    }
-  },
-  {
     "ticker": "MRSN",
     "price": 29.08,
     "signalScore": 0.58,

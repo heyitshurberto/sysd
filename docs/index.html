@@ -1,8 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=0.8, maximum-scale=5, user-scalable=yes">
 <style>
+
+body {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
 
 /* Just make tables horizontally scrollable */
 .table-container {
@@ -14,6 +19,11 @@
 table {
     min-width: 800px; /* Force scroll on mobile */
     width: 100%;
+}
+
+* {
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Slightly smaller text on mobile */
@@ -766,6 +776,8 @@ table {
             text-align: right;
             display: flex;
             gap: 15px;
+            white-space: nowrap;
+            overflow-x: auto;
         }
         
         body.dark-mode .time-display {
@@ -894,18 +906,51 @@ table {
             
             /* Mobile adjustments for time display */
             .time-display {
-                position: relative;
-                top: 0;
-                right: 0;
-                font-size: 9px;
-                gap: 8px;
-                margin-top: 10px;
+                position: static;
+                font-size: 8px;
+                gap: 2px;
+                margin-top: 8px;
                 text-align: left;
+                word-wrap: break-word;
+                width: 100%;
+                flex-wrap: wrap;
+                overflow: visible;
+                white-space: normal;
             }
             
             .header {
                 flex-direction: column;
                 align-items: flex-start;
+                padding: 5px;
+                overflow-x: hidden;
+            }
+            
+            .header-top {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+            
+            .header-right {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                overflow-x: hidden;
+            }
+            
+            .theme-toggle {
+                position: static;
+                width: 32px;
+                height: 32px;
+                margin: 0;
+            }
+            
+            .theme-toggle svg {
+                width: 20px;
+                height: 20px;
             }
             
             .header-top {

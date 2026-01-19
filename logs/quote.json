@@ -1,1 +1,13 @@
-{}
+{
+  "ASBP": {
+    "alert": 2.21,
+    "highest": 2.21,
+    "lowest": 2.21,
+    "current": 2.21,
+    "currentPrice": 2.21,
+    "volume": 1196988,
+    "averageVolume": 1070010,
+    "marketCap": 8840000,
+    "performance": 0
+  }
+}

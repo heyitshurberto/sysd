@@ -28,12 +28,12 @@ table {
     @media (max-width: 768px) {
         div[style*="position: absolute; top: 7px; left: 7px;"] {
             position: static !important;
-            margin-bottom: 8px !important;
-            padding-left: 10px !important;
+            margin-bottom: 0 !important;
+            padding-left: 0 !important;
         }
         div[style*="position: absolute; top: 7px; left: 7px;"] a {
-            font-size: 14px !important;
-            max-width: none !important;
+            font-size: 11px !important;
+            max-width: 100px !important;
         }
     }
 </style>
@@ -1029,7 +1029,7 @@ table {
                 overflow-x: hidden !important;
                 width: 100vw !important;
                 overflow-y: auto !important;
-                font-size: 60%;
+                font-size: 50%;
                 margin: 0 !important;
                 padding: 0 !important;
             }
@@ -1065,26 +1065,15 @@ table {
             }
             
             .alert-card {
-                margin: 12px !important;
-                padding: 12px !important;
+                margin-bottom: 8px !important;
+                padding: 7px !important;
                 font-size: 11px !important;
             }
             
-            .score-breakdown {
-                width: 140px !important;
-                padding: 2px 3px !important;
-                font-size: 4px !important;
-                right: 2px !important;
-                top: 5px !important;
-            }
-            
-            .score-details-container {
-                max-height: 300px !important;
-                overflow-y: auto !important;
-            }
-            
             .container {
-                padding: 12px !important;
+                padding: 0 !important;
+                margin: 0 auto !important;
+                width: 100% !important;
             }
         }
         .stat-box > div:first-child {

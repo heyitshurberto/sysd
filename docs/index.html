@@ -3344,7 +3344,7 @@ table {
                 
                 popup.innerHTML = `
                     <div class="popup-content">
-                        <h3 style="font-style: italic; padding-left: 4px;">$${alert.ticker}${alert.title ? ' ' + alert.title : ''} <span style="color: ${isShort ? '#ff0000' : '#00cc00'};">[${isShort ? 'SHORT' : 'LONG'}]</span></h3>
+                        <h3 style="font-style: italic; padding-left: 4px;">$${alert.ticker}${alert.title && !alert.title.includes('8-K') && !alert.title.includes('6-K') && !alert.title.includes('Filer') ? ' ' + alert.title : ''} <span style="color: ${isShort ? '#ff0000' : '#00cc00'};">[${isShort ? 'SHORT' : 'LONG'}]</span></h3>
                         <div class="popup-details">
                             <div class="popup-section">
                                 <h4>Alert Details</h4>

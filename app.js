@@ -3019,6 +3019,100 @@ app.listen(PORT, () => {
 
 })();
 
+// Background price updater - fetch live prices for all alert tickers and update quote.json
+const updateAllTickerPrices = async () => {
+  try {
+    // Load current alerts
+    if (!fs.existsSync(CONFIG.ALERTS_FILE)) return;
+    
+    const alertsContent = fs.readFileSync(CONFIG.ALERTS_FILE, 'utf8').trim();
+    if (!alertsContent) return;
+    
+    let alerts = [];
+    try {
+      alerts = JSON.parse(alertsContent);
+      if (!Array.isArray(alerts)) alerts = [];
+    } catch (e) {
+      return;
+    }
+    
+    // Load current performance data
+    let performanceData = {};
+    if (fs.existsSync(CONFIG.PERFORMANCE_FILE)) {
+      const content = fs.readFileSync(CONFIG.PERFORMANCE_FILE, 'utf8').trim();
+      if (content) {
+        try {
+          performanceData = JSON.parse(content);
+          if (!performanceData || typeof performanceData !== 'object') {
+            performanceData = {};
+          }
+        } catch (e) {
+          performanceData = {};
+        }
+      }
+    }
+    
+    // Get unique tickers from alerts
+    const tickers = [...new Set(alerts.map(a => a.ticker).filter(t => t))];
+    
+    if (tickers.length === 0) return;
+    
+    // Fetch prices for all tickers
+    for (const ticker of tickers) {
+      try {
+        await rateLimit.wait();
+        
+        const quote = await yahooFinance.quote(ticker, {
+          fields: ['regularMarketPrice', 'regularMarketVolume', 'averageVolume', 'marketCap']
+        });
+        
+        if (quote && quote.regularMarketPrice > 0) {
+          // Ensure ticker exists in performance data
+          if (!performanceData[ticker]) {
+            performanceData[ticker] = {
+              alert: quote.regularMarketPrice,
+              highest: quote.regularMarketPrice,
+              lowest: quote.regularMarketPrice,
+              current: quote.regularMarketPrice,
+              currentPrice: quote.regularMarketPrice,
+              volume: quote.regularMarketVolume || 0,
+              averageVolume: quote.averageVolume || 0,
+              marketCap: quote.marketCap || 'N/A'
+            };
+          } else {
+            // Update with latest price
+            performanceData[ticker].currentPrice = quote.regularMarketPrice;
+            performanceData[ticker].current = quote.regularMarketPrice;
+            performanceData[ticker].volume = quote.regularMarketVolume || 0;
+            performanceData[ticker].averageVolume = quote.averageVolume || 0;
+            performanceData[ticker].marketCap = quote.marketCap || 'N/A';
+            
+            // Update high/low
+            if (quote.regularMarketPrice > performanceData[ticker].highest) {
+              performanceData[ticker].highest = quote.regularMarketPrice;
+            }
+            if (quote.regularMarketPrice < performanceData[ticker].lowest) {
+              performanceData[ticker].lowest = quote.regularMarketPrice;
+            }
+          }
+        }
+      } catch (err) {
+        // Silently skip if fetch fails for this ticker
+      }
+    }
+    
+    // Save updated performance data
+    fs.writeFileSync(CONFIG.PERFORMANCE_FILE, JSON.stringify(performanceData, null, 2));
+  } catch (err) {
+    // Silently fail background updates
+  }
+};
+
+// Run price updates every 30 seconds
+setInterval(updateAllTickerPrices, 30000);
+// Also run immediately on startup
+updateAllTickerPrices();
+
 // Health monitoring - track memory usage
 setInterval(() => {
   const memory = process.memoryUsage();

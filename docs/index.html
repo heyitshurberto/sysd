@@ -944,7 +944,7 @@ table {
                 position: static;
                 font-size: 7px;
                 gap: 1px;
-                margin-top: 6px;
+                margin-top: 0;
                 text-align: left;
                 word-wrap: break-word;
                 width: 100%;
@@ -958,6 +958,7 @@ table {
                 align-items: flex-start;
                 padding: 4px;
                 overflow-x: hidden;
+                position: relative;
             }
             
             .header-top {
@@ -974,6 +975,8 @@ table {
                 flex-direction: column;
                 gap: 4px;
                 overflow-x: hidden;
+                position: relative;
+                margin-top: 4px;
             }
             
             .theme-toggle {
@@ -2081,10 +2084,10 @@ table {
             display: flex;
             align-items: center;
             gap: 24px;
-            position: absolute;
-            right: 88px;
-            top: 12px;
+            position: relative;
             white-space: nowrap;
+            width: 100%;
+            margin-top: 8px;
         }
 
         .time-display {

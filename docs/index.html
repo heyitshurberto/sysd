@@ -558,6 +558,9 @@ table {
             color: #555;
             box-shadow: none;
             pointer-events: auto !important;
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
         }
 
         body.dark-mode .score-details-toggle {
@@ -567,6 +570,9 @@ table {
         body.dark-mode .score-details-toggle:hover {
             color: #ddd;
             box-shadow: none;
+            background-color: rgba(120, 120, 120, 0.25);
+            padding: 2px 4px;
+            border-radius: 3px;
         }
 
         button {
@@ -2252,7 +2258,7 @@ table {
                     <div id="active-count">0 <span style="font-size: 11.5px;">(L:0 | S:0):</span></div>
                 </div>
                 <div class="stat-box">
-                    <div>Weighted Return:</div>
+                    <div>Weighted ROI:</div>
                     <div id="pl-count">0%</div>
                 </div>
                 <div class="stat-box">
@@ -3666,7 +3672,12 @@ FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && a
                                         milestonePercent: milestonePercent
                                     });
                                 }
-                                ms.upStep += 0.10;
+                                // Increment: 25% up to 100%, then 50% increments
+                                if (ms.upStep < 1.0) {
+                                    ms.upStep += 0.25;  // 25% increments
+                                } else {
+                                    ms.upStep += 0.50;  // 50% increments above 100%
+                                }
                             }
                             
                             // Downwards milestones - notify when crossed
@@ -3697,7 +3708,12 @@ FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && a
                                         milestonePercent: milestonePercent
                                     });
                                 }
-                                ms.downStep -= 0.10;
+                                // Decrement: 25% down to -100%, then 50% increments
+                                if (ms.downStep > -1.0) {
+                                    ms.downStep -= 0.25;  // 25% increments
+                                } else {
+                                    ms.downStep -= 0.50;  // 50% increments below -100%
+                                }
                             }
                             
                             // Persist updated steps
@@ -4141,7 +4157,7 @@ FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && a
                     <div class="score-details-container">
                     </div>
                     <div class="ticker ticker-clickable" tabindex="0" style="cursor:pointer;display:inline-block;user-select:none;transition:background 0.15s,border 0.15s; border-radius:4px; padding:2px 6px; margin-bottom:2px; font-size: 8px;">
-                    <button type="button" class="score-details-toggle" style="background: none; border: none; cursor: pointer; padding: 0; margin-right: 4px; font-size: 12px; color: #666;">⋮</button>
+                    <button type="button" class="score-details-toggle" style="background: transparent; border: none; cursor: pointer; padding: 2px 4px; margin-right: 4px; font-size: 12px; color: #666; border-radius: 3px; transition: background-color 0.2s, padding 0.2s;">⋮</button>
                     <div class="ticker" style="transition: all 0.15s ease;">
                         <i>$${alert.ticker}</i> 
                         <span style="color: ${alert.isShort ? '#cc0000' : '#00cc00'}; transition: color 0.15s ease;">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>

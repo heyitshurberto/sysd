@@ -905,13 +905,13 @@ table {
         
         @media (max-width: 768px) {
             .header {
-                flex-direction: row;
-                align-items: flex-start;
+                flex-direction: column;
+                align-items: center;
                 padding: 8px 10px !important;
                 margin-bottom: 12px !important;
                 position: relative;
-                justify-content: space-between;
-                gap: 0;
+                justify-content: center;
+                gap: 8px;
             }
             
             .header-top {
@@ -920,8 +920,8 @@ table {
                 gap: 8px;
                 width: auto;
                 margin: 0 !important;
-                flex: 1;
-                min-width: 0;
+                flex: none;
+                justify-content: center;
             }
             
             .logo {
@@ -935,13 +935,13 @@ table {
                 margin: 0 !important;
                 font-size: 18px !important;
                 white-space: normal !important;
-                flex: 1;
+                flex: none;
                 min-width: 0;
                 overflow: visible !important;
                 text-overflow: clip !important;
-                display: block !important;
+                display: inline-block !important;
                 color: #2c2c2c !important;
-                margin-left: 8px !important;
+                margin-left: 0 !important;
                 margin-top: 0 !important;
             }
             
@@ -1029,7 +1029,7 @@ table {
                 overflow-x: hidden !important;
                 width: 100vw !important;
                 overflow-y: auto !important;
-                font-size: 50%;
+                font-size: 70%;
                 margin: 0 !important;
                 padding: 0 !important;
             }
@@ -1068,6 +1068,19 @@ table {
                 margin-bottom: 8px !important;
                 padding: 7px !important;
                 font-size: 11px !important;
+            }
+            
+            .score-breakdown {
+                width: 150px !important;
+                padding: 2px 3px !important;
+                font-size: 8px !important;
+                right: 2px !important;
+                top: 5px !important;
+            }
+            
+            .score-details-container {
+                max-height: 300px !important;
+                overflow-y: auto !important;
             }
             
             .container {

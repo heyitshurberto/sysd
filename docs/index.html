@@ -677,6 +677,12 @@ table {
             line-height: 1;
         }
 
+        body.dark-mode .score-breakdown {
+            background: rgba(42, 42, 42, 0.95);
+            border: 1px solid rgba(68, 68, 68, 0.8);
+            width: 274px;
+        }
+
         /* Button and animation fixes */
         .score-details-toggle:active {
             transform: translateY(1px);
@@ -1104,6 +1110,14 @@ table {
                 margin-bottom: 8px !important;
                 padding: 7px !important;
                 font-size: 11px !important;
+            }
+            
+            .score-breakdown {
+                width: 150px !important;
+                padding: 2px 3px !important;
+                font-size: 8px !important;
+                right: 2px !important;
+                top: 5px !important;
             }
             
             .score-details-container {
@@ -4430,9 +4444,9 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 // Create the initial HTML content
                 card.innerHTML = `
                     <div class="score-details-container">
-                        <button type="button" class="score-details-toggle" style="background: transparent; border: none; cursor: pointer; padding: 2px 4px; margin-right: 4px; font-size: 12px; color: #666; border-radius: 3px; transition: background-color 0.2s, padding 0.2s;">⋮</button>
                     </div>
                     <div class="ticker ticker-clickable" tabindex="0" style="cursor:pointer;display:inline-block;user-select:none;transition:background 0.15s,border 0.15s; border-radius:4px; padding:2px 6px; margin-bottom:2px; font-size: 8px;">
+                    <button type="button" class="score-details-toggle" style="background: transparent; border: none; cursor: pointer; padding: 2px 4px; margin-right: 4px; font-size: 12px; color: #666; border-radius: 3px; transition: background-color 0.2s, padding 0.2s;">⋮</button>
                     <div class="ticker" style="transition: all 0.15s ease;">
                         <i>$${alert.ticker}</i> 
                         <span style="color: ${alert.isShort ? '#cc0000' : '#00cc00'}; transition: color 0.15s ease;">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>
@@ -4466,15 +4480,15 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                             const url = 'https://www.tradingview.com/chart/?symbol=' + tvSymbol;
                             console.log('Opening URL:', url);
                             customConfirm('Open TradingView Chart for $' + ticker + '?', url);
-                        })()">$TradingView</button>
+                        })()">TradingView</button>
                         <button type="button" class="link-button" onclick="(() => {
                             event.stopPropagation();
                             customConfirm('View Financials for $${alert.ticker}?', \`https://stockanalysis.com/stocks/${alert.ticker}/statistics/\`);
-                        })()">$Financials</button>
+                        })()">Financials</button>
                         <button type="button" class="link-button" onclick="(() => {
                             event.stopPropagation();
                             customConfirm('Open Trading 212 to trade $${alert.ticker}?', 'https://www.trading212.com/en/login');
-                        })()">$Trading212</button>
+                        })()">Trading 212</button>
                     </div>
                 `;
                 // Add hover/click animation to ticker/position

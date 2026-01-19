@@ -27,7 +27,13 @@ table {
 <style>
     @media (max-width: 768px) {
         div[style*="position: absolute; top: 7px; left: 7px;"] {
-            display: none !important;
+            position: static !important;
+            margin-bottom: 6px !important;
+            padding-left: 6px !important;
+        }
+        div[style*="position: absolute; top: 7px; left: 7px;"] a {
+            font-size: 9px !important;
+            max-width: 80px !important;
         }
     }
 </style>
@@ -1054,10 +1060,13 @@ table {
             }
             
             .score-breakdown .score-item,
-            .score-breakdown .score-header,
             .score-breakdown .section-header,
             .score-breakdown .intent-tag {
                 font-size: 4.3px !important;
+            }
+            
+            .score-breakdown .score-header {
+                font-size: 5px !important;
             }
             
             .score-details-container {
@@ -2298,14 +2307,13 @@ table {
         @media (max-width: 768px) {
             .notification-panel {
                 position: fixed !important;
-                top: auto !important;
+                top: 80px !important;
                 right: 8px !important;
                 left: auto !important;
                 bottom: auto !important;
                 width: 90vw !important;
                 max-width: 300px !important;
                 max-height: 60vh !important;
-                margin-top: 8px;
             }
         }
 
@@ -3447,13 +3455,13 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                                 console.log('Generated tvSymbol:', tvSymbol);
                                 const url = \`https://www.tradingview.com/chart/?symbol=\${tvSymbol}\`;
                                 console.log('Opening URL:', url);
-                                customConfirm(\`Open TradingView chart for \${ticker}?\`, url);
+                                customConfirm(\`Open TradingView chart for $${ticker}?\`, url);
                             })()">TradingView</button>
                             <button onclick="(() => {
-                                customConfirm(\`View Financials for ${alert.ticker}?\`, \`https://stockanalysis.com/stocks/${alert.ticker}/statistics/\`);
+                                customConfirm(\`View Financials for $${alert.ticker}?\`, \`https://stockanalysis.com/stocks/${alert.ticker}/statistics/\`);
                             })()">Financials</button>
                             <button onclick="(() => {
-                                customConfirm(\`Open Trading 212 to trade ${alert.ticker}?\`, 'https://www.trading212.com/en/login');
+                                customConfirm(\`Open Trading 212 to trade $${alert.ticker}?\`, 'https://www.trading212.com/en/login');
                             })()">Trading 212</button>
                            <button onclick="this.closest('.alert-popup').remove()">Close</button>
                         </div>

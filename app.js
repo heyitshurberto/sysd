@@ -18,13 +18,13 @@ if (fs.existsSync('.env')) {
 
 const CONFIG = {
   // Alert filtering criteria
-  FILE_TIME: 1,               // Minutes retro to fetch filings
-  MIN_ALERT_VOLUME: 20000,     // Lower base, conditional on signal strength
+  FILE_TIME: 1,                   // Minutes retro to fetch filings
+  MIN_ALERT_VOLUME: 20000,        // Lower base, conditional on signal strength
   STRONG_SIGNAL_MIN_VOLUME: 1000, // Very low for penny stocks with extreme S/O
-  EXTREME_SO_RATIO: 80,       // >80% S/O = tight float (primary volatility driver)
-  MAX_FLOAT_6K: 100000000,    // Max float size for 6-K
-  MAX_FLOAT_8K: 250000000,    // Max float size for 8-K (higher threshold - less reliable)
-  MAX_SO_RATIO: 125.0,        // Max short interest ratio - Increased from 80% to 100%
+  EXTREME_SO_RATIO: 90,           // >90% S/O = tight float (primary volatility driver)
+  MAX_FLOAT_6K: 100000000,        // Max float size for 6-K
+  MAX_FLOAT_8K: 250000000,        // Max float size for 8-K (higher threshold - less reliable)
+  MAX_SO_RATIO: 150.0,            // Max short interest ratio
   ALLOWED_COUNTRIES: ['israel', 'dubai', 'japan', 'china', 'hong kong', 'brazil', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'new york', 'nevada', 'ireland', 'california', 'delaware', 'massachusetts', 'texas', 'australia'], // Allowed incorporation/located countries
   // Enable optimizations for Raspberry Pi devices
   PI_MODE: true,              // Enable Pi optimizations          
@@ -41,7 +41,7 @@ const CONFIG = {
   ALERTS_FILE: 'logs/alert.json',      // File to store recent alerts
   STOCKS_FILE: 'logs/stocks.json',     // File to store all alerts
   PERFORMANCE_FILE: 'logs/quote.json', // File to store performance data
-  CSV_FILE: 'logs/track.csv',       // File to store CSV export of all alerts
+  CSV_FILE: 'logs/track.csv',          // File to store CSV export of all alerts
   // GitHub & Webhook settings
   GITHUB_REPO_PATH: process.env.GITHUB_REPO_PATH || '/home/user/Documents/sysd', // Local path to GitHub repo
   GITHUB_USERNAME: process.env.GITHUB_USERNAME || 'your-github-username', // GitHub username
@@ -253,7 +253,7 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
     const soPercent = (numFloat / numShares) * 100;
     const isADRStructure = adrMultiplier > 1.0;
     
-    // ADR (custodian-controlled): tight float = suppressed supply = pump potential
+    // ADR (custodian-controlled): tight float = suppressed supply = structural constraint
     // Higher float ratio = tighter float = better for ADR
     if (isADRStructure) {
       if (soPercent >= 100) soBonus = 1.2;   // Extreme tight (100%+)
@@ -546,7 +546,7 @@ const detectShellRecycling = (text) => {
   return (hasForm15 && hasNameChange) ? 'Shell Recycling' : null;
 };
 
-// 4. VStock Transfer Agent Detection - Pump setup indicator
+// 4. VStock Transfer Agent Detection - Transfer agent rotation indicator
 const detectVStockTransferAgent = (text) => {
   if (!text) return null;
   const lowerText = text.toLowerCase();
@@ -563,7 +563,7 @@ const detectVStockTransferAgent = (text) => {
   return (hasVStock && hasTransferAgent) ? 'VStock Setup' : null;
 };
 
-// 5. NT 10-K → Actual 10-K Cycle (Chinese ADRs) - Dump then pump pattern
+// 5. NT 10-K → Actual 10-K Cycle (Chinese ADRs) - Filing cycle pattern
 const detectNT10KCycle = (text, filingType) => {
   if (!text) return null;
   const lowerText = text.toLowerCase();
@@ -760,7 +760,7 @@ const detectMACloseRebrand = (text) => {
   
   let multiplier = 1.0;
   if (isMAClosed && hasRebrand) {
-    multiplier = 1.30; // Full M&A + rebrand = rebranding pump signal
+    multiplier = 1.30; // Full M&A + rebrand = structural transformation signal
   } else if (isMAClosed) {
     multiplier = 1.15; // M&A closed = structural change
   }
@@ -833,7 +833,7 @@ const cleanupStaleAlerts = () => {
 const saveToCSV = (alertData) => {
   try {
     const csvPath = CONFIG.CSV_FILE;
-    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Price,Score,Float,Shares Outstanding,S/O Ratio,VWAP,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Skip Reason\n';
+    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Price,Score,Float,Shares Outstanding,S/O Ratio,VWAP,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Bonus Signals,Skip Reason\n';
     
     // Create file with headers if it doesn't exist
     if (!fs.existsSync(csvPath)) {
@@ -878,6 +878,23 @@ const saveToCSV = (alertData) => {
       return str;
     };
     
+    // Format bonus signals
+    let bonusSignalsStr = 'N/A';
+    if (alertData.bonusSignals && typeof alertData.bonusSignals === 'object') {
+      const bonusItems = [];
+      if (alertData.bonusSignals['DTC Chill Lift']) bonusItems.push('DTC Chill Lift');
+      if (alertData.bonusSignals['Shell Recycling']) bonusItems.push('Shell Recycling');
+      if (alertData.bonusSignals['VStock']) bonusItems.push('VStock');
+      if (alertData.bonusSignals['NT 10K'] === 'NT 10K Filed') bonusItems.push('NT 10-K Filed');
+      if (alertData.bonusSignals['NT 10K'] === 'Actual 10K Filed') bonusItems.push('Actual 10-K');
+      if (alertData.bonusSignals['Third Party'] && Array.isArray(alertData.bonusSignals['Third Party'])) {
+        bonusItems.push(`Services: ${alertData.bonusSignals['Third Party'].join(';')}`);
+      }
+      if (bonusItems.length > 0) {
+        bonusSignalsStr = bonusItems.join('; ');
+      }
+    }
+    
     // Build CSV row with data
     const csvVWAP = calculateVWAP(alertData.price, alertData.volume);
     const row = [
@@ -904,6 +921,7 @@ const saveToCSV = (alertData) => {
       escapeCSV(alertData.custodianControl ? (alertData.custodianVerified ? `1.3x ${alertData.custodianName}` : alertData.custodianName) : 'No'),
       escapeCSV(alertData.filingTimeBonus ? `${alertData.filingTimeBonus}x Filing Time` : 'No'),
       escapeCSV(alertData.soBonus && alertData.soBonus > 1.0 ? `${alertData.soBonus}x S/O` : 'No'),
+      escapeCSV(bonusSignalsStr),
       escapeCSV(alertData.skipReason || ''),
     ];
 
@@ -963,9 +981,9 @@ const saveAlert = (alertData) => {
     if (alertData.bonusSignals) {
       if (alertData.bonusSignals['DTC Chill Lift']) bonusItems.push('DTC Chill Lift');
       if (alertData.bonusSignals['Shell Recycling']) bonusItems.push('Shell Recycling');
-      if (alertData.bonusSignals['VStock']) bonusItems.push('VStock Setup');
-      if (alertData.bonusSignals['NT 10K'] === 'NT 10K Filed') bonusItems.push('NT 10-K Filed');
-      if (alertData.bonusSignals['NT 10K'] === 'Actual 10K Filed') bonusItems.push('Actual 10-K');
+      if (alertData.bonusSignals['VStock']) bonusItems.push('Transfer Agent Change');
+      if (alertData.bonusSignals['NT 10K'] === 'NT 10K Filed') bonusItems.push('Late Filing Notice');
+      if (alertData.bonusSignals['NT 10K'] === 'Actual 10K Filed') bonusItems.push('10-K Filing');
       if (alertData.bonusSignals['Third Party'] && Array.isArray(alertData.bonusSignals['Third Party'])) {
         bonusItems.push(`Services: ${alertData.bonusSignals['Third Party'].join(', ')}`);
       }
@@ -2095,7 +2113,7 @@ app.listen(PORT, () => {
           const shellRecycle = detectShellRecycling(text);
           if (shellRecycle) bonusSignals['Shell Recycling'] = shellRecycle;
           
-          // Check VStock transfer agent (pump setup)
+          // Check VStock transfer agent (transfer agent rotation)
           const vstock = detectVStockTransferAgent(text);
           if (vstock) bonusSignals['VStock'] = vstock;
           
@@ -2435,18 +2453,18 @@ app.listen(PORT, () => {
           // VStock Transfer Agent
           if (bonusSignals['VStock']) {
             signalScoreData.score = parseFloat((signalScoreData.score * 1.15).toFixed(2));
-            signalScoreData.bonusSignal = 'VStock Pump Setup';
+            signalScoreData.bonusSignal = 'Transfer Agent Change';
             log('INFO', `Bonus: VStock Transfer Agent detected`);
           }
           
           // NT 10-K Cycle (Chinese ADRs)
           if (bonusSignals['NT 10K'] === 'NT 10K Filed') {
             signalScoreData.score = parseFloat((signalScoreData.score * 0.85).toFixed(2));
-            signalScoreData.bonusSignal = 'NT 10-K Dump';
+            signalScoreData.bonusSignal = 'Late Filing Notice';
             log('INFO', `Bonus: NT 10-K Filed`);
           } else if (bonusSignals['NT 10K'] === 'Actual 10K Filed') {
-            signalScoreData.score = parseFloat((signalScoreData.score * 1.3).toFixed(2));
-            signalScoreData.bonusSignal = 'Actual 10-K Pump';
+            signalScoreData.score = parseFloat((signalScoreData.score * 1.2).toFixed(2));
+            signalScoreData.bonusSignal = '10-K Filing';
             log('INFO', `Bonus: Actual 10-K Filed`);
           }
           
@@ -2592,6 +2610,10 @@ app.listen(PORT, () => {
             }
           }
           
+          const neutralCategories = ['Executive Departure', 'Asset Impairment', 'Restructuring', 'Stock Buyback', 'Licensing Deal', 'Partnership', 'Facility Expansion', 'Blockchain Initiative', 'Government Contract', 'Stock Split', 'Dividend Increase', 'Mining Operations', 'Financing Events', 'Analyst Coverage'];
+          const neutralSignals = signalCategories.filter(cat => neutralCategories.includes(cat));
+          const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
+          
           // Check if country is whitelisted - ONLY for 6-K filings (8-K can be Delaware/US states)
           let countryWhitelisted = true;
           if (filing.formType === '6-K' || filing.formType === '6-K/A') {
@@ -2690,10 +2712,6 @@ app.listen(PORT, () => {
           // Determine volume threshold based on signal type (will be calculated later after semantic analysis)
           // Store volume value for later threshold check after signal detection
           const volumeCheckLater = volumeValue;
-          
-          const neutralCategories = ['Executive Departure', 'Asset Impairment', 'Restructuring', 'Stock Buyback', 'Licensing Deal', 'Partnership', 'Facility Expansion', 'Blockchain Initiative', 'Government Contract', 'Stock Split', 'Dividend Increase', 'Mining Operations', 'Financing Events', 'Analyst Coverage'];
-          const neutralSignals = signalCategories.filter(cat => neutralCategories.includes(cat));
-          const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
           
           // Dynamic volume threshold based on signal strength
           // If S/O ratio >80% OR strong non-neutral signals, allow much lower volume
@@ -3000,3 +3018,33 @@ app.listen(PORT, () => {
   }
 
 })();
+
+// Health monitoring - track memory usage
+setInterval(() => {
+  const memory = process.memoryUsage();
+  const heapUsedMB = Math.round(memory.heapUsed / 1024 / 1024);
+  if (heapUsedMB > 500) {
+    log('WARN', `High memory: ${heapUsedMB}MB (${Math.round(memory.heapUsed / memory.heapTotal * 100)}% of heap)`);
+  }
+}, 60000);
+
+// Graceful shutdown handler
+process.on('SIGTERM', () => {
+  log('INFO', 'Shutdown signal received');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  log('INFO', 'Interrupt signal received');
+  process.exit(0);
+});
+
+// Uncaught error handler
+process.on('uncaughtException', (err) => {
+  log('ERROR', `Uncaught exception: ${err.message}`);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  log('ERROR', `Unhandled rejection at ${promise}: ${reason}`);
+});

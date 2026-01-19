@@ -1,0 +1,3234 @@
+[
+  {
+    "ticker": "ASBP",
+    "price": 0.1202,
+    "signalScore": 0.29,
+    "hasTuesdayBonus": true,
+    "volume": 17413679,
+    "averageVolume": 29344398,
+    "float": 34520591,
+    "sharesOutstanding": 138446102,
+    "soRatio": "24.93%",
+    "marketCap": 16641221,
+    "short": false,
+    "intent": "Credit Default, Partnership, Financing Events",
+    "incorporated": "Grand Cayman, Cayman Islands",
+    "located": "Florida",
+    "filingDate": "2026-01-06",
+    "signals": {
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, 8-K, F-1, 13G, 13D, EX-10.1, Item 1.01, Item 2.03, Item 3.02, Item 9.01",
+    "cik": "1847345",
+    "skipReason": "Low Score",
+    "recordedAt": "2026-01-06T13:36:29.146Z",
+    "recordId": "ASBP-1767706589146",
+    "expiresAt": "2026-01-11T13:36:29.146Z"
+  },
+  {
+    "ticker": "RGNT",
+    "price": 6.81,
+    "signalScore": 0.46,
+    "hasTuesdayBonus": true,
+    "volume": 39478,
+    "averageVolume": 30657,
+    "float": 2371812,
+    "sharesOutstanding": 5179378,
+    "soRatio": "45.79%",
+    "marketCap": 35271564,
+    "short": false,
+    "intent": "FDA Approval",
+    "incorporated": "Tel Aviv, Israel",
+    "located": "Israel",
+    "filingDate": "2026-01-06",
+    "signals": {
+      "FDA Approval": [
+        "FDA Approval"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, 20-F, EX-99.1",
+    "cik": "1912966",
+    "skipReason": "Not Enough Signals",
+    "recordedAt": "2026-01-06T13:51:32.539Z",
+    "recordId": "RGNT-1767707492539",
+    "expiresAt": "2026-01-11T13:51:32.539Z"
+  },
+  {
+    "ticker": "MRSN",
+    "price": 29.08,
+    "signalScore": 0.58,
+    "hasTuesdayBonus": true,
+    "volume": 704861,
+    "averageVolume": 136650,
+    "float": 3519900,
+    "sharesOutstanding": 4998750,
+    "soRatio": "70.42%",
+    "marketCap": 145363648,
+    "short": false,
+    "intent": "Merger/Acquisition, FDA Approval, Credit Default, Licensing Deal",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Massachusetts",
+    "filingDate": "2026-01-06",
+    "signals": {
+      "Merger/Acquisition": [
+        "Merger Agreement",
+        "Merger Consideration"
+      ],
+      "FDA Approval": [
+        "Breakthrough Therapy"
+      ],
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Licensing Deal": [
+        "License Agreement"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, Item 1.02, Item 2.01, Item 3.01, Item 3.03, Item 5.01, Item 5.02, Item 5.03, Item 9.01",
+    "cik": "1442836",
+    "skipReason": "High S/O Ratio",
+    "recordedAt": "2026-01-06T14:26:34.215Z",
+    "recordId": "MRSN-1767709594215",
+    "expiresAt": "2026-01-11T14:26:34.215Z"
+  },
+  {
+    "ticker": "PROF",
+    "price": 7.53,
+    "signalScore": 0.22,
+    "hasTuesdayBonus": true,
+    "volume": 52189,
+    "averageVolume": 112904,
+    "float": 28966800,
+    "sharesOutstanding": 36292972,
+    "soRatio": "79.81%",
+    "marketCap": 273286080,
+    "short": false,
+    "intent": "FDA Approval",
+    "incorporated": "Ottawa, Canada",
+    "located": "Ottawa, Canada",
+    "filingDate": "2026-01-06",
+    "signals": {
+      "FDA Approval": [
+        "FDA Approval",
+        "FDA Clearance"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, 6-K/A, 8-K, 20-F, 20-F/A, EX-99.1, Item 7.01, Item 9.01",
+    "cik": "1628808",
+    "skipReason": "Low Score",
+    "recordedAt": "2026-01-06T18:40:17.436Z",
+    "recordId": "PROF-1767724817436",
+    "expiresAt": "2026-01-11T18:40:17.436Z"
+  },
+  {
+    "ticker": "RENX",
+    "price": 0.2012,
+    "signalScore": 0.34,
+    "hasTuesdayBonus": true,
+    "volume": 548845,
+    "averageVolume": 3172301,
+    "float": 2534030,
+    "sharesOutstanding": 8882672,
+    "soRatio": "28.53%",
+    "marketCap": 1787193,
+    "short": false,
+    "intent": "Bankruptcy Filing, Credit Default",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Florida",
+    "filingDate": "2026-01-06",
+    "signals": {
+      "Bankruptcy Filing": [
+        "Insolvency Proceedings"
+      ],
+      "Credit Default": [
+        "Event Of Default"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, EX-10.1, EX-10.2, Item 1.01, Item 2.03, Item 9.01",
+    "cik": "1959023",
+    "skipReason": "",
+    "recordedAt": "2026-01-06T22:29:34.911Z",
+    "recordId": "RENX-1767738574911",
+    "expiresAt": "2026-01-11T22:29:34.911Z"
+  },
+  {
+    "ticker": "STEC",
+    "price": 1.53,
+    "signalScore": 0.56,
+    "hasTuesdayBonus": false,
+    "volume": 20161416,
+    "averageVolume": 1243957,
+    "float": 14286700,
+    "sharesOutstanding": 84000000,
+    "soRatio": "17.01%",
+    "marketCap": 128520000,
+    "short": false,
+    "intent": "Reverse Split, Partnership",
+    "incorporated": "Grand Cayman, Cayman Islands",
+    "located": "Hong Kong",
+    "filingDate": "2026-01-07",
+    "signals": {
+      "Reverse Split": [
+        "Consolidation Of Shares"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, 20-F, EX-3.1",
+    "cik": "1785680",
+    "skipReason": "",
+    "recordedAt": "2026-01-07T11:09:53.676Z",
+    "recordId": "STEC-1767784193676",
+    "expiresAt": "2026-01-12T11:09:53.676Z"
+  },
+  {
+    "ticker": "RZLT",
+    "price": 1.91,
+    "signalScore": 0.17,
+    "hasTuesdayBonus": false,
+    "volume": 4883543,
+    "averageVolume": 6073096,
+    "float": 64667000,
+    "sharesOutstanding": 92727532,
+    "soRatio": "69.74%",
+    "marketCap": 177109584,
+    "short": false,
+    "intent": "FDA Approval",
+    "incorporated": "Nevada",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-07",
+    "signals": {
+      "FDA Approval": [
+        "Breakthrough Therapy"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, S-4, F-1, Form D, EX-99.1, EX-99.2, Item 7.01, Item 9.01",
+    "cik": "1509261",
+    "skipReason": "Low Score",
+    "recordedAt": "2026-01-07T11:11:58.029Z",
+    "recordId": "RZLT-1767784318029",
+    "expiresAt": "2026-01-12T11:11:58.029Z"
+  },
+  {
+    "ticker": "KMDA",
+    "price": 7.43,
+    "signalScore": 0.32,
+    "hasTuesdayBonus": false,
+    "volume": 70489,
+    "averageVolume": 79629,
+    "float": 9549900,
+    "sharesOutstanding": 57681590,
+    "soRatio": "16.56%",
+    "marketCap": 429162944,
+    "short": false,
+    "intent": "Revenue Growth, Dividend Increase",
+    "incorporated": "Tel Aviv, Israel",
+    "located": "Tel Aviv, Israel",
+    "filingDate": "2026-01-07",
+    "signals": {
+      "Revenue Growth": [
+        "Organic Growth"
+      ],
+      "Dividend Increase": [
+        "Special Dividend"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, S-4, S-8, F-3, 20-F, EX-99.1, EX-99.2",
+    "cik": "1567529",
+    "skipReason": "Low Volume",
+    "recordedAt": "2026-01-07T12:11:57.680Z",
+    "recordId": "KMDA-1767787917680",
+    "expiresAt": "2026-01-12T12:11:57.680Z"
+  },
+  {
+    "ticker": "EYPT",
+    "price": 16.86,
+    "signalScore": 0.17,
+    "hasTuesdayBonus": false,
+    "volume": 716550,
+    "averageVolume": 1317425,
+    "float": 73290763,
+    "sharesOutstanding": 82787220,
+    "soRatio": "88.53%",
+    "marketCap": 1395792512,
+    "short": false,
+    "intent": "FDA Approval, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Massachusetts",
+    "filingDate": "2026-01-07",
+    "signals": {
+      "FDA Approval": [
+        "FDA Approval"
+      ],
+      "Compliance Issue": [
+        "FDA Warning",
+        "Warning Letter"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, 8-K, S-3, S-4, F-4, 13D, EX-99.1, Item 2.02, Item 9.01",
+    "cik": "1314102",
+    "skipReason": "Low Score",
+    "recordedAt": "2026-01-07T12:12:47.468Z",
+    "recordId": "EYPT-1767787967468",
+    "expiresAt": "2026-01-12T12:12:47.468Z"
+  },
+  {
+    "ticker": "ENLT",
+    "price": 51.275,
+    "signalScore": 0.44,
+    "hasTuesdayBonus": false,
+    "volume": 59688,
+    "averageVolume": 34153,
+    "float": 12283500,
+    "sharesOutstanding": 132067305,
+    "soRatio": "9.30%",
+    "marketCap": 6771751424,
+    "short": false,
+    "intent": "Revenue Growth, Financing Events",
+    "incorporated": "Tel Aviv, Israel",
+    "located": "Tel Aviv, Israel",
+    "filingDate": "2026-01-07",
+    "signals": {
+      "Revenue Growth": [
+        "Organic Growth"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, F-3, 20-F, EX-99.1",
+    "cik": "1922641",
+    "skipReason": "Low Volume",
+    "recordedAt": "2026-01-07T12:32:41.094Z",
+    "recordId": "ENLT-1767789161094",
+    "expiresAt": "2026-01-12T12:32:41.094Z"
+  },
+  {
+    "ticker": "MOBX",
+    "price": 0.1965,
+    "signalScore": 0.42,
+    "hasTuesdayBonus": false,
+    "volume": 65669478,
+    "averageVolume": 5620075,
+    "float": 29377000,
+    "sharesOutstanding": 64308034,
+    "soRatio": "45.68%",
+    "marketCap": 13030492,
+    "short": false,
+    "intent": "Partnership, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-07",
+    "signals": {
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Financing Events": [
+        "Debt Offering",
+        "Credit Facility"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, S-1, S-3, S-4, EX-10.1, EX-10.2, Item 1.01, Item 9.01",
+    "cik": "1855467",
+    "skipReason": "High S/O Ratio",
+    "recordedAt": "2026-01-07T13:24:17.153Z",
+    "recordId": "MOBX-1767792257153",
+    "expiresAt": "2026-01-12T13:24:17.153Z"
+  },
+  {
+    "ticker": "SABS",
+    "price": 3.62,
+    "signalScore": 0.24,
+    "hasTuesdayBonus": false,
+    "volume": 64688,
+    "averageVolume": 257290,
+    "float": 22587100,
+    "sharesOutstanding": 47606851,
+    "soRatio": "47.45%",
+    "marketCap": 172336800,
+    "short": false,
+    "intent": "FDA Approval",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Florida",
+    "filingDate": "2026-01-07",
+    "signals": {
+      "FDA Approval": [
+        "FDA Approval"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, EX-99.1, Item 5.02, Item 7.01, Item 9.01",
+    "cik": "1833214",
+    "skipReason": "Low Score",
+    "recordedAt": "2026-01-07T13:31:04.491Z",
+    "recordId": "SABS-1767792664491",
+    "expiresAt": "2026-01-12T13:31:04.491Z"
+  },
+  {
+    "ticker": "ACET",
+    "price": 8.05,
+    "signalScore": 0.24,
+    "hasTuesdayBonus": false,
+    "volume": 163277,
+    "averageVolume": 164199,
+    "float": 8408400,
+    "sharesOutstanding": 9600000,
+    "soRatio": "87.59%",
+    "marketCap": 77280000,
+    "short": false,
+    "intent": "FDA Approval",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Massachusetts",
+    "filingDate": "2026-01-07",
+    "signals": {
+      "FDA Approval": [
+        "Fast Track Designation"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, F-4, 13D, EX-99.1, Item 7.01, Item 8.01, Item 9.01",
+    "cik": "1720580",
+    "skipReason": "Low Score",
+    "recordedAt": "2026-01-07T13:31:14.077Z",
+    "recordId": "ACET-1767792674077",
+    "expiresAt": "2026-01-12T13:31:14.077Z"
+  },
+  {
+    "ticker": "VWAV",
+    "price": 9.57,
+    "signalScore": 0.41,
+    "hasTuesdayBonus": false,
+    "volume": 161388,
+    "averageVolume": 248701,
+    "float": 1014200,
+    "sharesOutstanding": 16496603,
+    "soRatio": "6.15%",
+    "marketCap": 157872480,
+    "short": false,
+    "intent": "Merger/Acquisition, Credit Default",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-07",
+    "signals": {
+      "Merger/Acquisition": [
+        "Agreed To Acquire"
+      ],
+      "Credit Default": [
+        "Event Of Default"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, EX-99.1, EX-10.1, Item 1.01, Item 2.01, Item 3.02, Item 8.01, Item 9.01",
+    "cik": "2038439",
+    "skipReason": "",
+    "recordedAt": "2026-01-07T13:31:40.528Z",
+    "recordId": "VWAV-1767792700528",
+    "expiresAt": "2026-01-12T13:31:40.528Z"
+  },
+  {
+    "ticker": "MNTK",
+    "price": 1.53,
+    "signalScore": 0.21,
+    "hasTuesdayBonus": false,
+    "volume": 149080,
+    "averageVolume": 148812,
+    "float": 64795000,
+    "sharesOutstanding": 142256617,
+    "soRatio": "45.55%",
+    "marketCap": 217652624,
+    "short": false,
+    "intent": "Credit Default, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Pennsylvania",
+    "filingDate": "2026-01-07",
+    "signals": {
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Financing Events": [
+        "Credit Facility",
+        "Loan Facility"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, F-3, F-4, EX-10.1, Item 1.01, Item 9.01",
+    "cik": "1826600",
+    "skipReason": "Low Score",
+    "recordedAt": "2026-01-07T22:16:34.589Z",
+    "recordId": "MNTK-1767824194589",
+    "expiresAt": "2026-01-12T22:16:34.589Z"
+  },
+  {
+    "ticker": "CNTX",
+    "price": 1.66,
+    "signalScore": 0.34,
+    "hasTuesdayBonus": false,
+    "volume": 1740380,
+    "averageVolume": 759279,
+    "float": 39796500,
+    "sharesOutstanding": 91879177,
+    "soRatio": "43.31%",
+    "marketCap": 152519424,
+    "short": false,
+    "intent": "FDA Approval",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Pennsylvania",
+    "filingDate": "2026-01-08",
+    "signals": {
+      "FDA Approval": [
+        "FDA Approval"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, 8-K, S-4, EX-99.1, Item 7.01, Item 9.01",
+    "cik": "1842952",
+    "skipReason": "Not Enough Signals",
+    "recordedAt": "2026-01-08T13:51:09.411Z",
+    "recordId": "CNTX-1767880269412",
+    "expiresAt": "2026-01-13T13:51:09.412Z"
+  },
+  {
+    "ticker": "PHAT",
+    "price": 15.6,
+    "signalScore": 1,
+    "hasTuesdayBonus": false,
+    "volume": 6659404,
+    "averageVolume": 968079,
+    "float": 50254000,
+    "sharesOutstanding": 71138440,
+    "soRatio": "70.64%",
+    "marketCap": 1109759744,
+    "short": true,
+    "intent": "Insider Selling, Partnership",
+    "incorporated": "Wilmington, Delaware",
+    "located": "New Jersey",
+    "filingDate": "2026-01-08",
+    "signals": {
+      "Insider Selling": [
+        "Equity Compensation"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, S-3, S-8, EX-1.1, Item 8.01, Item 9.01",
+    "cik": "1783183",
+    "skipReason": "",
+    "recordedAt": "2026-01-08T21:04:06.910Z",
+    "recordId": "PHAT-1767906246910",
+    "expiresAt": "2026-01-13T21:04:06.910Z"
+  },
+  {
+    "ticker": "WDFC",
+    "price": 203.5,
+    "signalScore": 1,
+    "hasTuesdayBonus": false,
+    "volume": 215854,
+    "averageVolume": 126187,
+    "float": 13470200,
+    "sharesOutstanding": 13527835,
+    "soRatio": "99.57%",
+    "marketCap": 2754141440,
+    "short": true,
+    "intent": "Insider Selling, Stock Buyback, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-08",
+    "signals": {
+      "Insider Selling": [
+        "Stock-based compensation"
+      ],
+      "Stock Buyback": [
+        "Share Repurchase"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, 8-K, F-3, EX-99.1, Item 2.02, Item 9.01",
+    "cik": "105132",
+    "skipReason": "",
+    "recordedAt": "2026-01-08T21:08:29.760Z",
+    "recordId": "WDFC-1767906509760",
+    "expiresAt": "2026-01-13T21:08:29.760Z"
+  },
+  {
+    "ticker": "KALA",
+    "price": 0.649,
+    "signalScore": 0.81,
+    "hasTuesdayBonus": false,
+    "volume": 1106564,
+    "averageVolume": 7890350,
+    "float": 8189900,
+    "sharesOutstanding": 27849725,
+    "soRatio": "29.41%",
+    "marketCap": 18074470,
+    "short": true,
+    "intent": "Dilution, Partnership, Compliance Issue, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Massachusetts",
+    "filingDate": "2026-01-08",
+    "signals": {
+      "Dilution": [
+        "Issuance of shares"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Compliance Issue": [
+        "Warning Letter"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, S-3, EX-1.1, Item 1.01, Item 9.01",
+    "cik": "1479419",
+    "skipReason": "",
+    "recordedAt": "2026-01-08T21:08:34.707Z",
+    "recordId": "KALA-1767906514707",
+    "expiresAt": "2026-01-13T21:08:34.707Z"
+  },
+  {
+    "ticker": "GOLF",
+    "price": 86.13,
+    "signalScore": 0.86,
+    "hasTuesdayBonus": false,
+    "volume": 268297,
+    "averageVolume": 308195,
+    "float": 27501600,
+    "sharesOutstanding": 58661329,
+    "soRatio": "46.88%",
+    "marketCap": 5052499968,
+    "short": true,
+    "intent": "Dilution, Credit Default, Partnership",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Massachusetts",
+    "filingDate": "2026-01-08",
+    "signals": {
+      "Dilution": [
+        "Issuance of shares"
+      ],
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, EX-10.1, Item 1.01, Item 9.01",
+    "cik": "1672013",
+    "skipReason": "",
+    "recordedAt": "2026-01-08T21:15:57.475Z",
+    "recordId": "GOLF-1767906957476",
+    "expiresAt": "2026-01-13T21:15:57.476Z"
+  },
+  {
+    "ticker": "ZJYL",
+    "price": 0.2632,
+    "signalScore": 0.76,
+    "hasTuesdayBonus": false,
+    "volume": 386732,
+    "averageVolume": 1073148,
+    "float": 37824900,
+    "sharesOutstanding": 156547100,
+    "soRatio": "24.16%",
+    "marketCap": 41203200,
+    "short": true,
+    "intent": "Reverse Split, Delisting Risk, Partnership, Stock Split, Financing Events",
+    "incorporated": "Grand Cayman, Cayman Islands",
+    "located": "Shadong, China",
+    "filingDate": "2026-01-08",
+    "signals": {
+      "Reverse Split": [
+        "Reverse Stock Split",
+        "Share Consolidation"
+      ],
+      "Delisting Risk": [
+        "Minimum Bid Price"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Stock Split": [
+        "Share Split"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, Form D, EX-99.1",
+    "cik": "1837821",
+    "skipReason": "",
+    "recordedAt": "2026-01-08T22:01:09.060Z",
+    "recordId": "ZJYL-1767909669060",
+    "expiresAt": "2026-01-13T22:01:09.060Z"
+  },
+  {
+    "ticker": "AEHR",
+    "price": 22.7,
+    "signalScore": 0.99,
+    "hasTuesdayBonus": false,
+    "volume": 1204019,
+    "averageVolume": 948674,
+    "float": 26566000,
+    "sharesOutstanding": 30006590,
+    "soRatio": "88.53%",
+    "marketCap": 681149632,
+    "short": true,
+    "intent": "Major Contract, Going Concern, Insider Selling, Partnership",
+    "incorporated": "Toronto, Canada",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-08",
+    "signals": {
+      "Major Contract": [
+        "Strategic Partnership"
+      ],
+      "Going Concern": [
+        "Net Loss",
+        "Loss from operations",
+        "Accumulated Deficit"
+      ],
+      "Insider Selling": [
+        "Stock-based compensation"
+      ],
+      "Partnership": [
+        "Strategic Partnership"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, EX-99.1, Item 2.02, Item 9.01",
+    "cik": "1040470",
+    "skipReason": "",
+    "recordedAt": "2026-01-08T22:05:39.494Z",
+    "recordId": "AEHR-1767909939494",
+    "expiresAt": "2026-01-13T22:05:39.494Z"
+  },
+  {
+    "ticker": "GNLX",
+    "price": 2.72,
+    "signalScore": 1,
+    "hasTuesdayBonus": false,
+    "volume": 1873348,
+    "averageVolume": 237140,
+    "float": 29367600,
+    "sharesOutstanding": 38051771,
+    "soRatio": "77.18%",
+    "marketCap": 103500824,
+    "short": true,
+    "intent": "Insider Selling, Partnership",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-08",
+    "signals": {
+      "Insider Selling": [
+        "Restricted Stock Unit"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, S-3, S-8, EX-1.1, Item 8.01, Item 9.01",
+    "cik": "1231457",
+    "skipReason": "",
+    "recordedAt": "2026-01-08T22:10:40.251Z",
+    "recordId": "GNLX-1767910240251",
+    "expiresAt": "2026-01-13T22:10:40.251Z"
+  },
+  {
+    "ticker": "WGRX",
+    "price": 0.403,
+    "signalScore": 0.3,
+    "hasTuesdayBonus": false,
+    "volume": 491231,
+    "averageVolume": 14271246,
+    "float": 39128900,
+    "sharesOutstanding": 102289619,
+    "soRatio": "38.25%",
+    "marketCap": 41222716,
+    "short": true,
+    "intent": "Dilution, Credit Default, Partnership",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Florida",
+    "filingDate": "2026-01-08",
+    "signals": {
+      "Dilution": [
+        "Issuance of shares"
+      ],
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, S-1, 13D, EX-10.1, EX-10.2, EX-4.1, Item 1.01, Item 2.03, Item 3.02, Item 7.01, Item 9.01",
+    "cik": "2030763",
+    "skipReason": "",
+    "recordedAt": "2026-01-08T22:26:26.692Z",
+    "recordId": "WGRX-1767911186692",
+    "expiresAt": "2026-01-13T22:26:26.692Z"
+  },
+  {
+    "ticker": "EOLS",
+    "price": 5.74,
+    "signalScore": 0.45,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only (Inc≠Loc)",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.15,
+    "volume": 992676,
+    "averageVolume": 1255569,
+    "float": 43258100,
+    "sharesOutstanding": 64819784,
+    "soRatio": "66.74%",
+    "marketCap": 372065536,
+    "short": true,
+    "intent": "Insider Selling, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Insider Selling": [
+        "Stock-based compensation"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, F-1, EX-99.1, Item 2.02, Item 9.01",
+    "cik": "1570562",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T13:35:31.029Z",
+    "recordId": "EOLS-1767965731029",
+    "expiresAt": "2026-01-14T13:35:31.029Z"
+  },
+  {
+    "ticker": "CGON",
+    "price": 41.93,
+    "signalScore": 0.59,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only (Inc≠Loc)",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.15,
+    "volume": 1201232,
+    "averageVolume": 891088,
+    "float": 65436000,
+    "sharesOutstanding": 80666179,
+    "soRatio": "81.12%",
+    "marketCap": 3382332672,
+    "short": true,
+    "intent": "FDA Approval, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "FDA Approval": [
+        "FDA Approval",
+        "Breakthrough Therapy"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, EX-99.1, EX-99.2, Item 7.01, Item 8.01, Item 9.01",
+    "cik": "1991792",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T13:46:37.568Z",
+    "recordId": "CGON-1767966397568",
+    "expiresAt": "2026-01-14T13:46:37.568Z"
+  },
+  {
+    "ticker": "PDSB",
+    "price": 0.9933,
+    "signalScore": 0.6,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only (Inc≠Loc)",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.15,
+    "volume": 902689,
+    "averageVolume": 783830,
+    "float": 47717100,
+    "sharesOutstanding": 54721307,
+    "soRatio": "87.20%",
+    "marketCap": 54354676,
+    "short": true,
+    "intent": "FDA Approval, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "New Jersey",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "FDA Approval": [
+        "FDA Approval"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, 8-K, S-3, F-3, EX-99.1, Item 8.01, Item 9.01",
+    "cik": "1472091",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T13:51:40.853Z",
+    "recordId": "PDSB-1767966700853",
+    "expiresAt": "2026-01-14T13:51:40.853Z"
+  },
+  {
+    "ticker": "ACON",
+    "title": "8-K - Aclarion, Inc. (0001635077) (Filer)",
+    "price": 8.17,
+    "signalScore": 0.96,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only (Inc≠Loc)",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 43259399,
+    "averageVolume": 873666,
+    "float": 582340,
+    "sharesOutstanding": 671371,
+    "soRatio": "86.74%",
+    "marketCap": 5485101,
+    "short": true,
+    "intent": "Reverse Split, Dilution, Partnership, Stock Split, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Colorado",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Reverse Split": [
+        "Reverse Stock Split"
+      ],
+      "Dilution": [
+        "Issuance of shares"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Stock Split": [
+        "Stock Dividend"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, S-3, EX-10.1, EX-4.1, Item 1.01, Item 9.01",
+    "cik": "1635077",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T14:03:42.492Z",
+    "recordId": "ACON-1767967422492",
+    "expiresAt": "2026-01-14T14:03:42.492Z"
+  },
+  {
+    "ticker": "ANPA",
+    "title": "6-K - Rich Sparkle Holdings Ltd (0002031688) (Filer)",
+    "price": 63.23,
+    "signalScore": 0.78,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only (Inc≠Ops)",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.05,
+    "volume": 1849035,
+    "averageVolume": 10561,
+    "float": 3636000,
+    "sharesOutstanding": 12500000,
+    "soRatio": "29.09%",
+    "marketCap": 790374976,
+    "short": false,
+    "intent": "Partnership, Financing Events",
+    "incorporated": "Unknown",
+    "located": "China",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, 20-F, EX-10.1",
+    "cik": "2031688",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T17:48:05.116Z",
+    "recordId": "ANPA-1767980885116",
+    "expiresAt": "2026-01-14T17:48:05.116Z"
+  },
+  {
+    "ticker": "TERN",
+    "title": "8-K - Terns Pharmaceuticals, Inc. (0001831363) (Filer)",
+    "price": 35.48,
+    "signalScore": 0.55,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 3483248,
+    "averageVolume": 4003780,
+    "float": 66517000,
+    "sharesOutstanding": 108767281,
+    "soRatio": "61.16%",
+    "marketCap": 3859063040,
+    "short": true,
+    "intent": "FDA Granted, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "FDA Granted": [
+        "Fast Track Designation"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "F-1",
+      "EX-99.1",
+      "Item 2.02",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, F-1, EX-99.1, Item 2.02, Item 9.01",
+    "cik": "1831363",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T21:06:39.365Z",
+    "recordId": "TERN-1767992799365",
+    "expiresAt": "2026-01-14T21:06:39.365Z"
+  },
+  {
+    "ticker": "SPWR",
+    "title": "8-K/A - SunPower Inc. (0001838987) (Filer)",
+    "price": 1.63,
+    "signalScore": 0.35,
+    "hasTuesdayBonus": false,
+    "custodianControl": false,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1,
+    "volume": 648378,
+    "averageVolume": 2186083,
+    "float": 57699000,
+    "sharesOutstanding": 107621272,
+    "soRatio": "53.61%",
+    "marketCap": 175422672,
+    "short": true,
+    "intent": "Going Concern, Insider Selling",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Wilmington, Delaware",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Going Concern": [
+        "Net Loss",
+        "Loss from operations"
+      ],
+      "Insider Selling": [
+        "Stock-based compensation"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "8-K/A",
+      "S-8",
+      "EX-99.1",
+      "EX-99.2",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, 8-K/A, S-8, EX-99.1, EX-99.2, Item 9.01",
+    "cik": "1838987",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T21:14:49.029Z",
+    "recordId": "SPWR-1767993289029",
+    "expiresAt": "2026-01-14T21:14:49.029Z"
+  },
+  {
+    "ticker": "LMFA",
+    "title": "8-K - LM FUNDING AMERICA, INC. (0001640384) (Filer)",
+    "price": 0.47,
+    "signalScore": 0.49,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 187893,
+    "averageVolume": 1013548,
+    "float": 8827300,
+    "sharesOutstanding": 14123497,
+    "soRatio": "62.50%",
+    "marketCap": 6638043,
+    "short": true,
+    "intent": "Reverse Split, Delisting Risk",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Florida",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Reverse Split": [
+        "Reverse Stock Split"
+      ],
+      "Delisting Risk": [
+        "Minimum Bid Price"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "Item 3.01"
+    ],
+    "filingType": "8-K, Item 3.01",
+    "cik": "1640384",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T21:21:10.140Z",
+    "recordId": "LMFA-1767993670140",
+    "expiresAt": "2026-01-14T21:21:10.140Z"
+  },
+  {
+    "ticker": "CETX",
+    "title": "8-K - CEMTREX INC (0001435064) (Filer)",
+    "price": 2.97,
+    "signalScore": 0.92,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 35777331,
+    "averageVolume": 5513669,
+    "float": 6911700,
+    "sharesOutstanding": 8600552,
+    "soRatio": "80.36%",
+    "marketCap": 25543642,
+    "short": true,
+    "intent": "Reverse Split, Dilution, Partnership, Stock Split, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "New York",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Reverse Split": [
+        "Reverse Stock Split"
+      ],
+      "Dilution": [
+        "Issuance of shares"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Stock Split": [
+        "Stock Dividend"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "S-3",
+      "EX-10.1",
+      "EX-4.1",
+      "Item 1.01",
+      "Item 8.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, S-3, EX-10.1, EX-4.1, Item 1.01, Item 8.01, Item 9.01",
+    "cik": "1435064",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T21:23:19.201Z",
+    "recordId": "CETX-1767993799201",
+    "expiresAt": "2026-01-14T21:23:19.201Z"
+  },
+  {
+    "ticker": "ROLR",
+    "title": "8-K - High Roller Technologies, Inc. (0001947210) (Filer)",
+    "price": 2.63,
+    "signalScore": 0.82,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.05,
+    "volume": 137613,
+    "averageVolume": 48022,
+    "float": 2244400,
+    "sharesOutstanding": 8497511,
+    "soRatio": "26.41%",
+    "marketCap": 22348454,
+    "short": true,
+    "intent": "Dilution, Partnership, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Nevada",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Dilution": [
+        "Issuance of shares"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "S-3",
+      "Form D",
+      "EX-99.1",
+      "EX-10.1",
+      "Item 1.01",
+      "Item 3.02",
+      "Item 5.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, S-3, Form D, EX-99.1, EX-10.1, Item 1.01, Item 3.02, Item 5.02, Item 7.01, Item 9.01",
+    "cik": "1947210",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T21:29:28.330Z",
+    "recordId": "ROLR-1767994168330",
+    "expiresAt": "2026-01-14T21:29:28.330Z"
+  },
+  {
+    "ticker": "TPET",
+    "title": "8-K - Trio Petroleum Corp (0001898766) (Filer)",
+    "price": 0.85,
+    "signalScore": 0.49,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 349946,
+    "averageVolume": 598572,
+    "float": 6438600,
+    "sharesOutstanding": 9353724,
+    "soRatio": "68.83%",
+    "marketCap": 7950665,
+    "short": true,
+    "intent": "Dilution, Partnership, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Dilution": [
+        "Issuance of shares"
+      ],
+      "Partnership": [
+        "Joint Venture",
+        "Strategic Alliance"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "S-3",
+      "EX-10.1",
+      "Item 1.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, S-3, EX-10.1, Item 1.01, Item 9.01",
+    "cik": "1898766",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T21:36:11.050Z",
+    "recordId": "TPET-1767994571050",
+    "expiresAt": "2026-01-14T21:36:11.050Z"
+  },
+  {
+    "ticker": "PED",
+    "title": "8-K/A - PEDEVCO CORP (0001141197) (Filer)",
+    "price": 0.5113,
+    "signalScore": 0.42,
+    "hasTuesdayBonus": false,
+    "custodianControl": false,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.1,
+    "volume": 128916,
+    "averageVolume": 176129,
+    "float": 24275300,
+    "sharesOutstanding": 95519352,
+    "soRatio": "25.41%",
+    "marketCap": 48839048,
+    "short": true,
+    "intent": "Merger/Acquisition, Going Concern, Debt Issuance, Compliance Issue, Financing Events",
+    "incorporated": "Texas",
+    "located": "Texas",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Merger/Acquisition": [
+        "Merger Agreement"
+      ],
+      "Going Concern": [
+        "Net Loss"
+      ],
+      "Debt Issuance": [
+        "Debt Issuance"
+      ],
+      "Compliance Issue": [
+        "variable interest"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "8-K/A",
+      "S-3",
+      "S-8",
+      "EX-99.1",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, 8-K/A, S-3, S-8, EX-99.1, Item 9.01",
+    "cik": "1141197",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T21:38:08.567Z",
+    "recordId": "PED-1767994688567",
+    "expiresAt": "2026-01-14T21:38:08.567Z"
+  },
+  {
+    "ticker": "CIO",
+    "title": "8-K - City Office REIT, Inc. (0001593222) (Filer)",
+    "price": 6.99,
+    "signalScore": 0.6,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.15,
+    "volume": 457182,
+    "averageVolume": 404737,
+    "float": 32468100,
+    "sharesOutstanding": 40363640,
+    "soRatio": "80.44%",
+    "marketCap": 282141824,
+    "short": true,
+    "intent": "Merger/Acquisition, Insider Selling, Credit Default, Partnership, Financing Events",
+    "incorporated": "Unknown",
+    "located": "Canada (Federal Level)",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Merger/Acquisition": [
+        "Merger Agreement",
+        "Merger Consideration"
+      ],
+      "Insider Selling": [
+        "Employee Incentive"
+      ],
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "13G",
+      "EX-99.1",
+      "Item 1.02",
+      "Item 2.01",
+      "Item 3.01",
+      "Item 3.03",
+      "Item 5.01",
+      "Item 5.02",
+      "Item 5.03",
+      "Item 8.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, 13G, EX-99.1, Item 1.02, Item 2.01, Item 3.01, Item 3.03, Item 5.01, Item 5.02, Item 5.03, Item 8.01, Item 9.01",
+    "cik": "1593222",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T22:03:06.904Z",
+    "recordId": "CIO-1767996186904",
+    "expiresAt": "2026-01-14T22:03:06.904Z"
+  },
+  {
+    "ticker": "MNTS",
+    "title": "8-K - Momentus Inc. (0001781162) (Filer)",
+    "price": 12.46,
+    "signalScore": 0.64,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.15,
+    "volume": 2919980,
+    "averageVolume": 2261037,
+    "float": 1342100,
+    "sharesOutstanding": 1669562,
+    "soRatio": "80.39%",
+    "marketCap": 20802756,
+    "short": true,
+    "intent": "Reverse Split, Dilution, Stock Split",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Reverse Split": [
+        "Reverse Stock Split"
+      ],
+      "Dilution": [
+        "Issuance of shares"
+      ],
+      "Stock Split": [
+        "Stock Dividend"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "EX-4.1",
+      "EX-4.2",
+      "Item 1.01",
+      "Item 3.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-4.1, EX-4.2, Item 1.01, Item 3.02, Item 7.01, Item 9.01",
+    "cik": "1781162",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T22:08:20.357Z",
+    "recordId": "MNTS-1767996500357",
+    "expiresAt": "2026-01-14T22:08:20.357Z"
+  },
+  {
+    "ticker": "FLYX",
+    "title": "8-K - FLYEXCLUSIVE INC. (0001843973) (Filer)",
+    "price": 6.39,
+    "signalScore": 0.85,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.05,
+    "volume": 9824574,
+    "averageVolume": 1871400,
+    "float": 5682400,
+    "sharesOutstanding": 20757668,
+    "soRatio": "27.37%",
+    "marketCap": 132641496,
+    "short": true,
+    "intent": "Partnership, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "North Carolina",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Compliance Issue": [
+        "Warning Letter"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "S-3",
+      "EX-1.1",
+      "Item 1.01",
+      "Item 8.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, S-3, EX-1.1, Item 1.01, Item 8.01, Item 9.01",
+    "cik": "1843973",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T22:10:59.558Z",
+    "recordId": "FLYX-1767996659558",
+    "expiresAt": "2026-01-14T22:10:59.558Z"
+  },
+  {
+    "ticker": "PRPH",
+    "title": "8-K - ProPhase Labs, Inc. (0000868278) (Filer)",
+    "price": 0.198,
+    "signalScore": 0.48,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.2,
+    "volume": 265829,
+    "averageVolume": 1113450,
+    "float": 4284600,
+    "sharesOutstanding": 4187902,
+    "soRatio": "102.3%",
+    "marketCap": 829204,
+    "short": true,
+    "intent": "Reverse Split, Compliance Issue, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "New York",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "Reverse Split": [
+        "Reverse Stock Split",
+        "1-for-09"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "6-K/A",
+      "8-K",
+      "20-F",
+      "20-F/A",
+      "EX-1.1",
+      "Item 8.01",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 6-K/A, 8-K, 20-F, 20-F/A, EX-1.1, Item 8.01, Item 9.01",
+    "cik": "868278",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T22:16:50.056Z",
+    "recordId": "PRPH-1767997010056",
+    "expiresAt": "2026-01-14T22:16:50.056Z"
+  },
+  {
+    "ticker": "ANAB",
+    "title": "8-K - ANAPTYSBIO, INC (0001370053) (Filer)",
+    "price": 44.67,
+    "signalScore": 0.63,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.15,
+    "volume": 581861,
+    "averageVolume": 534827,
+    "float": 14406000,
+    "sharesOutstanding": 27688470,
+    "soRatio": "52.03%",
+    "marketCap": 1249553792,
+    "short": true,
+    "intent": "FDA Granted, Going Concern, Licensing Deal, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-09",
+    "signals": {
+      "FDA Granted": [
+        "FDA Approval",
+        "EMA Approval",
+        "Priority Review"
+      ],
+      "Going Concern": [
+        "Operating Loss"
+      ],
+      "Licensing Deal": [
+        "License Agreement"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "Item 2.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, Item 2.02, Item 7.01, Item 9.01",
+    "cik": "1370053",
+    "skipReason": "",
+    "recordedAt": "2026-01-09T22:18:07.211Z",
+    "recordId": "ANAB-1767997087211",
+    "expiresAt": "2026-01-14T22:18:07.211Z"
+  },
+  {
+    "ticker": "HGBL",
+    "title": "8-K - Heritage Global Inc. (0000849145) (Filer)",
+    "price": 1.36,
+    "signalScore": 0.8,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 161760,
+    "averageVolume": 77645,
+    "float": 28235800,
+    "sharesOutstanding": 34741553,
+    "soRatio": "81.27%",
+    "marketCap": 47248512,
+    "short": true,
+    "intent": "Insider Selling, Partnership",
+    "incorporated": "Florida",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-12",
+    "signals": {
+      "Insider Selling": [
+        "Equity Compensation"
+      ],
+      "Partnership": [
+        "Joint Venture",
+        "Partnership Agreement"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "EX-10.1",
+      "Item 1.01",
+      "Item 2.01",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-10.1, Item 1.01, Item 2.01, Item 7.01, Item 9.01",
+    "cik": "849145",
+    "skipReason": "",
+    "recordedAt": "2026-01-12T21:01:19.936Z",
+    "recordId": "HGBL-1768251679936",
+    "expiresAt": "2026-01-17T21:01:19.936Z"
+  },
+  {
+    "ticker": "PLYM",
+    "title": "8-K - Plymouth Industrial REIT, Inc. (0001515816) (Filer)",
+    "price": 21.935,
+    "signalScore": 0.38,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 619316,
+    "averageVolume": 1489390,
+    "float": 41040500,
+    "sharesOutstanding": 44551164,
+    "soRatio": "92.12%",
+    "marketCap": 987984512,
+    "short": false,
+    "intent": "Merger/Acquisition, Partnership",
+    "incorporated": "Maryland",
+    "located": "Massachusetts",
+    "filingDate": "2026-01-12",
+    "signals": {
+      "Merger/Acquisition": [
+        "Merger Agreement",
+        "Merger Consideration"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "8-K",
+      "Item 8.01"
+    ],
+    "filingType": "6-K, 8-K, Item 8.01",
+    "cik": "1515816",
+    "skipReason": "",
+    "recordedAt": "2026-01-12T21:06:44.047Z",
+    "recordId": "PLYM-1768252004047",
+    "expiresAt": "2026-01-17T21:06:44.047Z"
+  },
+  {
+    "ticker": "SANM",
+    "title": "8-K/A - SANMINA CORP (0000897723) (Filer)",
+    "price": 161.01,
+    "signalScore": 0.53,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 561833,
+    "averageVolume": 686793,
+    "float": 52684000,
+    "sharesOutstanding": 54563887,
+    "soRatio": "96.55%",
+    "marketCap": 8944918528,
+    "short": true,
+    "isShort": true,
+    "intent": "Going Concern, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-12",
+    "signals": {
+      "Going Concern": [
+        "Operating Loss"
+      ],
+      "Financing Events": [
+        "Credit Facility",
+        "Loan Facility"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "8-K/A",
+      "S-8",
+      "EX-99.1",
+      "EX-99.2",
+      "Item 2.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, 8-K/A, S-8, EX-99.1, EX-99.2, Item 2.01, Item 9.01",
+    "cik": "897723",
+    "skipReason": "",
+    "recordedAt": "2026-01-12T21:35:21.820Z",
+    "recordId": "SANM-1768253721820",
+    "expiresAt": "2026-01-17T21:35:21.820Z"
+  },
+  {
+    "ticker": "SNDX",
+    "title": "8-K - Syndax Pharmaceuticals Inc (0001395937) (Filer)",
+    "price": 20.72,
+    "signalScore": 0.37,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 1401787,
+    "averageVolume": 2534158,
+    "float": 73277031,
+    "sharesOutstanding": 86914838,
+    "soRatio": "84.31%",
+    "marketCap": 1800875392,
+    "short": false,
+    "isShort": false,
+    "intent": "FDA Granted, Licensing Deal",
+    "incorporated": "Wilmington, Delaware",
+    "located": "New York",
+    "filingDate": "2026-01-12",
+    "signals": {
+      "FDA Granted": [
+        "FDA Approval",
+        "Breakthrough Therapy",
+        "Fast Track Designation"
+      ],
+      "Licensing Deal": [
+        "License Agreement"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "8-K",
+      "S-8",
+      "F-1",
+      "F-4",
+      "EX-99.1",
+      "Item 2.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 8-K, S-8, F-1, F-4, EX-99.1, Item 2.02, Item 7.01, Item 9.01",
+    "cik": "1395937",
+    "skipReason": "",
+    "recordedAt": "2026-01-12T21:37:21.275Z",
+    "recordId": "SNDX-1768253841275",
+    "expiresAt": "2026-01-17T21:37:21.275Z"
+  },
+  {
+    "ticker": "VMAR",
+    "title": "6-K - Vision Marine Technologies Inc. (0001813783) (Filer)",
+    "price": 0.1483,
+    "signalScore": 0.56,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1,
+    "volume": 7880088,
+    "averageVolume": 10366163,
+    "float": 872700,
+    "sharesOutstanding": 24258735,
+    "soRatio": "3.60%",
+    "marketCap": 3597570,
+    "short": true,
+    "isShort": true,
+    "intent": "Reverse Split, Going Concern, Dilution",
+    "incorporated": "Montreal, Canada",
+    "located": "Canada (Federal Level)",
+    "filingDate": "2026-01-13",
+    "signals": {
+      "Reverse Split": [
+        "Reverse Stock Split"
+      ],
+      "Going Concern": [
+        "Net Loss"
+      ],
+      "Dilution": [
+        "Issuance of shares"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "S-8",
+      "F-3",
+      "20-F",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, S-8, F-3, 20-F, EX-99.1",
+    "cik": "1813783",
+    "skipReason": "",
+    "recordedAt": "2026-01-13T14:02:34.006Z",
+    "recordId": "VMAR-1768312954006",
+    "expiresAt": "2026-01-18T14:02:34.006Z"
+  },
+  {
+    "ticker": "PBM",
+    "title": "6-K - PSYENCE BIOMEDICAL LTD. (0001985062) (Filer)",
+    "price": 0.7947,
+    "signalScore": 0.44,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.05,
+    "volume": 299429,
+    "averageVolume": 1371619,
+    "float": 1550500,
+    "sharesOutstanding": 6388604,
+    "soRatio": "24.27%",
+    "marketCap": 5077024,
+    "short": false,
+    "isShort": false,
+    "intent": "Stock Buyback, Financing Events",
+    "incorporated": "Ottawa, Canada",
+    "located": "Ontario, Canada",
+    "filingDate": "2026-01-13",
+    "signals": {
+      "Stock Buyback": [
+        "Share Repurchase",
+        "Repurchase Program"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "20-F",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, 20-F, EX-99.1",
+    "cik": "1985062",
+    "skipReason": "",
+    "recordedAt": "2026-01-13T14:03:14.564Z",
+    "recordId": "PBM-1768312994564",
+    "expiresAt": "2026-01-18T14:03:14.564Z"
+  },
+  {
+    "ticker": "DTCK",
+    "title": "6-K/A - DAVIS COMMODITIES Ltd (0001949478) (Filer)",
+    "price": 0.356,
+    "signalScore": 0.5,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.1,
+    "volume": 881681,
+    "averageVolume": 4493414,
+    "float": 7985700,
+    "sharesOutstanding": 24500625,
+    "soRatio": "32.59%",
+    "marketCap": 8722223,
+    "short": true,
+    "isShort": true,
+    "intent": "Reverse Split, Delisting Risk",
+    "incorporated": "Cayman Islands",
+    "located": "Singapore",
+    "filingDate": "2026-01-13",
+    "signals": {
+      "Reverse Split": [
+        "Reverse Stock Split"
+      ],
+      "Delisting Risk": [
+        "Minimum Bid Price"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "6-K/A",
+      "F-3",
+      "20-F"
+    ],
+    "filingType": "6-K, 6-K/A, F-3, 20-F",
+    "cik": "1949478",
+    "skipReason": "",
+    "recordedAt": "2026-01-13T14:03:20.678Z",
+    "recordId": "DTCK-1768313000678",
+    "expiresAt": "2026-01-18T14:03:20.678Z"
+  },
+  {
+    "ticker": "XTKG",
+    "title": "6-K - X3 Holdings Co., Ltd. (0001754323) (Filer)",
+    "price": 0.19,
+    "signalScore": 0.89,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.1,
+    "volume": 2878209,
+    "averageVolume": 1620237,
+    "float": 6132400,
+    "sharesOutstanding": 16007777,
+    "soRatio": "38.31%",
+    "marketCap": 3079863,
+    "short": true,
+    "isShort": true,
+    "intent": "Reverse Split, Dilution, Delisting Risk",
+    "incorporated": "Cayman Islands",
+    "located": "Singapore",
+    "filingDate": "2026-01-12",
+    "signals": {
+      "Reverse Split": [
+        "Share Consolidation"
+      ],
+      "Dilution": [
+        "Issuance of shares"
+      ],
+      "Delisting Risk": [
+        "Minimum Bid Price"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "20-F",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, 20-F, EX-99.1",
+    "cik": "1754323",
+    "skipReason": "",
+    "recordedAt": "2026-01-13T14:09:01.966Z",
+    "recordId": "XTKG-1768313341966",
+    "expiresAt": "2026-01-18T14:09:01.967Z"
+  },
+  {
+    "ticker": "NUKK",
+    "title": "8-K - Nukkleus Inc. (0001787518) (Filer)",
+    "price": 3.805,
+    "signalScore": 0.53,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.15,
+    "volume": 934057,
+    "averageVolume": 1517661,
+    "float": 14180900,
+    "sharesOutstanding": 18645766,
+    "soRatio": "76.05%",
+    "marketCap": 70947152,
+    "short": true,
+    "isShort": true,
+    "intent": "Reverse Split, Dilution, Credit Default, Stock Split",
+    "incorporated": "Wilmington, Delaware",
+    "located": "New York",
+    "filingDate": "2026-01-13",
+    "signals": {
+      "Reverse Split": [
+        "Reverse Stock Split"
+      ],
+      "Dilution": [
+        "Issuance of shares"
+      ],
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Stock Split": [
+        "Stock Dividend"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "EX-4.1",
+      "Item 1.01",
+      "Item 2.01",
+      "Item 3.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-4.1, Item 1.01, Item 2.01, Item 3.02, Item 7.01, Item 9.01",
+    "cik": "1787518",
+    "skipReason": "",
+    "recordedAt": "2026-01-13T14:10:43.575Z",
+    "recordId": "NUKK-1768313443575",
+    "expiresAt": "2026-01-18T14:10:43.575Z"
+  },
+  {
+    "ticker": "RCEL",
+    "title": "8-K - AVITA Medical, Inc. (0001762303) (Filer)",
+    "price": 3.42,
+    "signalScore": 0.83,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.15,
+    "volume": 444886,
+    "averageVolume": 228580,
+    "float": 30197900,
+    "sharesOutstanding": 30493111,
+    "soRatio": "99.03%",
+    "marketCap": 104286448,
+    "short": true,
+    "isShort": true,
+    "intent": "Major Contract, Reverse Split, Insider Selling, Credit Default, Licensing Deal, Partnership, Stock Split, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-13",
+    "signals": {
+      "Major Contract": [
+        "Exclusive License"
+      ],
+      "Reverse Split": [
+        "Reverse Stock Split"
+      ],
+      "Insider Selling": [
+        "Employee Incentive"
+      ],
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Licensing Deal": [
+        "Exclusive License"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Stock Split": [
+        "Stock Dividend"
+      ],
+      "Financing Events": [
+        "Credit Facility",
+        "Loan Facility"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "S-3",
+      "S-4",
+      "S-8",
+      "EX-4.1",
+      "Item 1.01",
+      "Item 1.02",
+      "Item 2.02",
+      "Item 2.03",
+      "Item 3.02",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, S-3, S-4, S-8, EX-4.1, Item 1.01, Item 1.02, Item 2.02, Item 2.03, Item 3.02, Item 9.01",
+    "cik": "1762303",
+    "skipReason": "",
+    "recordedAt": "2026-01-13T14:11:15.544Z",
+    "recordId": "RCEL-1768313475544",
+    "expiresAt": "2026-01-18T14:11:15.544Z"
+  },
+  {
+    "ticker": "VCEL",
+    "title": "8-K - Vericel Corp (0000887359) (Filer)",
+    "price": 36.59,
+    "signalScore": 0.52,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 465227,
+    "averageVolume": 632556,
+    "float": 50019000,
+    "sharesOutstanding": 50574026,
+    "soRatio": "98.90%",
+    "marketCap": 1850503552,
+    "short": true,
+    "isShort": true,
+    "intent": "Major Contract, Licensing Deal, Compliance Issue",
+    "incorporated": "Michigan",
+    "located": "Massachusetts",
+    "filingDate": "2026-01-13",
+    "signals": {
+      "Major Contract": [
+        "Exclusive License"
+      ],
+      "Licensing Deal": [
+        "Exclusive License"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "S-1",
+      "EX-99.1",
+      "Item 2.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, S-1, EX-99.1, Item 2.02, Item 7.01, Item 9.01",
+    "cik": "887359",
+    "skipReason": "",
+    "recordedAt": "2026-01-13T14:11:49.766Z",
+    "recordId": "VCEL-1768313509766",
+    "expiresAt": "2026-01-18T14:11:49.766Z"
+  },
+  {
+    "ticker": "VMAR",
+    "title": "6-K - Vision Marine Technologies Inc. (0001813783) (Filer)",
+    "price": 0.1483,
+    "signalScore": 0.56,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1,
+    "volume": 7880088,
+    "averageVolume": 10366163,
+    "float": 872700,
+    "sharesOutstanding": 24258735,
+    "soRatio": "3.60%",
+    "marketCap": 3597570,
+    "short": true,
+    "isShort": true,
+    "intent": "Reverse Split, Going Concern, Dilution",
+    "incorporated": "Montreal, Canada",
+    "located": "Canada (Federal Level)",
+    "filingDate": "2026-01-13",
+    "signals": {
+      "Reverse Split": [
+        "Reverse Stock Split"
+      ],
+      "Going Concern": [
+        "Net Loss"
+      ],
+      "Dilution": [
+        "Issuance of shares"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "S-8",
+      "F-3",
+      "20-F",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, S-8, F-3, 20-F, EX-99.1",
+    "cik": "1813783",
+    "skipReason": "",
+    "recordedAt": "2026-01-13T14:12:07.697Z",
+    "recordId": "VMAR-1768313527697",
+    "expiresAt": "2026-01-18T14:12:07.697Z"
+  },
+  {
+    "ticker": "PBM",
+    "title": "6-K - PSYENCE BIOMEDICAL LTD. (0001985062) (Filer)",
+    "price": 0.7947,
+    "signalScore": 0.44,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.05,
+    "volume": 299429,
+    "averageVolume": 1371619,
+    "float": 1550500,
+    "sharesOutstanding": 6388604,
+    "soRatio": "24.27%",
+    "marketCap": 5077024,
+    "short": false,
+    "isShort": false,
+    "intent": "Stock Buyback, Financing Events",
+    "incorporated": "Ottawa, Canada",
+    "located": "Ontario, Canada",
+    "filingDate": "2026-01-13",
+    "signals": {
+      "Stock Buyback": [
+        "Share Repurchase",
+        "Repurchase Program"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "20-F",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, 20-F, EX-99.1",
+    "cik": "1985062",
+    "skipReason": "",
+    "recordedAt": "2026-01-13T14:12:53.768Z",
+    "recordId": "PBM-1768313573768",
+    "expiresAt": "2026-01-18T14:12:53.768Z"
+  },
+  {
+    "ticker": "RGLD",
+    "title": "8-K - ROYAL GOLD INC (0000085535) (Filer)",
+    "price": 246.98,
+    "signalScore": 0.65,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 1215565,
+    "averageVolume": 1112246,
+    "float": 65290000,
+    "sharesOutstanding": 84398063,
+    "soRatio": "77.36%",
+    "marketCap": 20844634112,
+    "short": false,
+    "isShort": false,
+    "intent": "Partnership, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Colorado",
+    "filingDate": "2026-01-13",
+    "signals": {
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "8-K",
+      "S-4",
+      "13D",
+      "EX-99.1",
+      "Item 2.02",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 8-K, S-4, 13D, EX-99.1, Item 2.02, Item 9.01",
+    "cik": "85535",
+    "skipReason": "",
+    "recordedAt": "2026-01-13T14:13:40.214Z",
+    "recordId": "RGLD-1768313620214",
+    "expiresAt": "2026-01-18T14:13:40.214Z"
+  },
+  {
+    "ticker": "RAPT",
+    "title": "8-K - RAPT Therapeutics, Inc. (0001673772) (Filer)",
+    "price": 34.06,
+    "signalScore": 0.39,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1.15,
+    "volume": 173962,
+    "averageVolume": 506253,
+    "float": 18344300,
+    "sharesOutstanding": 27710871,
+    "soRatio": "66.20%",
+    "marketCap": 943832320,
+    "short": true,
+    "isShort": true,
+    "intent": "FDA Granted, Public Offering",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-14",
+    "signals": {
+      "FDA Granted": [
+        "FDA Clearance"
+      ],
+      "Public Offering": [
+        "Follow-On Offering"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "8-K",
+      "F-4",
+      "13G",
+      "EX-99.1",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 8-K, F-4, 13G, EX-99.1, Item 7.01, Item 9.01",
+    "cik": "1673772",
+    "skipReason": "",
+    "recordedAt": "2026-01-14T13:23:26.920Z",
+    "recordId": "RAPT-1768397006920",
+    "expiresAt": "2026-01-19T13:23:26.920Z"
+  },
+  {
+    "ticker": "ANGO",
+    "title": "8-K - ANGIODYNAMICS INC (0001275187) (Filer)",
+    "price": 10.07,
+    "signalScore": 0.55,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.15,
+    "volume": 687987,
+    "averageVolume": 571269,
+    "float": 33499400,
+    "sharesOutstanding": 41217386,
+    "soRatio": "81.27%",
+    "marketCap": 415059040,
+    "short": true,
+    "isShort": true,
+    "intent": "FDA Granted, Insider Selling, Partnership, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "New York",
+    "filingDate": "2026-01-14",
+    "signals": {
+      "FDA Granted": [
+        "FDA Clearance"
+      ],
+      "Insider Selling": [
+        "Stock-based compensation"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, Item 7.01, Item 9.01",
+    "cik": "1275187",
+    "skipReason": "",
+    "recordedAt": "2026-01-14T13:24:01.501Z",
+    "recordId": "ANGO-1768397041501",
+    "expiresAt": "2026-01-19T13:24:01.501Z"
+  },
+  {
+    "ticker": "SYPR",
+    "title": "8-K - SYPRIS SOLUTIONS INC (0000864240) (Filer)",
+    "price": 2.48,
+    "signalScore": 0.68,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.1,
+    "volume": 226207,
+    "averageVolume": 52822,
+    "float": 10394800,
+    "sharesOutstanding": 23029970,
+    "soRatio": "45.14%",
+    "marketCap": 57114328,
+    "short": true,
+    "isShort": true,
+    "intent": "Credit Default, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Cayman Islands",
+    "filingDate": "2026-01-14",
+    "signals": {
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "8-K",
+      "EX-10.1",
+      "Item 1.01",
+      "Item 2.03",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 8-K, EX-10.1, Item 1.01, Item 2.03, Item 9.01",
+    "cik": "864240",
+    "skipReason": "",
+    "recordedAt": "2026-01-14T13:24:15.226Z",
+    "recordId": "SYPR-1768397055226",
+    "expiresAt": "2026-01-19T13:24:15.226Z"
+  },
+  {
+    "ticker": "AMN",
+    "title": "8-K - AMN HEALTHCARE SERVICES INC (0001142750) (Filer)",
+    "price": 15.32,
+    "signalScore": 0.38,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 566267,
+    "averageVolume": 963011,
+    "float": 35691800,
+    "sharesOutstanding": 38413780,
+    "soRatio": "92.91%",
+    "marketCap": 588499072,
+    "short": false,
+    "isShort": false,
+    "intent": "Asset Impairment, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Texas",
+    "filingDate": "2026-01-14",
+    "signals": {
+      "Asset Impairment": [
+        "Goodwill Impairment"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, Item 7.01, Item 9.01",
+    "cik": "1142750",
+    "skipReason": "",
+    "recordedAt": "2026-01-14T14:02:31.329Z",
+    "recordId": "AMN-1768399351329",
+    "expiresAt": "2026-01-19T14:02:31.329Z"
+  },
+  {
+    "ticker": "OSRH",
+    "title": "8-K - OSR Holdings, Inc. (0001840425) (Filer)",
+    "price": 0.7419,
+    "signalScore": 0.49,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.1,
+    "volume": 5241387,
+    "averageVolume": 5487991,
+    "float": 7850500,
+    "sharesOutstanding": 25672788,
+    "soRatio": "30.58%",
+    "marketCap": 19046642,
+    "short": false,
+    "isShort": false,
+    "intent": "Capital Raise, Major Contract, Licensing Deal",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Washington",
+    "filingDate": "2026-01-14",
+    "signals": {
+      "Capital Raise": [
+        "Strategic Investor"
+      ],
+      "Major Contract": [
+        "Exclusive License"
+      ],
+      "Licensing Deal": [
+        "Exclusive License",
+        "License Agreement"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "6-K/A",
+      "8-K",
+      "S-1",
+      "20-F",
+      "20-F/A",
+      "Form D",
+      "EX-99.1",
+      "EX-10.1",
+      "Item 1.01",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 6-K/A, 8-K, S-1, 20-F, 20-F/A, Form D, EX-99.1, EX-10.1, Item 1.01, Item 7.01, Item 9.01",
+    "cik": "1840425",
+    "skipReason": "",
+    "recordedAt": "2026-01-14T14:27:35.954Z",
+    "recordId": "OSRH-1768400855954",
+    "expiresAt": "2026-01-19T14:27:35.954Z"
+  },
+  {
+    "ticker": "DAAQ",
+    "title": "8-K - Digital Asset Acquisition Corp. (0002052162) (Filer)",
+    "price": 10.21,
+    "signalScore": 0.91,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 1003848,
+    "averageVolume": 54967,
+    "float": 16076800,
+    "sharesOutstanding": 17250000,
+    "soRatio": "93.20%",
+    "marketCap": 234830000,
+    "short": true,
+    "isShort": true,
+    "intent": "Compliance Issue, Financing Events",
+    "incorporated": "Cayman Islands",
+    "located": "New Jersey",
+    "filingDate": "2026-01-14",
+    "signals": {
+      "Compliance Issue": [
+        "Subject to risks"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "S-1",
+      "S-4",
+      "EX-99.1",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, S-1, S-4, EX-99.1, Item 7.01, Item 9.01",
+    "cik": "2052162",
+    "skipReason": "",
+    "recordedAt": "2026-01-14T14:30:20.907Z",
+    "recordId": "DAAQ-1768401020907",
+    "expiresAt": "2026-01-19T14:30:20.907Z"
+  },
+  {
+    "ticker": "FSS",
+    "title": "8-K - FEDERAL SIGNAL CORP /DE/ (0000277509) (Filer)",
+    "price": 118.085,
+    "signalScore": 0.45,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.15,
+    "volume": 170872,
+    "averageVolume": 491756,
+    "float": 59301000,
+    "sharesOutstanding": 60808577,
+    "soRatio": "97.52%",
+    "marketCap": 7180580864,
+    "short": true,
+    "isShort": true,
+    "intent": "Revenue Growth, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Israel",
+    "filingDate": "2026-01-14",
+    "signals": {
+      "Revenue Growth": [
+        "Organic Growth"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "13D",
+      "EX-99.1",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, 13D, EX-99.1, Item 7.01, Item 9.01",
+    "cik": "277509",
+    "skipReason": "",
+    "recordedAt": "2026-01-14T17:29:26.846Z",
+    "recordId": "FSS-1768411766846",
+    "expiresAt": "2026-01-19T17:29:26.846Z"
+  },
+  {
+    "ticker": "IOTR",
+    "title": "6-K - iOThree Ltd (0001997637) (Filer)",
+    "price": 2.945,
+    "signalScore": 0.53,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.2,
+    "volume": 402766,
+    "averageVolume": 486862,
+    "float": 6026200,
+    "sharesOutstanding": 733326,
+    "soRatio": "821.8%",
+    "marketCap": 7553928,
+    "isShort": false,
+    "intent": "Partnership, Financing Events",
+    "incorporated": "Cayman Islands",
+    "located": "Singapore",
+    "filingDate": "2026-01-14",
+    "signals": {
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "S-8",
+      "20-F",
+      "EX-10.1"
+    ],
+    "filingType": "6-K, S-8, 20-F, EX-10.1",
+    "cik": "1997637",
+    "skipReason": "",
+    "recordedAt": "2026-01-14T21:31:30.970Z",
+    "recordId": "IOTR-1768426290970",
+    "expiresAt": "2026-01-19T21:31:30.970Z"
+  },
+  {
+    "ticker": "ORMP",
+    "title": "8-K - ORAMED PHARMACEUTICALS INC. (0001176309) (Filer)",
+    "price": 3.64,
+    "signalScore": 0.95,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 1531528,
+    "averageVolume": 197382,
+    "float": 30471200,
+    "sharesOutstanding": 39802455,
+    "soRatio": "76.56%",
+    "marketCap": 145047568,
+    "isShort": true,
+    "intent": "Merger/Acquisition, Dilution, Credit Default, Stock Split",
+    "incorporated": "Wilmington, Delaware",
+    "located": "New York",
+    "filingDate": "2026-01-14",
+    "signals": {
+      "Merger/Acquisition": [
+        "Agreed To Acquire"
+      ],
+      "Dilution": [
+        "Convertible Notes"
+      ],
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Stock Split": [
+        "Share Split"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "EX-4.1",
+      "EX-4.2",
+      "Item 1.01",
+      "Item 8.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-4.1, EX-4.2, Item 1.01, Item 8.01, Item 9.01",
+    "cik": "1176309",
+    "skipReason": "",
+    "recordedAt": "2026-01-14T21:32:13.312Z",
+    "recordId": "ORMP-1768426333312",
+    "expiresAt": "2026-01-19T21:32:13.313Z"
+  },
+  {
+    "ticker": "THH",
+    "title": "6-K - TryHard Holdings Ltd (0002044241) (Filer)",
+    "price": 32,
+    "signalScore": 0.82,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.1,
+    "volume": 975956,
+    "averageVolume": 217693,
+    "float": 20662600,
+    "sharesOutstanding": 50046250,
+    "soRatio": "41.29%",
+    "marketCap": 1601479936,
+    "isShort": false,
+    "intent": "Partnership, Financing Events",
+    "incorporated": "Cayman Islands",
+    "located": "Japan",
+    "filingDate": "2026-01-15",
+    "signals": {
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "20-F",
+      "Form D",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, 20-F, Form D, EX-99.1",
+    "cik": "2044241",
+    "skipReason": "",
+    "recordedAt": "2026-01-15T14:10:46.041Z",
+    "recordId": "THH-1768486246041",
+    "expiresAt": "2026-01-20T14:10:46.041Z"
+  },
+  {
+    "ticker": "FEMY",
+    "title": "8-K - FEMASYS INC (0001339005) (Filer)",
+    "price": 0.69,
+    "signalScore": 0.46,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 2293688,
+    "averageVolume": 6299011,
+    "float": 48836100,
+    "sharesOutstanding": 59501854,
+    "soRatio": "82.07%",
+    "marketCap": 41056280,
+    "isShort": true,
+    "intent": "Reverse Split, Delisting Risk",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Georgia",
+    "filingDate": "2026-01-15",
+    "signals": {
+      "Reverse Split": [
+        "Reverse Stock Split"
+      ],
+      "Delisting Risk": [
+        "Minimum Bid Price"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "Item 3.01"
+    ],
+    "filingType": "8-K, Item 3.01",
+    "cik": "1339005",
+    "skipReason": "",
+    "recordedAt": "2026-01-15T14:16:26.226Z",
+    "recordId": "FEMY-1768486586226",
+    "expiresAt": "2026-01-20T14:16:26.226Z"
+  },
+  {
+    "ticker": "FNGR",
+    "title": "8-K - FingerMotion, Inc. (0001602409) (Filer)",
+    "price": 1.16,
+    "signalScore": 0.65,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 281699,
+    "averageVolume": 222964,
+    "float": 46074880,
+    "sharesOutstanding": 61217225,
+    "soRatio": "75.26%",
+    "marketCap": 71011976,
+    "isShort": true,
+    "intent": "Going Concern, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Singapore",
+    "filingDate": "2026-01-15",
+    "signals": {
+      "Going Concern": [
+        "Net Loss"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "6-K/A",
+      "8-K",
+      "S-1",
+      "20-F",
+      "20-F/A",
+      "EX-99.1",
+      "Item 2.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 6-K/A, 8-K, S-1, 20-F, 20-F/A, EX-99.1, Item 2.02, Item 7.01, Item 9.01",
+    "cik": "1602409",
+    "skipReason": "",
+    "recordedAt": "2026-01-15T14:26:21.950Z",
+    "recordId": "FNGR-1768487181950",
+    "expiresAt": "2026-01-20T14:26:21.950Z"
+  },
+  {
+    "ticker": "FNGR",
+    "title": "8-K - FingerMotion, Inc. (0001602409) (Filer)",
+    "price": 1.202,
+    "signalScore": 0.46,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.15,
+    "volume": 139561,
+    "averageVolume": 222964,
+    "float": 46123400,
+    "sharesOutstanding": 61217225,
+    "soRatio": "75.34%",
+    "marketCap": 73583104,
+    "isShort": true,
+    "ftd": 27701,
+    "ftdPercent": "0.06",
+    "intent": "Going Concern, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Singapore",
+    "filingDate": "2026-01-15",
+    "signals": {
+      "Going Concern": [
+        "Net Loss"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "6-K/A",
+      "8-K",
+      "S-1",
+      "20-F",
+      "20-F/A",
+      "EX-99.1",
+      "Item 2.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 6-K/A, 8-K, S-1, 20-F, 20-F/A, EX-99.1, Item 2.02, Item 7.01, Item 9.01",
+    "cik": "1602409",
+    "skipReason": "",
+    "recordedAt": "2026-01-15T16:35:24.327Z",
+    "recordId": "FNGR-1768494924327",
+    "expiresAt": "2026-01-20T16:35:24.327Z"
+  },
+  {
+    "ticker": "GSIW",
+    "title": "6-K - Garden Stage Ltd (0001954269) (Filer)",
+    "price": 0.1392,
+    "signalScore": 0.37,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1,
+    "volume": 246725,
+    "averageVolume": 907516,
+    "float": 14962500,
+    "sharesOutstanding": 218148992,
+    "soRatio": "6.86%",
+    "marketCap": 30366340,
+    "isShort": false,
+    "ftd": 3687,
+    "ftdPercent": "0.02",
+    "intent": "Partnership, Financing Events",
+    "incorporated": "Cayman Islands",
+    "located": "Hong Kong",
+    "filingDate": "2026-01-15",
+    "signals": {
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Financing Events": [
+        "Credit Facility"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "S-8",
+      "F-1",
+      "F-3",
+      "20-F",
+      "EX-10.1"
+    ],
+    "filingType": "6-K, S-8, F-1, F-3, 20-F, EX-10.1",
+    "cik": "1954269",
+    "skipReason": "",
+    "recordedAt": "2026-01-15T16:43:59.198Z",
+    "recordId": "GSIW-1768495439198",
+    "expiresAt": "2026-01-20T16:43:59.198Z"
+  },
+  {
+    "ticker": "THH",
+    "title": "6-K - TryHard Holdings Ltd (0002044241) (Filer)",
+    "price": 17.5,
+    "signalScore": 0.82,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.1,
+    "volume": 1967671,
+    "averageVolume": 217693,
+    "float": 20662600,
+    "sharesOutstanding": 50046250,
+    "soRatio": "41.29%",
+    "marketCap": 875809344,
+    "isShort": false,
+    "ftd": 27894,
+    "ftdPercent": "0.13",
+    "intent": "Partnership, Financing Events",
+    "incorporated": "Cayman Islands",
+    "located": "Japan",
+    "filingDate": "2026-01-15",
+    "signals": {
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "20-F",
+      "Form D",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, 20-F, Form D, EX-99.1",
+    "cik": "2044241",
+    "skipReason": "",
+    "recordedAt": "2026-01-15T16:56:55.199Z",
+    "recordId": "THH-1768496215199",
+    "expiresAt": "2026-01-20T16:56:55.199Z"
+  },
+  {
+    "ticker": "THH",
+    "title": "6-K - TryHard Holdings Ltd (0002044241) (Filer)",
+    "price": 18.12,
+    "signalScore": 0.82,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.1,
+    "volume": 2014505,
+    "averageVolume": 217693,
+    "float": 20662600,
+    "sharesOutstanding": 50046250,
+    "soRatio": "41.29%",
+    "marketCap": 906838080,
+    "isShort": false,
+    "ftd": 27894,
+    "ftdPercent": "0.13",
+    "intent": "Partnership, Financing Events",
+    "incorporated": "Cayman Islands",
+    "located": "Japan",
+    "filingDate": "2026-01-15",
+    "signals": {
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "20-F",
+      "Form D",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, 20-F, Form D, EX-99.1",
+    "cik": "2044241",
+    "skipReason": "",
+    "recordedAt": "2026-01-15T17:35:01.614Z",
+    "recordId": "THH-1768498501614",
+    "expiresAt": "2026-01-20T17:35:01.614Z"
+  },
+  {
+    "ticker": "AMIX",
+    "title": "8-K - Autonomix Medical, Inc. (0001617867) (Filer)",
+    "price": 0.5203,
+    "signalScore": 0.44,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.15,
+    "volume": 332971,
+    "averageVolume": 8388219,
+    "float": 4839013,
+    "sharesOutstanding": 6907678,
+    "soRatio": "70.05%",
+    "marketCap": 3594064,
+    "isShort": true,
+    "ftd": 376396,
+    "ftdPercent": "7.78",
+    "intent": "Reverse Split, Delisting Risk",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Texas",
+    "filingDate": "2026-01-16",
+    "signals": {
+      "Reverse Split": [
+        "Reverse Stock Split"
+      ],
+      "Delisting Risk": [
+        "Minimum Bid Price"
+      ]
+    },
+    "formType": [
+      "6-K",
+      "8-K",
+      "F-1",
+      "Item 3.01"
+    ],
+    "filingType": "6-K, 8-K, F-1, Item 3.01",
+    "cik": "1617867",
+    "skipReason": "",
+    "recordedAt": "2026-01-16T12:31:10.529Z",
+    "recordId": "AMIX-1768566670529",
+    "expiresAt": "2026-01-21T12:31:10.529Z"
+  },
+  {
+    "ticker": "AGEN",
+    "title": "8-K - AGENUS INC (0001098972) (Filer)",
+    "price": 3.68,
+    "signalScore": 0.83,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1.15,
+    "volume": 3159862,
+    "averageVolume": 629672,
+    "float": 33417624,
+    "sharesOutstanding": 34008349,
+    "soRatio": "98.26%",
+    "marketCap": 125150720,
+    "isShort": true,
+    "ftd": 2506,
+    "ftdPercent": "0.01",
+    "intent": "Major Contract, Going Concern, Licensing Deal, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Massachusetts",
+    "filingDate": "2026-01-16",
+    "signals": {
+      "Major Contract": [
+        "Exclusive License"
+      ],
+      "Going Concern": [
+        "Operating Loss",
+        "Net Loss",
+        "Accumulated Deficit"
+      ],
+      "Licensing Deal": [
+        "Exclusive License",
+        "License Agreement"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "EX-99.2",
+      "Item 2.01",
+      "Item 3.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, EX-99.2, Item 2.01, Item 3.02, Item 7.01, Item 9.01",
+    "cik": "1098972",
+    "skipReason": "",
+    "recordedAt": "2026-01-16T13:26:14.214Z",
+    "recordId": "AGEN-1768569974214",
+    "expiresAt": "2026-01-21T13:26:14.214Z"
+  },
+  {
+    "ticker": "NUKK",
+    "title": "8-K - Nukkleus Inc. (0001787518) (Filer)",
+    "price": 3.65,
+    "signalScore": 0.55,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.15,
+    "volume": 1299016,
+    "averageVolume": 1468137,
+    "float": 14180806,
+    "sharesOutstanding": 23416106,
+    "soRatio": "60.56%",
+    "marketCap": 85468792,
+    "isShort": true,
+    "ftd": 673071,
+    "ftdPercent": "4.75",
+    "intent": "Revenue Growth, Dilution, Credit Default, Partnership, Compliance Issue",
+    "incorporated": "Wilmington, Delaware",
+    "located": "New York",
+    "filingDate": "2026-01-16",
+    "signals": {
+      "Revenue Growth": [
+        "Organic Growth"
+      ],
+      "Dilution": [
+        "Issuance of shares"
+      ],
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Compliance Issue": [
+        "Subject to risks"
+      ]
+    },
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "EX-4.1",
+      "Item 1.01",
+      "Item 2.01",
+      "Item 3.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, EX-4.1, Item 1.01, Item 2.01, Item 3.02, Item 7.01, Item 9.01",
+    "cik": "1787518",
+    "skipReason": "",
+    "recordedAt": "2026-01-16T13:31:14.117Z",
+    "recordId": "NUKK-1768570274117",
+    "expiresAt": "2026-01-21T13:31:14.117Z"
+  }
+]

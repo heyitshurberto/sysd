@@ -24,6 +24,13 @@ table {
 </style>
 <div style="position: absolute; top: 7px; left: 7px;">
   <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 11px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
+<style>
+    @media (max-width: 768px) {
+        div[style*="position: absolute; top: 7px; left: 7px;"] {
+            display: none !important;
+        }
+    }
+</style>
     <title style="font-family: 'Monaco', monospace;">Eugene's Non-Profit</title>
     <!-- PWA meta tags and manifest -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -746,6 +753,13 @@ table {
             margin: 0 auto;
         }
 
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 10px !important;
+                margin: 0 !important;
+            }
+        }
+
         .header {
             padding-top: 10px;
             padding-bottom: 10px;
@@ -884,49 +898,126 @@ table {
         }
         
         @media (max-width: 768px) {
-            .stat-box {
-                min-width: 100%;
-            }
-            .stats {
-                grid-template-columns: 1fr;
-                gap: 8px;
-            }
-            
-            /* Mobile adjustments for time display */
-            .time-display {
-                position: relative;
-                top: 0;
-                right: 0;
-                font-size: 9px;
-                gap: 8px;
-                margin-top: 10px;
-                text-align: left;
+            html, body {
+                overflow-x: hidden;
+                width: 100vw;
+                overflow-y: auto;
+                font-size: 50%;
             }
             
             .header {
-                flex-direction: column;
+                flex-direction: row;
                 align-items: flex-start;
+                padding: 8px 10px !important;
+                margin-bottom: 12px !important;
+                position: relative;
+                justify-content: space-between;
             }
             
             .header-top {
-                width: 100%;
-                gap: 10px;
-            }
-            
-            .dashboard-title {
-                margin-left: 0 !important;
-                margin-top: 0 !important;
-                font-size: 16px !important;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                width: auto;
+                margin: 0 !important;
+                flex: 1;
             }
             
             .logo {
-                height: 60px !important;
+                height: 50px !important;
+                width: auto !important;
+                margin-right: 8px;
             }
             
-            /* Disable horizontal scrolling on mobile */
-            html, body {
-                overflow-x: hidden;
-                width: 100%;
+            .dashboard-title {
+                margin: 0 !important;
+                font-size: 14px !important;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            
+            .theme-toggle {
+                position: static !important;
+                width: 32px !important;
+                height: 32px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                order: 2;
+                flex-shrink: 0;
+            }
+            
+            .theme-toggle svg {
+                width: 22px !important;
+                height: 22px !important;
+            }
+            
+            .header-right {
+                display: flex !important;
+                align-items: center;
+                gap: 12px;
+                position: relative !important;
+                right: auto !important;
+                top: auto !important;
+                white-space: nowrap;
+                margin-left: 8px;
+            }
+            
+            .time-display {
+                display: flex !important;
+                position: relative !important;
+                top: auto !important;
+                right: auto !important;
+                font-size: 20px !important;
+                gap: 16px !important;
+                margin: 0 !important;
+                text-align: right;
+            }
+            
+            .notification-history-icon {
+                display: block !important;
+                font-size: 20px !important;
+            }
+            
+            .stat-box {
+                min-width: 100%;
+                padding: 8px !important;
+                font-size: 11px !important;
+            }
+            
+            .stat-box > div:first-child {
+                font-size: 10px !important;
+            }
+            
+            .stat-box > div:last-child {
+                font-size: 11px !important;
+                margin-top: 3px !important;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 6px !important;
+                margin-bottom: 12px !important;
+                padding-bottom: 12px !important;
+                border-bottom: 0.5px solid rgba(120,120,120,0.15) !important;
+            }
+            
+            .alert-card {
+                margin-bottom: 8px !important;
+                padding: 7px !important;
+                font-size: 11px !important;
+            }
+            
+            .score-breakdown {
+                width: 140px !important;
+                padding: 2px 3px !important;
+                font-size: 4px !important;
+                right: 2px !important;
+                top: 5px !important;
+            }
+            
+            .score-details-container {
+                max-height: 300px !important;
+                overflow-y: auto !important;
             }
         }
         .stat-box > div:first-child {

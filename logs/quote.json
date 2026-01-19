@@ -20,5 +20,16 @@
     "averageVolume": 37033,
     "marketCap": 36773584,
     "performance": 0
+  },
+  "MRSN": {
+    "alert": 29.08,
+    "highest": 29.08,
+    "lowest": 29.08,
+    "current": 29.08,
+    "currentPrice": 29.08,
+    "volume": 704861,
+    "averageVolume": 139912,
+    "marketCap": 145363648,
+    "performance": 0
   }
 }

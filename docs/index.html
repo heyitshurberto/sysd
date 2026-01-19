@@ -906,21 +906,23 @@ table {
             }
             
             .header {
-                flex-direction: row;
-                align-items: flex-start;
+                flex-direction: column;
+                align-items: center;
                 padding: 8px 10px !important;
                 margin-bottom: 12px !important;
                 position: relative;
-                justify-content: space-between;
+                justify-content: center;
+                gap: 8px;
             }
             
             .header-top {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                width: auto;
+                width: 100%;
                 margin: 0 !important;
                 flex: 1;
+                justify-content: center;
             }
             
             .logo {
@@ -937,13 +939,15 @@ table {
             }
             
             .theme-toggle {
-                position: static !important;
+                position: absolute !important;
+                right: 10px !important;
+                top: 8px !important;
                 width: 32px !important;
                 height: 32px !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                order: 2;
                 flex-shrink: 0;
+                z-index: 100;
             }
             
             .theme-toggle svg {
@@ -954,28 +958,35 @@ table {
             .header-right {
                 display: flex !important;
                 align-items: center;
+                justify-content: center;
                 gap: 12px;
-                position: relative !important;
+                position: static !important;
                 right: auto !important;
                 top: auto !important;
                 white-space: nowrap;
-                margin-left: 8px;
+                width: 100%;
+                margin: 0 !important;
+                flex-wrap: wrap;
             }
             
             .time-display {
                 display: flex !important;
-                position: relative !important;
+                position: static !important;
                 top: auto !important;
                 right: auto !important;
                 font-size: 20px !important;
                 gap: 16px !important;
                 margin: 0 !important;
-                text-align: right;
+                text-align: center;
+                justify-content: center;
+                flex-wrap: wrap;
+                order: 3;
             }
             
             .notification-history-icon {
                 display: block !important;
                 font-size: 20px !important;
+                order: 2;
             }
             
             .stat-box {
@@ -1008,16 +1019,20 @@ table {
             }
             
             .score-breakdown {
-                width: 140px !important;
-                padding: 2px 3px !important;
-                font-size: 4px !important;
-                right: 2px !important;
-                top: 5px !important;
+                width: 90px !important;
+                max-width: 90vw !important;
+                padding: 3px 4px !important;
+                font-size: 3px !important;
+                right: 6px !important;
+                top: 40px !important;
+                overflow: visible !important;
+                max-height: 200px !important;
+                overflow-y: visible !important;
             }
             
             .score-details-container {
-                max-height: 300px !important;
-                overflow-y: auto !important;
+                position: relative !important;
+                overflow: visible !important;
             }
         }
         .stat-box > div:first-child {

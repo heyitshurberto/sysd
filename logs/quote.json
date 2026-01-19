@@ -1,26 +1,4 @@
 {
-  "ASBP": {
-    "alert": 2.21,
-    "highest": 2.21,
-    "lowest": 2.21,
-    "current": 2.21,
-    "currentPrice": 2.21,
-    "volume": 1196988,
-    "averageVolume": 1070010,
-    "marketCap": 8840000,
-    "performance": 0
-  },
-  "RGNT": {
-    "alert": 7.1,
-    "highest": 7.1,
-    "lowest": 7.1,
-    "current": 7.1,
-    "currentPrice": 7.1,
-    "volume": 320705,
-    "averageVolume": 37033,
-    "marketCap": 36773584,
-    "performance": 0
-  },
   "MRSN": {
     "alert": 29.08,
     "highest": 29.08,
@@ -45,7 +23,7 @@
   },
   "AGEN": {
     "alert": 3.34,
-    "highest": 3.34,
+    "highest": 3.3499999999999996,
     "lowest": 3.34,
     "current": 3.34,
     "currentPrice": 3.34,

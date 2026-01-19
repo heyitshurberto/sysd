@@ -3063,7 +3063,7 @@ const updateAllTickerPrices = async () => {
         await rateLimit.wait();
         
         const quote = await yahooFinance.quote(ticker, {
-          fields: ['regularMarketPrice', 'regularMarketVolume', 'averageVolume', 'marketCap']
+          fields: ['regularMarketPrice', 'regularMarketVolume', 'averageDailyVolume3Month', 'marketCap']
         });
         
         if (quote && quote.regularMarketPrice > 0) {
@@ -3076,7 +3076,7 @@ const updateAllTickerPrices = async () => {
               current: quote.regularMarketPrice,
               currentPrice: quote.regularMarketPrice,
               volume: quote.regularMarketVolume || 0,
-              averageVolume: quote.averageVolume || 0,
+              averageVolume: quote.averageDailyVolume3Month || 0,
               marketCap: quote.marketCap || 'N/A'
             };
           } else {
@@ -3084,7 +3084,7 @@ const updateAllTickerPrices = async () => {
             performanceData[ticker].currentPrice = quote.regularMarketPrice;
             performanceData[ticker].current = quote.regularMarketPrice;
             performanceData[ticker].volume = quote.regularMarketVolume || 0;
-            performanceData[ticker].averageVolume = quote.averageVolume || 0;
+            performanceData[ticker].averageVolume = quote.averageDailyVolume3Month || 0;
             performanceData[ticker].marketCap = quote.marketCap || 'N/A';
             
             // Update high/low

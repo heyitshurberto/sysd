@@ -901,11 +901,20 @@ table {
         }
         
         @media (max-width: 768px) {
-            html, body {
+            html {
                 overflow-x: hidden;
                 width: 100vw;
                 overflow-y: auto;
-                zoom: 0.5;
+                transform: scale(0.5);
+                transform-origin: 0 0;
+                width: 200vw;
+                height: 200vh;
+            }
+            
+            body {
+                width: 100vw;
+                margin: 0;
+                padding: 0;
             }
             
             .header {

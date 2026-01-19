@@ -28,12 +28,13 @@ table {
     @media (max-width: 768px) {
         div[style*="position: absolute; top: 7px; left: 7px;"] {
             position: static !important;
-            margin-bottom: 6px !important;
-            padding-left: 6px !important;
+            margin-bottom: 8px !important;
+            margin-top: 4px !important;
+            padding-left: 4px !important;
         }
         div[style*="position: absolute; top: 7px; left: 7px;"] a {
-            font-size: 9px !important;
-            max-width: 80px !important;
+            font-size: 7px !important;
+            max-width: 70px !important;
         }
     }
 </style>
@@ -2307,13 +2308,14 @@ table {
         @media (max-width: 768px) {
             .notification-panel {
                 position: fixed !important;
-                top: 80px !important;
+                top: 125px !important;
                 right: 8px !important;
                 left: auto !important;
                 bottom: auto !important;
                 width: 90vw !important;
                 max-width: 300px !important;
-                max-height: 60vh !important;
+                max-height: 55vh !important;
+                margin-top: 0 !important;
             }
         }
 
@@ -2774,11 +2776,8 @@ table {
                 window.activeDropdown = null;
                 window.lastActiveTicker = null;
                 window.dropdownStates = new Map();
-                // Load Recent alerts when opening panel, but preserve any milestone alerts already in the list
-                const notificationList = document.getElementById('notification-list');
-                if (!notificationList || notificationList.children.length === 0) {
-                    loadRecentAlerts();
-                }
+                // Always load Recent alerts when opening panel
+                loadRecentAlerts();
             }
 
             // Toggle panel visibility with animation

@@ -906,76 +906,81 @@ table {
             }
             
             .header {
-                flex-direction: row;
-                align-items: flex-start;
+                flex-direction: column;
+                align-items: stretch;
                 padding: 8px 10px !important;
                 margin-bottom: 12px !important;
                 position: relative;
-                justify-content: space-between;
+                justify-content: flex-start;
+                gap: 8px;
             }
             
             .header-top {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                width: auto;
+                width: 100%;
                 margin: 0 !important;
-                flex: 1;
+                flex: none;
             }
             
             .logo {
-                height: 50px !important;
+                height: 40px !important;
                 width: auto !important;
                 margin-right: 8px;
+                flex-shrink: 0;
             }
             
             .dashboard-title {
                 margin: 0 !important;
-                font-size: 14px !important;
+                font-size: 13px !important;
                 white-space: nowrap;
-                flex-shrink: 0;
+                flex: 1;
+                min-width: 0;
             }
             
             .theme-toggle {
                 position: static !important;
-                width: 32px !important;
-                height: 32px !important;
+                width: 28px !important;
+                height: 28px !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                order: 2;
                 flex-shrink: 0;
             }
             
             .theme-toggle svg {
-                width: 22px !important;
-                height: 22px !important;
+                width: 18px !important;
+                height: 18px !important;
             }
             
             .header-right {
                 display: flex !important;
                 align-items: center;
-                gap: 12px;
-                position: relative !important;
+                gap: 10px;
+                position: static !important;
                 right: auto !important;
                 top: auto !important;
                 white-space: nowrap;
-                margin-left: 8px;
+                width: 100%;
+                justify-content: flex-end;
             }
             
             .time-display {
                 display: flex !important;
-                position: relative !important;
+                position: static !important;
                 top: auto !important;
                 right: auto !important;
-                font-size: 20px !important;
-                gap: 16px !important;
+                font-size: 8px !important;
+                gap: 8px !important;
                 margin: 0 !important;
                 text-align: right;
+                flex-shrink: 0;
             }
             
             .notification-history-icon {
                 display: block !important;
-                font-size: 20px !important;
+                font-size: 12px !important;
+                flex-shrink: 0;
             }
             
             .stat-box {

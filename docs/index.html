@@ -2763,20 +2763,8 @@ table {
             const panel = document.getElementById('notification-panel');
             const isVisible = panel.style.display === 'block';
 
-            // Close all dropdowns when opening notifications (without triggering their close handlers)
+            // Only load alerts when opening, don't close dropdowns
             if (!isVisible) {
-                document.querySelectorAll('.score-breakdown').forEach(dropdown => {
-                    const card = dropdown.closest('.alert-card');
-                    const button = card.querySelector('.score-details-toggle');
-                    // Arrow removed
-                    dropdown.style.display = 'none';
-                    dropdown.style.opacity = '0';
-                    card.dataset.dropdownOpen = 'false';
-                });
-                window.activeDropdown = null;
-                window.lastActiveTicker = null;
-                window.dropdownStates = new Map();
-                // Always load Recent alerts when opening panel
                 loadRecentAlerts();
             }
 
@@ -5255,12 +5243,12 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             // Rest of the existing notification code...
             const notifications = document.querySelectorAll('.notification');
             const isMobile = window.innerWidth <= 768;
-            const offset = notifications.length * (isMobile ? 30 : 45);
-            const topOffset = isMobile ? 15 : 20;
+            const offset = notifications.length * (isMobile ? 55 : 65);
+            const topOffset = isMobile ? 10 : 25;
 
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
-            notification.style.top = `${topOffset + (offset * (isMobile ? 1 : 1.23))}px`; // Adjusted spacing for mobile
+            notification.style.top = `${topOffset + offset}px`; // Consistent spacing
             notification.style.right = isMobile ? '10px' : '20px';
             notification.style.opacity = document.body.classList.contains('dark-mode') ? '0.95' : '0.85'; // More visible in dark mode
             

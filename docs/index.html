@@ -2,9 +2,6 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, user-scalable=yes">
-<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="pragma" content="no-cache">
-<meta http-equiv="expires" content="0">
 <style>
 
 /* Just make tables horizontally scrollable */
@@ -901,20 +898,11 @@ table {
         }
         
         @media (max-width: 768px) {
-            html {
+            html, body {
                 overflow-x: hidden;
                 width: 100vw;
                 overflow-y: auto;
-                transform: scale(0.5);
-                transform-origin: 0 0;
-                width: 200vw;
-                height: 200vh;
-            }
-            
-            body {
-                width: 100vw;
-                margin: 0;
-                padding: 0;
+                font-size: 50%;
             }
             
             .header {

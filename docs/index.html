@@ -22,8 +22,21 @@ table {
     table { font-size: 12px; }
 }
 </style>
-<div style="position: absolute; top: 7px; left: 7px; display: none;">
+<div style="position: absolute; top: 7px; left: 7px;">
   <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 11px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
+<style>
+    @media (max-width: 768px) {
+        div[style*="position: absolute; top: 7px; left: 7px;"] {
+            position: static !important;
+            margin-bottom: 8px !important;
+            padding-left: 10px !important;
+        }
+        div[style*="position: absolute; top: 7px; left: 7px;"] a {
+            font-size: 14px !important;
+            max-width: none !important;
+        }
+    }
+</style>
     <title style="font-family: 'Monaco', monospace;">Eugene's Non-Profit</title>
     <!-- PWA meta tags and manifest -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -891,13 +904,6 @@ table {
         }
         
         @media (max-width: 768px) {
-            html, body {
-                overflow-x: hidden;
-                width: 100vw;
-                overflow-y: auto;
-                font-size: 50%;
-            }
-            
             .header {
                 flex-direction: row;
                 align-items: flex-start;
@@ -927,12 +933,12 @@ table {
             
             .dashboard-title {
                 margin: 0 !important;
-                font-size: 16px !important;
-                white-space: nowrap;
+                font-size: 18px !important;
+                white-space: normal !important;
                 flex: 1;
                 min-width: 0;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                overflow: visible !important;
+                text-overflow: clip !important;
                 display: block !important;
                 color: #2c2c2c !important;
                 margin-left: 8px !important;
@@ -1023,7 +1029,7 @@ table {
                 overflow-x: hidden !important;
                 width: 100vw !important;
                 overflow-y: auto !important;
-                font-size: 75%;
+                font-size: 60%;
                 margin: 0 !important;
                 padding: 0 !important;
             }
@@ -1059,8 +1065,8 @@ table {
             }
             
             .alert-card {
-                margin-bottom: 8px !important;
-                padding: 7px !important;
+                margin: 12px !important;
+                padding: 12px !important;
                 font-size: 11px !important;
             }
             
@@ -1075,6 +1081,10 @@ table {
             .score-details-container {
                 max-height: 300px !important;
                 overflow-y: auto !important;
+            }
+            
+            .container {
+                padding: 12px !important;
             }
         }
         .stat-box > div:first-child {

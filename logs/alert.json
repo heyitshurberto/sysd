@@ -23,7 +23,7 @@
     "alertTime": "2026-01-06T13:51:32.539Z",
     "signals": {
       "FDA Approval": [
-        "FDA Approval"
+        "Orphan Drug Designation"
       ]
     },
     "formType": {},
@@ -36,6 +36,62 @@
     "isShort": false,
     "currentVolume": 39478,
     "vwap": 6.85,
+    "ftd": false,
+    "bonusSignals": {
+      "DTC Chill Lift": false,
+      "Shell Recycling": false,
+      "VStock": false,
+      "NT 10K": false,
+      "Third Party": []
+    }
+  },
+  {
+    "ticker": "MRSN",
+    "price": 29.08,
+    "signalScore": 0.58,
+    "hasTuesdayBonus": true,
+    "volume": 704861,
+    "averageVolume": 136650,
+    "float": 3519900,
+    "sharesOutstanding": 4998750,
+    "soRatio": "70.42%",
+    "marketCap": 145363648,
+    "short": false,
+    "intent": "Merger/Acquisition, FDA Approval, Credit Default, Licensing Deal",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Massachusetts",
+    "filingDate": "2026-01-06",
+    "alertDate": "2026-01-19T11:00:00Z",
+    "alertPrice": 28.50,
+    "currentPrice": 29.08,
+    "peakPrice": 31.25,
+    "lowPrice": 27.80,
+    "alertTime": "2026-01-06T13:36:29.146Z",
+    "signals": {
+      "Merger/Acquisition": [
+        "Merger Agreement",
+        "Merger Consideration"
+      ],
+      "FDA Approval": [
+        "Breakthrough Therapy"
+      ],
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Licensing Deal": [
+        "License Agreement"
+      ]
+    },
+    "formType": {},
+    "filingType": "8-K, Item 1.02, Item 2.01, Item 3.01, Item 3.03, Item 5.01, Item 5.02, Item 5.03, Item 9.01",
+    "cik": "1442836",
+    "recordedAt": "2026-01-06T13:36:29.146Z",
+    "recordId": "MRSN-1767706589146",
+    "expiresAt": "2026-01-11T13:36:29.146Z",
+    "exchange": "NASDAQ",
+    "isShort": false,
+    "currentVolume": 704861,
+    "vwap": 29.15,
     "ftd": false,
     "bonusSignals": {
       "DTC Chill Lift": false,

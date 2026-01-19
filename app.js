@@ -2827,6 +2827,34 @@ app.listen(PORT, () => {
           const filingTimeBonus = filingTimeMultiplier > 1.0 ? parseFloat(filingTimeMultiplier.toFixed(2)) : null;
           
           const vwapValue = calculateVWAP(price, volume);
+          
+          // Detect reverse split ratio and reason
+          let reverseSplitRatio = null;
+          let reverseSplitReason = null;
+          if (Object.keys(semanticSignals).includes('Artificial Inflation')) {
+            const ratio = extractReverseSplitRatio(text);
+            if (ratio) {
+              const ratioMatch = ratio.match(/\d+$/);
+              if (ratioMatch) {
+                reverseSplitRatio = parseInt(ratioMatch[0]);
+              }
+              
+              // Detect reason for split
+              const lowerText = text.toLowerCase();
+              if (lowerText.includes('nasdaq') && (lowerText.includes('bid') || lowerText.includes('price') || lowerText.includes('minimum'))) {
+                reverseSplitReason = 'Nasdaq minimum bid price requirement';
+              } else if (lowerText.includes('listing') && lowerText.includes('standard')) {
+                reverseSplitReason = 'Listing standard compliance';
+              } else if (lowerText.includes('consolidat')) {
+                reverseSplitReason = 'Share consolidation';
+              } else if (lowerText.includes('stock split')) {
+                reverseSplitReason = 'Stock split';
+              } else {
+                reverseSplitReason = 'Reverse stock split';
+              }
+            }
+          }
+          
           const alertData = {
             ticker: ticker || filing.cik || 'Unknown',
             title: filing.title ? filing.title.replace(/\s*\(\d{10}\)\s*$/, '').trim() : 'Unknown Company',
@@ -2855,6 +2883,8 @@ app.listen(PORT, () => {
             filingDate: periodOfReport,
             signals: semanticSignals,
             bonusSignals: bonusSignals,
+            reverseSplitRatio: reverseSplitRatio,
+            reverseSplitReason: reverseSplitReason,
             formType: Array.from(foundForms),
             filingType: formLogMessage,
             cik: filing.cik,

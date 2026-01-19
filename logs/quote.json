@@ -9,5 +9,16 @@
     "averageVolume": 1070010,
     "marketCap": 8840000,
     "performance": 0
+  },
+  "RGNT": {
+    "alert": 7.1,
+    "highest": 7.1,
+    "lowest": 7.1,
+    "current": 7.1,
+    "currentPrice": 7.1,
+    "volume": 320705,
+    "averageVolume": 37033,
+    "marketCap": 36773584,
+    "performance": 0
   }
 }

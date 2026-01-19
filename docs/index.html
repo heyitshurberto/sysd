@@ -3135,7 +3135,7 @@ table {
 <span style="opacity: 0.7;">Current:</span> $${alert.currentPrice.toFixed(4)}
 <span style="opacity: 0.7;">Highest:</span> $${(alert.peakPrice || alert.currentPrice).toFixed(4)}
 <span style="opacity: 0.7;">Lowest:</span> $${(alert.lowPrice || alert.currentPrice).toFixed(4)}
-<span style="opacity: 0.7;">Move:</span> ${displayPercentMove}% ($${priceMove})</pre>
+<span style="opacity: 0.7;">Move:</span> ${displayPercentMove}% ($${priceMove})${alert.reverseSplitRatio ? `\n<span style="opacity: 0.7;">Stock Split:</span> 1-for-${alert.reverseSplitRatio} (${alert.reverseSplitReason || 'Reverse split'})` : ''}</pre>
                             </div>
                             <div class="popup-section">
 <h4>Company Disclosures</h4>

@@ -735,7 +735,7 @@ table {
             background: white;
             color: black;
             margin: 0;
-            padding: 20px 10px 10px 10px;
+            padding: 0;
             font-size: 12px;
             -webkit-font-smoothing: antialiased;
             transition: background-color 0.02s ease, color 0.02s ease;
@@ -1101,7 +1101,7 @@ table {
             }
             
             .popup-section pre {
-                font-size: 6.5px !important;
+                font-size: 8px !important;
                 line-height: 1.2 !important;
                 padding: 2px !important;
                 margin: 2px 0 !important;
@@ -4543,22 +4543,24 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 // Stack notifications with comfortable spacing
                 const notifications = document.querySelectorAll('.notification');
                 const isMobile = window.innerWidth <= 768;
-                const offset = notifications.length * (isMobile ? 45 : 65); // Smaller spacing on mobile
-                const topOffset = isMobile ? 15 : 25; // Higher up on mobile to fit in tight space
+                const spacing = isMobile ? 55 : 65; // Better spacing to prevent overlap
+                const offset = notifications.length * spacing;
+                const topOffset = isMobile ? 10 : 25; // Higher up on mobile
 
                 // Create new notification
                 const notification = document.createElement('div');
                 notification.className = `notification ${type}`;
                 notification.style.top = `${topOffset + offset}px`; // Stack from top
-                notification.style.right = isMobile ? '10px' : '20px'; // Closer to edge on mobile
+                notification.style.right = isMobile ? '8px' : '20px'; // Closer to edge on mobile
                 
                 // Make notification smaller on mobile
                 if (isMobile) {
-                    notification.style.padding = '8px 10px';
+                    notification.style.padding = '6px 8px';
                     notification.style.fontSize = '10px';
-                    notification.style.maxWidth = '180px';
+                    notification.style.maxWidth = '160px';
                     notification.style.minWidth = '100px';
-                    notification.style.borderRadius = '4px';
+                    notification.style.borderRadius = '3px';
+                    notification.style.lineHeight = '1.2';
                 }
 
                 if (link) {

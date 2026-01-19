@@ -2639,7 +2639,7 @@ table {
                         `;
                         
                         item.addEventListener('click', () => {
-                            customConfirm(`View details for ${alert.ticker}?`, `${saLink}`);
+                            customConfirm(`View details for $${alert.ticker}?`, `${saLink}`);
                         });
                         
                         list.appendChild(item);
@@ -2696,7 +2696,7 @@ table {
                         `
                         
                         item.addEventListener('click', () => {
-                            customConfirm(`View details for ${stock.ticker}?`, saLink);
+                            customConfirm(`View details for $${stock.ticker}?`, saLink);
                         });
                         
                         list.appendChild(item);
@@ -3111,7 +3111,7 @@ Lowest: $${(alert.lowPrice || alert.currentPrice).toFixed(4)}
 Move: ${displayPercentMove}% ($${priceMove})</pre>
                             </div>
                             <div class="popup-section">
-<h4>Key Indicators</h4>
+<h4>Company Disclosures</h4>
 ${alert.intent ? `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.6; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">Intent: Revenue Growth, Dilution, Credit Default, Partnership, Compliance Issue</pre>` : ''}
 ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signals).length > 0 ? 
     `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.3; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">` + 
@@ -4898,10 +4898,10 @@ FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && a
                                     return;
                                 }
                             } else {
-                                confirmMsg = `View Financials for ${ticker}?`;
+                                confirmMsg = `View Financials for $${ticker}?`;
                             }
                         } else {
-                            confirmMsg = `View details for ${ticker}?`;
+                            confirmMsg = `View details for $${ticker}?`;
                         }
                         
                         if (await customConfirm(confirmMsg)) {

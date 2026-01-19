@@ -556,7 +556,7 @@ table {
 
         .score-details-toggle:hover {
             color: #555;
-            box-shadow: none;
+            box-shadow: 0 0 0 1.5px rgba(100, 150, 255, 0.6);
             pointer-events: auto !important;
             background-color: rgba(0, 0, 0, 0.1);
             padding: 2px 4px;
@@ -569,7 +569,7 @@ table {
 
         body.dark-mode .score-details-toggle:hover {
             color: #ddd;
-            box-shadow: none;
+            box-shadow: 0 0 0 1.5px rgba(150, 200, 255, 0.7);
             background-color: rgba(120, 120, 120, 0.25);
             padding: 2px 4px;
             border-radius: 3px;
@@ -651,6 +651,23 @@ table {
         /* Button and animation fixes */
         .score-details-toggle:active {
             transform: translateY(1px);
+        }
+
+        /* Button styling for triggered cards */
+        body.dark-mode .alert-card.triggered.down .score-details-toggle {
+            color: #ffcccc;
+        }
+
+        body.dark-mode .alert-card.triggered.up .score-details-toggle {
+            color: #ccffcc;
+        }
+
+        body:not(.dark-mode) .alert-card.triggered.down .score-details-toggle {
+            color: #8b0000;
+        }
+
+        body:not(.dark-mode) .alert-card.triggered.up .score-details-toggle {
+            color: #008000;
         }
 
         @keyframes flash {
@@ -842,6 +859,16 @@ table {
             transition: background-color 0.2s ease, border-color 0.2s ease;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
+        }
+        
+        @media (max-width: 768px) {
+            .stat-box {
+                min-width: 100%;
+            }
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
         }
         .stat-box > div:first-child {
             font-size: 15px;
@@ -2676,7 +2703,7 @@ table {
                         return;
                     }
                     
-                    stocks.slice(-30).reverse().forEach(stock => {
+                    stocks.slice(-2).reverse().forEach(stock => {
                         const item = document.createElement('div');
                         item.className = 'notification-item';
                         item.style.cursor = 'pointer';
@@ -3096,32 +3123,39 @@ table {
                         <div class="popup-details">
                             <div class="popup-section">
                                 <h4>Alert Details</h4>
-                                <pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 10px; line-height: 1.4; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">Score: ${alert.signalScore.toFixed(1)}
-Alert: ${alertAge}
-Date: ${alert.alertTime ? new Date(alert.alertTime).toLocaleDateString() + ' ' + new Date(alert.alertTime).toLocaleTimeString() : 'N/A'}
-Inc: ${alert.incorporated || 'N/A'}
-Ops: ${alert.located || 'N/A'}</pre>
+                                <pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 10px; line-height: 1.4; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);"><span style="opacity: 0.7;">Score:</span> ${alert.signalScore.toFixed(1)}
+<span style="opacity: 0.7;">Alert:</span> ${alertAge}
+<span style="opacity: 0.7;">Date:</span> ${alert.alertTime ? new Date(alert.alertTime).toLocaleDateString() + ' ' + new Date(alert.alertTime).toLocaleTimeString() : 'N/A'}
+<span style="opacity: 0.7;">Inc:</span> ${alert.incorporated || 'N/A'}
+<span style="opacity: 0.7;">Ops:</span> ${alert.located || 'N/A'}</pre>
                             </div>
                             <div class="popup-section">
                                 <h4>Price Action</h4>
-                                <pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.4; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">Alert Price: $${alert.alertPrice.toFixed(4)}
-Current: $${alert.currentPrice.toFixed(4)}
-Highest: $${(alert.peakPrice || alert.currentPrice).toFixed(4)}
-Lowest: $${(alert.lowPrice || alert.currentPrice).toFixed(4)}
-Move: ${displayPercentMove}% ($${priceMove})</pre>
+                                <pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.4; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);"><span style="opacity: 0.7;">Alert Price:</span> $${alert.alertPrice.toFixed(4)}
+<span style="opacity: 0.7;">Current:</span> $${alert.currentPrice.toFixed(4)}
+<span style="opacity: 0.7;">Highest:</span> $${(alert.peakPrice || alert.currentPrice).toFixed(4)}
+<span style="opacity: 0.7;">Lowest:</span> $${(alert.lowPrice || alert.currentPrice).toFixed(4)}
+<span style="opacity: 0.7;">Move:</span> ${displayPercentMove}% ($${priceMove})</pre>
                             </div>
                             <div class="popup-section">
 <h4>Company Disclosures</h4>
-${alert.intent ? `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.6; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">Intent: Revenue Growth, Dilution, Credit Default, Partnership, Compliance Issue</pre>` : ''}
+${alert.intent ? `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.6; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;"><span style="opacity: 0.7;">Intent:</span> ${alert.intent}</pre>` : ''}
 ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signals).length > 0 ? 
     `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.3; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">` + 
     Object.entries(alert.signals).map(([signal, reasons]) => 
         `${signal}:\n${Array.isArray(reasons) ? reasons.join('\n') : reasons}`
-    ).join('\n') + (alert.hasTuesdayBonus ? '\nBonus:\nTuesday Window' : '') + `</pre>`
+    ).join('\n') + `</pre>`
     : (alert.intent ? '' : '<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.3; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">No signals detected</pre>')}
-${alert.bonusSignals && typeof alert.bonusSignals === 'object' && Object.keys(alert.bonusSignals).length > 0 ? 
-    `<pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.3; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">Bonus:` + 
-    Object.entries(alert.bonusSignals).map(([bonus, value]) => {
+</div>
+<div class="popup-section">
+                                <h4>Quote Metrics</h4>
+                                <pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.4; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);"><span style="opacity: 0.7;">Market Cap:</span> ${alert.marketCap ? '$' + (alert.marketCap / 1000000).toFixed(2) + 'M' : 'N/A'}
+<span style="opacity: 0.7;">Shares:</span> ${alert.sharesOutstanding ? alert.sharesOutstanding.toLocaleString() : 'N/A'}
+<span style="opacity: 0.7;">Float:</span> ${alert.float ? alert.float.toLocaleString() : 'N/A'}
+<span style="opacity: 0.7;">S/O Ratio:</span> ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (' + alert.soBonus.toFixed(2) + 'x)' : ''}
+<span style="opacity: 0.7;">VWAP:</span> ${alert.vwap ? '$' + parseFloat(alert.vwap).toFixed(2) + (alert.currentPrice && alert.vwap ? ` (Spread: ${((alert.currentPrice - alert.vwap) / alert.vwap * 100).toFixed(2)}%)` : '') : 'N/A'}
+<span style="opacity: 0.7;">FTD:</span> ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && alert.ftd !== 'False' ? (typeof alert.ftd === 'number' ? alert.ftd.toLocaleString() : alert.ftd) + (alert.ftdPercent ? ' (' + alert.ftdPercent + '%)' : '') : 'False'}${alert.custodianName ? '\n<span style="opacity: 0.7;">Banks:</span> ' + alert.custodianName : ''}
+<span style="opacity: 0.7;">Bonus:</span> ${alert.hasTuesdayBonus ? 'Tuesday Window' : 'None'}${alert.bonusSignals && typeof alert.bonusSignals === 'object' ? Object.entries(alert.bonusSignals).map(([bonus, value]) => {
         if (bonus === 'DTC Chill Lift' && value) return '\nDTC Chill Lift';
         if (bonus === 'Shell Recycling' && value) return '\nShell Recycling';
         if (bonus === 'VStock' && value) return '\nVStock Setup';
@@ -3129,17 +3163,7 @@ ${alert.bonusSignals && typeof alert.bonusSignals === 'object' && Object.keys(al
         if (bonus === 'NT 10K' && value === 'Actual 10K Filed') return '\nActual 10-K';
         if (bonus === 'Third Party' && Array.isArray(value) && value.length > 0) return '\nServices: ' + value.join(', ');
         return '';
-    }).filter(x => x).join('') + `</pre>` 
-    : ''}
-</div>
-<div class="popup-section">
-                                <h4>Quote Metrics</h4>
-                                <pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.4; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);">Market Cap: ${alert.marketCap ? '$' + (alert.marketCap / 1000000).toFixed(2) + 'M' : 'N/A'}
-Shares: ${alert.sharesOutstanding ? alert.sharesOutstanding.toLocaleString() : 'N/A'}
-Float: ${alert.float ? alert.float.toLocaleString() : 'N/A'}
-S/O Ratio: ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (' + alert.soBonus.toFixed(2) + 'x)' : ''}
-VWAP: ${alert.vwap ? '$' + parseFloat(alert.vwap).toFixed(2) + (alert.currentPrice && alert.vwap ? ` (Spread: ${((alert.currentPrice - alert.vwap) / alert.vwap * 100).toFixed(2)}%)` : '') : 'N/A'}
-FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && alert.ftd !== 'False' ? (typeof alert.ftd === 'number' ? alert.ftd.toLocaleString() : alert.ftd) + (alert.ftdPercent ? ' (' + alert.ftdPercent + '%)' : '') : 'False'}${alert.custodianName ? '\nBanks: ' + alert.custodianName : ''}</pre>
+    }).filter(x => x).join('') : ''}</pre>
                             </div>
                         </div>
                         <div class="popup-footer">

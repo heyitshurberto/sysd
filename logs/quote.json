@@ -42,5 +42,16 @@
     "averageVolume": 148412,
     "marketCap": 298328224,
     "performance": 0
+  },
+  "AGEN": {
+    "alert": 3.34,
+    "highest": 3.34,
+    "lowest": 3.34,
+    "current": 3.34,
+    "currentPrice": 3.34,
+    "volume": 1738937,
+    "averageVolume": 648848,
+    "marketCap": 113587880,
+    "performance": 0
   }
 }

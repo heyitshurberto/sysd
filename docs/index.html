@@ -22,7 +22,7 @@ table {
     table { font-size: 12px; }
 }
 </style>
-<div style="position: absolute; top: 7px; left: 7px;">
+<div style="position: absolute; top: 7px; left: 7px; display: none;">
   <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 11px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
     <title style="font-family: 'Monaco', monospace;">Eugene's Non-Profit</title>
     <!-- PWA meta tags and manifest -->
@@ -934,6 +934,9 @@ table {
                 overflow: hidden;
                 text-overflow: ellipsis;
                 display: block !important;
+                color: #2c2c2c !important;
+                margin-left: 8px !important;
+                margin-top: 0 !important;
             }
             
             .theme-toggle {
@@ -992,28 +995,28 @@ table {
                 right: 5vw !important;
                 top: auto !important;
                 bottom: 50px !important;
-                font-size: 16px !important;
-            }
-            
-            .notification-item {
-                padding: 12px 16px !important;
-                font-size: 13px !important;
-            }
-            
-            .notification-content {
-                font-size: 13px !important;
-            }
-            
-            .notification-panel-header {
                 font-size: 14px !important;
             }
             
-            .notification-tab {
+            .notification-item {
+                padding: 10px 14px !important;
+                font-size: 11px !important;
+            }
+            
+            .notification-content {
+                font-size: 11px !important;
+            }
+            
+            .notification-panel-header {
                 font-size: 12px !important;
             }
             
+            .notification-tab {
+                font-size: 11px !important;
+            }
+            
             .notification-duration {
-                font-size: 10px !important;
+                font-size: 9px !important;
             }
             
             html, body {

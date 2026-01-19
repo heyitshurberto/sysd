@@ -2585,7 +2585,10 @@ table {
         }
 
         function loadRecentAlerts() {
-            fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/alert.json')
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const alertUrl = isLocalhost ? '/logs/alert.json' : 'https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/alert.json';
+            
+            fetch(alertUrl)
                 .then(r => r.json())
                 .then(alerts => {
                     const list = document.getElementById('notification-list');
@@ -2650,7 +2653,10 @@ table {
         }
 
         function loadHistoryAlerts() {
-            fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/stocks.json')
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const stockUrl = isLocalhost ? '/logs/stocks.json' : 'https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/stocks.json';
+            
+            fetch(stockUrl)
                 .then(r => r.json())
                 .then(stocks => {
                     const list = document.getElementById('notification-history-list');
@@ -2866,18 +2872,41 @@ table {
                     this.alerts.clear();
                     this.knownAlerts.clear();
                     
-                    const response = await fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/alert.json');
-                    if (!response.ok) {
-                        console.error('Failed to fetch alert.json:', response.status, response.statusText);
-                        return;
+                    // Try local endpoint first (if available), fall back to GitHub raw content
+                    let alertData = [];
+                    let response;
+                    
+                    // Determine which URL to use
+                    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                    const alertUrl = isLocalhost ? '/logs/alert.json' : 'https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/alert.json';
+                    
+                    try {
+                        response = await fetch(alertUrl);
+                        if (!response.ok) {
+                            console.error('Failed to fetch alert.json:', response.status, response.statusText);
+                            // If it's localhost and failed, try GitHub as fallback
+                            if (isLocalhost) {
+                                response = await fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/alert.json');
+                            }
+                        }
+                        
+                        if (response.ok) {
+                            alertData = await response.json();
+                        } else {
+                            alertData = [];
+                        }
+                    } catch (err) {
+                        console.error('Error fetching alerts:', err.message);
+                        alertData = [];
                     }
-                    const alertData = await response.json();
+                    
                     smartLog('info', `Loaded ${alertData.length} alerts from alert.json`); // Log total count
 
                     // Load performance/PnL data for reverse split adjustments
                     let performanceData = {};
                     try {
-                        const pnlResponse = await fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/quote.json');
+                        const quoteUrl = isLocalhost ? '/logs/quote.json' : 'https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/quote.json';
+                        const pnlResponse = await fetch(quoteUrl);
                         if (pnlResponse.ok) {
                             performanceData = await pnlResponse.json();
                         }
@@ -3344,7 +3373,22 @@ FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && a
 
             async checkForNewAlerts() {
                 try {
-                    const response = await fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/alert.json');
+                    // Determine which URL to use
+                    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                    const alertUrl = isLocalhost ? '/logs/alert.json' : 'https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/alert.json';
+                    
+                    let response;
+                    try {
+                        response = await fetch(alertUrl);
+                        if (!response.ok && isLocalhost) {
+                            // Fall back to GitHub if localhost fails
+                            response = await fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/alert.json');
+                        }
+                    } catch (err) {
+                        console.error('Error fetching new alerts:', err.message);
+                        return;
+                    }
+                    
                     if (!response.ok) {
                         console.error('Failed to fetch alert.json for updates:', response.status, response.statusText);
                         return;
@@ -3494,7 +3538,9 @@ FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && a
                         
                         // Always fetch updated performance data for reverse split adjustments
                         try {
-                            const pnlResp = await fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/quote.json');
+                            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                            const quoteUrl = isLocalhost ? '/logs/quote.json' : 'https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/quote.json';
+                            const pnlResp = await fetch(quoteUrl);
                             if (pnlResp.ok) {
                                 const pnlData = await pnlResp.json();
                                 const tickerPerf = pnlData[alert.ticker];

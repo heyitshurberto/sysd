@@ -677,12 +677,6 @@ table {
             line-height: 1;
         }
 
-        body.dark-mode .score-breakdown {
-            background: rgba(42, 42, 42, 0.95);
-            border: 1px solid rgba(68, 68, 68, 0.8);
-            width: 274px;
-        }
-
         /* Button and animation fixes */
         .score-details-toggle:active {
             transform: translateY(1px);
@@ -931,35 +925,44 @@ table {
                 flex-shrink: 0;
             }
             
+            .logo {
+                height: 40px !important;
+                width: auto !important;
+                margin-right: 0px !important;
+                margin-left: -10px !important;
+                flex-shrink: 0;
+            }
+            
             .dashboard-title {
                 margin: 0 !important;
-                font-size: 16px !important;
+                font-size: 14px !important;
                 white-space: normal !important;
                 flex: none;
                 min-width: 0;
                 overflow: visible !important;
                 text-overflow: clip !important;
-                display: inline-block !important;
+                display: block !important;
                 color: #2c2c2c !important;
                 margin-left: -20px !important;
-                margin-top: 28px !important;
+                margin-top: 32px !important;
                 text-align: left !important;
-                padding-left: 0 !important;
+                padding-left: 10px !important;
+                position: relative !important;
             }
             
             div[style*="position: absolute; top: 7px; left: 7px;"] a {
-                font-size: 5px !important;
-                max-width: 50px !important;
+                font-size: 6px !important;
+                max-width: 60px !important;
                 line-height: 1 !important;
             }
             
             .score-breakdown {
-                width: 90px !important;
+                width: 100px !important;
                 padding: 2px 2px !important;
-                font-size: 5px !important;
+                font-size: 4px !important;
                 right: 2px !important;
                 top: 5px !important;
-                max-height: 200px !important;
+                max-height: 150px !important;
                 overflow-y: auto !important;
             }
             

@@ -2639,7 +2639,7 @@ table {
                         `;
                         
                         item.addEventListener('click', () => {
-                            customConfirm(`View details for $${alert.ticker}?`, `${saLink}`);
+                            customConfirm(`View details for ${alert.ticker}?`, `${saLink}`);
                         });
                         
                         list.appendChild(item);
@@ -2696,7 +2696,7 @@ table {
                         `
                         
                         item.addEventListener('click', () => {
-                            customConfirm(`View details for $${stock.ticker}?`, saLink);
+                            customConfirm(`View details for ${stock.ticker}?`, saLink);
                         });
                         
                         list.appendChild(item);
@@ -4974,7 +4974,7 @@ FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && a
                         confirmMsg = `View Financials for ${ticker}?`;
                         link = `https://stockanalysis.com/stocks/${ticker}/statistics/`;
                     } else {
-                        confirmMsg = `View details for $${ticker}?`;
+                        confirmMsg = `View details for ${ticker}?`;
                     }
                     
                     if (await customConfirm(confirmMsg)) {

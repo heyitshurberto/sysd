@@ -3511,7 +3511,7 @@ FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && a
                     } else {
                         // On GitHub Pages - fetch from quote.json which is updated by the bot
                         try {
-                            const quoteUrl = '/logs/quote.json';
+                            const quoteUrl = 'https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/quote.json';
                             const response = await fetch(quoteUrl);
                             if (response.ok) {
                                 const quoteData = await response.json();

@@ -755,8 +755,10 @@ table {
 
         @media (max-width: 768px) {
             .container {
-                padding: 0 10px !important;
+                padding: 0 !important;
                 margin: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
             }
         }
 
@@ -4540,13 +4542,24 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             showNotification(message, type = 'info', link = null) {
                 // Stack notifications with comfortable spacing
                 const notifications = document.querySelectorAll('.notification');
-                const offset = notifications.length * 65; // Adjusted spacing between notifications
+                const isMobile = window.innerWidth <= 768;
+                const offset = notifications.length * (isMobile ? 45 : 65); // Smaller spacing on mobile
+                const topOffset = isMobile ? 15 : 25; // Higher up on mobile to fit in tight space
 
                 // Create new notification
                 const notification = document.createElement('div');
                 notification.className = `notification ${type}`;
-                notification.style.top = `${25 + offset}px`; // Stack from top with extra generous space
-                notification.style.right = '20px'; // Ensure consistent right positioning
+                notification.style.top = `${topOffset + offset}px`; // Stack from top
+                notification.style.right = isMobile ? '10px' : '20px'; // Closer to edge on mobile
+                
+                // Make notification smaller on mobile
+                if (isMobile) {
+                    notification.style.padding = '8px 10px';
+                    notification.style.fontSize = '10px';
+                    notification.style.maxWidth = '180px';
+                    notification.style.minWidth = '100px';
+                    notification.style.borderRadius = '4px';
+                }
 
                 if (link) {
                     const linkElement = document.createElement('a');
@@ -4573,9 +4586,10 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                     notification.classList.remove('show');
                     setTimeout(() => {
                         notification.remove();
-                        // Reposition remaining notifications with much tighter spacing
+                        // Reposition remaining notifications with tighter spacing on mobile
                         document.querySelectorAll('.notification').forEach((n, i) => {
-                            n.style.top = `${20 + (i * 42)}px`;
+                            const spacing = isMobile ? 30 : 42;
+                            n.style.top = `${(isMobile ? 15 : 20) + (i * spacing)}px`;
                         });
                     }, 300);
                 }, 8000);
@@ -5231,19 +5245,30 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             
             // Rest of the existing notification code...
             const notifications = document.querySelectorAll('.notification');
-            const offset = notifications.length * 45;
+            const isMobile = window.innerWidth <= 768;
+            const offset = notifications.length * (isMobile ? 30 : 45);
+            const topOffset = isMobile ? 15 : 20;
 
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
-            notification.style.top = `${20 + (offset * 1.23)}px`; // Slightly increased vertical spacing
-            notification.style.right = '20px';
+            notification.style.top = `${topOffset + (offset * (isMobile ? 1 : 1.23))}px`; // Adjusted spacing for mobile
+            notification.style.right = isMobile ? '10px' : '20px';
             notification.style.opacity = document.body.classList.contains('dark-mode') ? '0.95' : '0.85'; // More visible in dark mode
+            
+            // Make smaller on mobile
+            if (isMobile) {
+                notification.style.padding = '8px 10px';
+                notification.style.fontSize = '10px';
+                notification.style.maxWidth = '180px';
+                notification.style.minWidth = '100px';
+                notification.style.borderRadius = '4px';
+            }
 
             // Create a wrapper div for better styling
             const contentWrapper = document.createElement('div');
             contentWrapper.style.display = 'flex';
             contentWrapper.style.flexDirection = 'column';
-            contentWrapper.style.gap = '4px';
+            contentWrapper.style.gap = isMobile ? '2px' : '4px';
 
             if (link) {
                 const linkElement = document.createElement('div');

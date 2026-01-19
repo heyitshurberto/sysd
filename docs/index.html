@@ -247,6 +247,32 @@ table {
         });
     }
 
+    // Map exchange names to TradingView prefixes
+    function getTradingViewSymbol(ticker, exchange) {
+        if (!exchange) exchange = 'NASDAQ';
+        exchange = exchange.toUpperCase().trim();
+        
+        // Normalize exchange name and map to TradingView prefix
+        let tvPrefix;
+        
+        if (exchange.includes('OTC') || exchange === 'OTCBB' || exchange === 'OTCPK' || exchange === 'OTCQB' || exchange === 'OTCQX' || exchange === 'PINK') {
+            tvPrefix = 'OTCPINK';
+        } else if (exchange === 'NYSE' || exchange === 'NEW YORK STOCK EXCHANGE') {
+            tvPrefix = 'NYSE';
+        } else if (exchange === 'NASDAQ' || exchange === 'NASDAQ-NM') {
+            tvPrefix = 'NASDAQ';
+        } else if (exchange === 'AMEX' || exchange === 'AMERICAN STOCK EXCHANGE') {
+            tvPrefix = 'AMEX';
+        } else if (exchange === 'ARCA' || exchange === 'NYSE ARCA') {
+            tvPrefix = 'ARCA';
+        } else {
+            // Default fallback - use exchange as-is if it's a known TradingView prefix
+            tvPrefix = exchange;
+        }
+        
+        return tvPrefix + ':' + ticker;
+    }
+
     // Console filter to suppress DNS resolution logs for www.sec.gov
     (function() {
         const originalLog = console.log;
@@ -3187,7 +3213,8 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         </div>
                         <div class="popup-footer">
                             <button onclick="(() => {
-                                const url = \`https://www.tradingview.com/chart/?symbol=${alert.exchange}:${alert.ticker}\`;
+                                const tvSymbol = getTradingViewSymbol('${alert.ticker}', '${alert.exchange || 'NASDAQ'}');
+                                const url = \`https://www.tradingview.com/chart/?symbol=\${tvSymbol}\`;
                                 customConfirm(\`Open TradingView chart for ${alert.ticker}?\`, url);
                             })()">TradingView</button>
                             <button onclick="(() => {
@@ -4083,29 +4110,15 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 const card = document.createElement('div');
                 const isShort = alert.isShort === true || alert.short === true;
                 
-                // Determine price movement class - use adjusted price change for reverse splits
+                // Determine price movement class - use priceChange (already calculated correctly for all cases)
                 let effectivePriceChange = alert.priceChange;
-                if (alert.reverseSplitRatio && alert.reverseSplitRatio > 1) {
-                    // For reverse splits, recalculate effective price change
-                    if (alert.performance && typeof alert.performance.adjustedPercent === 'number') {
-                        effectivePriceChange = alert.performance.adjustedPercent / 100;
-                    } else if (alert.performance && typeof alert.performance.percent === 'number') {
-                        // Use performance.percent (literal price change) but converted to P&L for shorts
-                        effectivePriceChange = (isShort ? -alert.performance.percent : alert.performance.percent) / 100;
-                    } else {
-                        // Recalculate if not available
-                        const adjustedEntry = alert.alertPrice * alert.reverseSplitRatio;
-                        if (isShort) {
-                            effectivePriceChange = ((adjustedEntry - alert.currentPrice) / adjustedEntry);
-                        } else {
-                            effectivePriceChange = ((alert.currentPrice - adjustedEntry) / adjustedEntry);
-                        }
-                    }
-                } else if (isShort) {
-                    // For non-split shorts: priceChange is (current - alert) / alert
+                if (isShort) {
+                    // For shorts: priceChange is (current - alert) / alert
                     // Negative change = price down = profit for short, so invert the sign
                     effectivePriceChange = -alert.priceChange;
                 }
+                // For reverse splits: alert.priceChange already reflects actual P&L since alertPrice and currentPrice
+                // are both in their respective market units. No adjustment needed.
                 
                 // Determine price movement class
                 const directionClass = effectivePriceChange > 0 ? 'up' : effectivePriceChange < 0 ? 'down' : 'neutral';
@@ -4233,9 +4246,8 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                     </div>` : ''}
                         <button type="button" class="link-button" onclick="(() => {
                             event.stopPropagation();
-                            const exchange = '${alert.exchange || "NASDAQ"}';
-                            const symbol = exchange + ':' + '${alert.ticker}';
-                            const url = 'https://www.tradingview.com/chart/?symbol=' + symbol;
+                            const tvSymbol = getTradingViewSymbol('${alert.ticker}', '${alert.exchange || 'NASDAQ'}');
+                            const url = 'https://www.tradingview.com/chart/?symbol=' + tvSymbol;
                             customConfirm('Open TradingView Chart for $${alert.ticker}?', url);
                         })()">TradingView</button>
                         <button type="button" class="link-button" onclick="(() => {

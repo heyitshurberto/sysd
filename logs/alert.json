@@ -1,51 +1,5 @@
 [
-  {
-    "ticker": "PROF",
-    "price": 7.53,
-    "signalScore": 0.22,
-    "hasTuesdayBonus": true,
-    "volume": 52189,
-    "averageVolume": 112904,
-    "float": 28966800,
-    "sharesOutstanding": 36292972,
-    "soRatio": "79.81%",
-    "marketCap": 273286080,
-    "short": false,
-    "intent": "FDA Approval",
-    "incorporated": "Ottawa, Canada",
-    "located": "Ottawa, Canada",
-    "filingDate": "2026-01-06",
-    "alertDate": "2026-01-19T12:00:00Z",
-    "alertPrice": 7.25,
-    "currentPrice": 7.53,
-    "peakPrice": 7.89,
-    "lowPrice": 7.10,
-    "alertTime": "2026-01-06T18:40:17.436Z",
-    "signals": {
-      "FDA Approval": [
-        "FDA Clearance"
-      ]
-    },
-    "formType": {},
-    "filingType": "6-K, 6-K/A, 8-K, 20-F, 20-F/A, EX-99.1, Item 7.01, Item 9.01",
-    "cik": "1628808",
-    "recordedAt": "2026-01-06T18:40:17.436Z",
-    "recordId": "PROF-1767724817436",
-    "expiresAt": "2026-01-11T18:40:17.436Z",
-    "exchange": "NASDAQ",
-    "isShort": false,
-    "currentVolume": 52189,
-    "vwap": 7.48,
-    "ftd": false,
-    "bonusSignals": {
-      "DTC Chill Lift": false,
-      "Shell Recycling": false,
-      "VStock": false,
-      "NT 10K": false,
-      "Third Party": []
-    }
-  },
-  {
+    {
     "ticker": "AGEN",
     "title": "8-K - AGENUS INC (0001098972) (Filer)",
     "price": 3.68,
@@ -102,6 +56,52 @@
     "recordedAt": "2026-01-16T13:26:14.214Z",
     "recordId": "AGEN-1768569974214",
     "expiresAt": "2026-01-21T13:26:14.214Z"
+  },
+  {
+    "ticker": "PROF",
+    "price": 7.53,
+    "signalScore": 0.22,
+    "hasTuesdayBonus": true,
+    "volume": 52189,
+    "averageVolume": 112904,
+    "float": 28966800,
+    "sharesOutstanding": 36292972,
+    "soRatio": "79.81%",
+    "marketCap": 273286080,
+    "short": false,
+    "intent": "FDA Approval",
+    "incorporated": "Ottawa, Canada",
+    "located": "Ottawa, Canada",
+    "filingDate": "2026-01-06",
+    "alertDate": "2026-01-19T12:00:00Z",
+    "alertPrice": 7.25,
+    "currentPrice": 7.53,
+    "peakPrice": 7.89,
+    "lowPrice": 7.10,
+    "alertTime": "2026-01-06T18:40:17.436Z",
+    "signals": {
+      "FDA Approval": [
+        "FDA Clearance"
+      ]
+    },
+    "formType": {},
+    "filingType": "6-K, 6-K/A, 8-K, 20-F, 20-F/A, EX-99.1, Item 7.01, Item 9.01",
+    "cik": "1628808",
+    "recordedAt": "2026-01-06T18:40:17.436Z",
+    "recordId": "PROF-1767724817436",
+    "expiresAt": "2026-01-11T18:40:17.436Z",
+    "exchange": "NASDAQ",
+    "isShort": false,
+    "currentVolume": 52189,
+    "vwap": 7.48,
+    "ftd": false,
+    "bonusSignals": {
+      "DTC Chill Lift": false,
+      "Shell Recycling": false,
+      "VStock": false,
+      "NT 10K": false,
+      "Third Party": []
+    }
   },
   {
     "ticker": "MRSN",

@@ -1,7 +1,7 @@
 [
   {
     "ticker": "RGNT",
-    "price": 6.81,
+    "price": 7.1000,
     "signalScore": 0.46,
     "hasTuesdayBonus": true,
     "volume": 39478,
@@ -17,7 +17,7 @@
     "filingDate": "2026-01-06",
     "alertDate": "2026-01-19T12:00:00Z",
     "alertPrice": 6.75,
-    "currentPrice": 6.81,
+    "currentPrice": 7.1000,
     "peakPrice": 7.12,
     "lowPrice": 6.40,
     "alertTime": "2026-01-06T13:51:32.539Z",

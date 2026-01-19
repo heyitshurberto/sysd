@@ -902,16 +902,16 @@ table {
                 overflow-x: hidden;
                 width: 100vw;
                 overflow-y: auto;
-                font-size: 50%;
+                font-size: 12px;
             }
             
             .header {
-                flex-direction: column;
-                align-items: center;
+                flex-direction: row;
+                align-items: flex-start;
                 padding: 8px 10px !important;
                 margin-bottom: 12px !important;
                 position: relative;
-                justify-content: center;
+                justify-content: flex-start;
                 gap: 8px;
             }
             
@@ -919,10 +919,10 @@ table {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                width: 100%;
+                width: auto;
                 margin: 0 !important;
-                flex: 1;
-                justify-content: center;
+                flex: 0 0 auto;
+                justify-content: flex-start;
             }
             
             .logo {
@@ -958,15 +958,16 @@ table {
             .header-right {
                 display: flex !important;
                 align-items: center;
-                justify-content: center;
+                justify-content: flex-start;
                 gap: 12px;
                 position: static !important;
                 right: auto !important;
                 top: auto !important;
                 white-space: nowrap;
-                width: 100%;
+                width: auto;
                 margin: 0 !important;
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
+                margin-left: 10px;
             }
             
             .time-display {
@@ -974,19 +975,19 @@ table {
                 position: static !important;
                 top: auto !important;
                 right: auto !important;
-                font-size: 20px !important;
-                gap: 16px !important;
+                font-size: 10px !important;
+                gap: 8px !important;
                 margin: 0 !important;
-                text-align: center;
-                justify-content: center;
-                flex-wrap: wrap;
-                order: 3;
+                text-align: left;
+                justify-content: flex-start;
+                flex-wrap: nowrap;
+                order: unset;
             }
             
             .notification-history-icon {
                 display: block !important;
-                font-size: 20px !important;
-                order: 2;
+                font-size: 16px !important;
+                order: unset;
             }
             
             .stat-box {
@@ -1019,15 +1020,17 @@ table {
             }
             
             .score-breakdown {
-                width: 90px !important;
-                max-width: 90vw !important;
-                padding: 3px 4px !important;
-                font-size: 3px !important;
+                width: 75px !important;
+                max-width: 75vw !important;
+                padding: 2px 2px !important;
+                font-size: 3.5px !important;
                 right: 6px !important;
                 top: 40px !important;
-                overflow: visible !important;
-                max-height: 200px !important;
-                overflow-y: visible !important;
+                max-height: 150px !important;
+                overflow: hidden !important;
+                overflow-y: hidden !important;
+                position: absolute !important;
+                z-index: 1002 !important;
             }
             
             .score-details-container {
@@ -3288,9 +3291,15 @@ table {
                 
                 const priceMove = (alert.currentPrice - alert.alertPrice).toFixed(4);
                 
+                // Clean title by removing form types (8-K, 6-K, /A)
+                let cleanTitle = alert.title || '';
+                if (cleanTitle) {
+                    cleanTitle = cleanTitle.replace(/^(8-K|6-K|\/A)\s*-?\s*/i, '').trim();
+                }
+                
                 popup.innerHTML = `
                     <div class="popup-content">
-                        <h3 style="font-style: italic; padding-left: 4px;">$${alert.ticker}${alert.title ? ' ' + alert.title : ''} <span style="color: ${isShort ? '#ff0000' : '#00cc00'};">[${isShort ? 'SHORT' : 'LONG'}]</span></h3>
+                        <h3 style="font-style: italic; padding-left: 4px;">$${alert.ticker}${cleanTitle ? ' ' + cleanTitle : ''} <span style="color: ${isShort ? '#ff0000' : '#00cc00'};">[${isShort ? 'SHORT' : 'LONG'}]</span></h3>
                         <div class="popup-details">
                             <div class="popup-section">
                                 <h4>Alert Details</h4>

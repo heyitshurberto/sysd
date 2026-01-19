@@ -24,19 +24,6 @@ table {
 </style>
 <div style="position: absolute; top: 7px; left: 7px;">
   <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 11px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
-<style>
-    @media (max-width: 768px) {
-        div[style*="position: absolute; top: 7px; left: 7px;"] {
-            position: static !important;
-            margin-bottom: 0 !important;
-            padding-left: 0 !important;
-        }
-        div[style*="position: absolute; top: 7px; left: 7px;"] a {
-            font-size: 11px !important;
-            max-width: 100px !important;
-        }
-    }
-</style>
     <title style="font-family: 'Monaco', monospace;">Eugene's Non-Profit</title>
     <!-- PWA meta tags and manifest -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -759,13 +746,6 @@ table {
             margin: 0 auto;
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 0 10px !important;
-                margin: 0 !important;
-            }
-        }
-
         .header {
             padding-top: 10px;
             padding-bottom: 10px;
@@ -904,212 +884,49 @@ table {
         }
         
         @media (max-width: 768px) {
+            .stat-box {
+                min-width: 100%;
+            }
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            /* Mobile adjustments for time display */
+            .time-display {
+                position: relative;
+                top: 0;
+                right: 0;
+                font-size: 9px;
+                gap: 8px;
+                margin-top: 10px;
+                text-align: left;
+            }
+            
             .header {
                 flex-direction: column;
                 align-items: flex-start;
-                padding: 8px 10px !important;
-                margin-bottom: 12px !important;
-                position: relative;
-                justify-content: flex-start;
-                gap: 0px;
             }
             
             .header-top {
-                display: flex;
-                align-items: center;
-                gap: 0px;
-                width: auto;
-                margin: 0 !important;
-                flex: none;
-                justify-content: flex-start;
-            }
-            
-            .logo {
-                height: 40px !important;
-                width: auto !important;
-                margin-right: 0px !important;
-                margin-left: 0px !important;
-                flex-shrink: 0;
+                width: 100%;
+                gap: 10px;
             }
             
             .dashboard-title {
-                margin: 0 !important;
-                font-size: 12px !important;
-                white-space: nowrap !important;
-                flex: none;
-                min-width: 0;
-                overflow: visible !important;
-                text-overflow: clip !important;
-                display: block !important;
-                color: #2c2c2c !important;
-                margin-left: 0px !important;
-                margin-top: 4px !important;
-                text-align: left !important;
-                padding-left: 0px !important;
-                position: static !important;
+                margin-left: 0 !important;
+                margin-top: 0 !important;
+                font-size: 16px !important;
             }
             
-            div[style*="position: absolute; top: 7px; left: 7px;"] a {
-                font-size: 8px !important;
-                max-width: 80px !important;
-                line-height: 1.2 !important;
+            .logo {
+                height: 60px !important;
             }
             
-            .score-breakdown {
-                width: 85px !important;
-                padding: 3px 3px !important;
-                font-size: 5px !important;
-                right: 6px !important;
-                top: 8px !important;
-                max-height: 180px !important;
-                overflow-y: auto !important;
-                position: absolute !important;
-                z-index: 1002 !important;
-            }
-            
-            .theme-toggle {
-                position: absolute !important;
-                right: 10px !important;
-                top: 8px !important;
-                width: 28px !important;
-                height: 28px !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                flex-shrink: 0;
-                z-index: 100;
-            }
-            
-            .theme-toggle svg {
-                width: 18px !important;
-                height: 18px !important;
-            }
-            
-            .header-right {
-                display: flex !important;
-                align-items: center;
-                gap: 8px;
-                position: static !important;
-                right: auto !important;
-                top: auto !important;
-                white-space: nowrap;
-                margin-top: 36px;
-                width: 100%;
-                justify-content: flex-start;
-            }
-            
-            .time-display {
-                display: flex !important;
-                position: static !important;
-                top: auto !important;
-                right: auto !important;
-                font-size: 8px !important;
-                gap: 8px !important;
-                margin: 0 !important;
-                text-align: left;
-                flex-shrink: 0;
-            }
-            
-            .notification-history-icon {
-                display: block !important;
-                font-size: 12px !important;
-                flex-shrink: 0;
-                margin-left: auto;
-            }
-            
-            .notification-panel {
-                width: 85vw !important;
-                max-width: 350px !important;
-                max-height: 45vh !important;
-                right: 10px !important;
-                top: 50px !important;
-                bottom: auto !important;
-                font-size: 12px !important;
-                padding: 8px !important;
-            }
-            
-            .notification-item {
-                padding: 6px 8px !important;
-                font-size: 10px !important;
-            }
-            
-            .notification-content {
-                font-size: 10px !important;
-            }
-            
-            .notification-panel-header {
-                font-size: 11px !important;
-            }
-            
-            .notification-tab {
-                font-size: 10px !important;
-            }
-            
-            .notification-duration {
-                font-size: 8px !important;
-            }
-            
+            /* Disable horizontal scrolling on mobile */
             html, body {
-                overflow-x: hidden !important;
-                width: 100vw !important;
-                overflow-y: auto !important;
-                font-size: 56%;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            .container {
-                padding: 0 !important;
-                margin: 0 !important;
-                width: 100% !important;
-                overflow: hidden !important;
-            }
-            
-            .stat-box {
-                min-width: 100%;
-                padding: 8px !important;
-                font-size: 11px !important;
-            }
-            
-            .stat-box > div:first-child {
-                font-size: 10px !important;
-            }
-            
-            .stat-box > div:last-child {
-                font-size: 11px !important;
-                margin-top: 3px !important;
-            }
-            
-            .stats {
-                grid-template-columns: 1fr;
-                gap: 6px !important;
-                margin-bottom: 12px !important;
-                padding-bottom: 12px !important;
-                border-bottom: 0.5px solid rgba(120,120,120,0.15) !important;
-            }
-            
-            .alert-card {
-                margin-bottom: 8px !important;
-                padding: 7px !important;
-                font-size: 11px !important;
-            }
-            
-            .score-breakdown {
-                width: 150px !important;
-                padding: 2px 3px !important;
-                font-size: 8px !important;
-                right: 2px !important;
-                top: 5px !important;
-            }
-            
-            .score-details-container {
-                max-height: 300px !important;
-                overflow-y: auto !important;
-            }
-            
-            .container {
-                padding: 0 !important;
-                margin: 0 auto !important;
-                width: 100% !important;
+                overflow-x: hidden;
+                width: 100%;
             }
         }
         .stat-box > div:first-child {
@@ -3367,7 +3184,7 @@ table {
                 
                 popup.innerHTML = `
                     <div class="popup-content">
-                        <h3 style="font-style: italic; padding-left: 4px;">$${alert.ticker}${alert.title && !alert.title.includes('8-K') && !alert.title.includes('8-K/A') && !alert.title.includes('6-K') && !alert.title.includes('6-K/A') && !alert.title.includes('Filer') ? ' ' + alert.title : ''} <span style="color: ${isShort ? '#ff0000' : '#00cc00'};">[${isShort ? 'SHORT' : 'LONG'}]</span></h3>
+                        <h3 style="font-style: italic; padding-left: 4px;">$${alert.ticker}${alert.title ? ' ' + alert.title : ''} <span style="color: ${isShort ? '#ff0000' : '#00cc00'};">[${isShort ? 'SHORT' : 'LONG'}]</span></h3>
                         <div class="popup-details">
                             <div class="popup-section">
                                 <h4>Alert Details</h4>
@@ -3422,13 +3239,13 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                                 console.log('Generated tvSymbol:', tvSymbol);
                                 const url = \`https://www.tradingview.com/chart/?symbol=\${tvSymbol}\`;
                                 console.log('Opening URL:', url);
-                                customConfirm(\`Open TradingView chart for $${ticker}?\`, url);
+                                customConfirm(\`Open TradingView chart for \${ticker}?\`, url);
                             })()">TradingView</button>
                             <button onclick="(() => {
-                                customConfirm(\`View Financials for $${alert.ticker}?\`, \`https://stockanalysis.com/stocks/${alert.ticker}/statistics/\`);
+                                customConfirm(\`View Financials for ${alert.ticker}?\`, \`https://stockanalysis.com/stocks/${alert.ticker}/statistics/\`);
                             })()">Financials</button>
                             <button onclick="(() => {
-                                customConfirm(\`Open Trading 212 to trade $${alert.ticker}?\`, 'https://www.trading212.com/en/login');
+                                customConfirm(\`Open Trading 212 to trade ${alert.ticker}?\`, 'https://www.trading212.com/en/login');
                             })()">Trading 212</button>
                            <button onclick="this.closest('.alert-popup').remove()">Close</button>
                         </div>
@@ -4425,10 +4242,9 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 // Create the initial HTML content
                 card.innerHTML = `
                     <div class="score-details-container">
-                        <button type="button" class="score-details-toggle" style="background: transparent; border: none; cursor: pointer; padding: 2px 4px; margin-right: 4px; font-size: 12px; color: #666; border-radius: 3px; transition: background-color 0.2s, padding 0.2s; position: absolute; top: 8px; right: 6px; z-index: 1003;">⋮</button>
-                        <div class="score-breakdown" style="display: none; position: absolute; background: white; border: 1px solid #ccc; border-radius: 4px; padding: 8px; z-index: 1005; min-width: 150px; top: 25px; right: 25px;"></div>
                     </div>
                     <div class="ticker ticker-clickable" tabindex="0" style="cursor:pointer;display:inline-block;user-select:none;transition:background 0.15s,border 0.15s; border-radius:4px; padding:2px 6px; margin-bottom:2px; font-size: 8px;">
+                    <button type="button" class="score-details-toggle" style="background: transparent; border: none; cursor: pointer; padding: 2px 4px; margin-right: 4px; font-size: 12px; color: #666; border-radius: 3px; transition: background-color 0.2s, padding 0.2s;">⋮</button>
                     <div class="ticker" style="transition: all 0.15s ease;">
                         <i>$${alert.ticker}</i> 
                         <span style="color: ${alert.isShort ? '#cc0000' : '#00cc00'}; transition: color 0.15s ease;">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>

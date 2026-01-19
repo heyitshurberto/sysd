@@ -884,6 +884,19 @@ table {
         }
         
         @media (max-width: 768px) {
+            html, body {
+                overflow-x: hidden;
+                width: 100vw;
+                overflow-y: auto;
+            }
+            
+            body {
+                transform: scale(0.75);
+                transform-origin: top left;
+                width: 133.33%;
+                height: 133.33%;
+            }
+            
             .stat-box {
                 min-width: 100%;
             }
@@ -921,12 +934,6 @@ table {
             
             .logo {
                 height: 60px !important;
-            }
-            
-            /* Disable horizontal scrolling on mobile */
-            html, body {
-                overflow-x: hidden;
-                width: 100%;
             }
         }
         .stat-box > div:first-child {

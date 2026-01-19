@@ -247,32 +247,11 @@ table {
         });
     }
 
-    // Map exchange names to TradingView prefixes
+    // Get TradingView symbol - just use ticker directly, TradingView handles all exchanges
     function getTradingViewSymbol(ticker, exchange) {
-        if (!exchange) exchange = 'NASDAQ';
-        exchange = exchange.toUpperCase().trim();
-        
-        // Normalize exchange name and map to TradingView prefix
-        let tvPrefix;
-        
-        if (exchange.includes('OTC') || exchange === 'OTCBB' || exchange === 'OTCPK' || exchange === 'OTCQB' || exchange === 'OTCQX' || exchange === 'PINK') {
-            tvPrefix = 'OTCPINK';
-        } else if (exchange === 'NYSE' || exchange === 'NEW YORK STOCK EXCHANGE') {
-            tvPrefix = 'NYSE';
-        } else if (exchange === 'NASDAQ' || exchange === 'NASDAQ-NM') {
-            tvPrefix = 'NASDAQ';
-        } else if (exchange === 'AMEX' || exchange === 'AMERICAN STOCK EXCHANGE') {
-            tvPrefix = 'AMEX';
-        } else if (exchange === 'ARCA' || exchange === 'NYSE ARCA') {
-            tvPrefix = 'ARCA';
-        } else {
-            // Default fallback - use exchange as-is if it's a known TradingView prefix
-            tvPrefix = exchange;
-        }
-        
-        const result = tvPrefix + ':' + ticker;
-        console.log('getTradingViewSymbol:', { ticker, exchange, tvPrefix, result });
-        return result;
+        // TradingView can resolve any ticker symbol directly without exchange mapping
+        console.log('getTradingViewSymbol:', { ticker, exchange });
+        return ticker;
     }
 
     // Console filter to suppress DNS resolution logs for www.sec.gov
@@ -3254,7 +3233,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         <div class="popup-footer">
                             <button onclick="(() => {
                                 const ticker = '${alert.ticker}';
-                                const exchange = '${exchange}';
+                                const exchange = '${alert.exchange || 'NASDAQ'}';
                                 console.log('Popup TradingView button clicked:', { ticker, exchange });
                                 const tvSymbol = getTradingViewSymbol(ticker, exchange);
                                 console.log('Generated tvSymbol:', tvSymbol);
@@ -4154,7 +4133,6 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             createAlertCard(alert) {
                 const card = document.createElement('div');
                 const isShort = alert.isShort === true || alert.short === true;
-                console.log('Creating card for:', { ticker: alert.ticker, exchange: alert.exchange, allKeys: Object.keys(alert) });
                 
                 // Determine price movement class - use priceChange (already calculated correctly for all cases)
                 let effectivePriceChange = alert.priceChange;
@@ -4293,7 +4271,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         <button type="button" class="link-button" onclick="(() => {
                             event.stopPropagation();
                             const ticker = '${alert.ticker}';
-                            const exchange = '${exchange}';
+                            const exchange = '${alert.exchange || 'NASDAQ'}';
                             console.log('Card TradingView button clicked:', { ticker, exchange });
                             const tvSymbol = getTradingViewSymbol(ticker, exchange);
                             console.log('Generated tvSymbol:', tvSymbol);

@@ -31,5 +31,16 @@
     "averageVolume": 139912,
     "marketCap": 145363648,
     "performance": 0
+  },
+  "PROF": {
+    "alert": 8.22,
+    "highest": 8.22,
+    "lowest": 8.22,
+    "current": 8.22,
+    "currentPrice": 8.22,
+    "volume": 118609,
+    "averageVolume": 148412,
+    "marketCap": 298328224,
+    "performance": 0
   }
 }

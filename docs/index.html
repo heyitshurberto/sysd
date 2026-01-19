@@ -22,7 +22,7 @@ table {
     table { font-size: 12px; }
 }
 </style>
-<div style="position: absolute; top: 7px; left: 150px;">
+<div style="position: absolute; top: 7px; left: 4.5px;">
   <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 11px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
 <style>
     @media (max-width: 768px) {
@@ -33,7 +33,7 @@ table {
             padding-left: 4px !important;
         }
         div[style*="position: absolute; top: 7px; left: 7px;"] a {
-            font-size: 6px !important;
+            font-size: 5px !important;
             max-width: 70px !important;
         }
     }
@@ -4538,7 +4538,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 // Stack notifications with comfortable spacing
                 const notifications = document.querySelectorAll('.notification');
                 const isMobile = window.innerWidth <= 768;
-                const spacing = isMobile ? 55 : 65; // Better spacing to prevent overlap
+                const spacing = isMobile ? 75 : 80; // Better spacing to prevent overlap
                 const offset = notifications.length * spacing;
                 const topOffset = isMobile ? 10 : 25; // Higher up on mobile
 
@@ -4583,10 +4583,12 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                     notification.classList.remove('show');
                     setTimeout(() => {
                         notification.remove();
-                        // Reposition remaining notifications with tighter spacing on mobile
+                        // Reposition remaining notifications with proper spacing on mobile
                         document.querySelectorAll('.notification').forEach((n, i) => {
-                            const spacing = isMobile ? 30 : 42;
-                            n.style.top = `${(isMobile ? 15 : 20) + (i * spacing)}px`;
+                            const isMobile = window.innerWidth <= 768;
+                            const spacing = isMobile ? 75 : 80;
+                            const topOffset = isMobile ? 10 : 25;
+                            n.style.top = `${topOffset + (i * spacing)}px`;
                         });
                     }, 300);
                 }, 8000);
@@ -5243,7 +5245,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             // Rest of the existing notification code...
             const notifications = document.querySelectorAll('.notification');
             const isMobile = window.innerWidth <= 768;
-            const offset = notifications.length * (isMobile ? 55 : 65);
+            const offset = notifications.length * (isMobile ? 75 : 80);
             const topOffset = isMobile ? 10 : 25;
 
             const notification = document.createElement('div');
@@ -5312,8 +5314,11 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 notification.classList.remove('show');
                 setTimeout(() => {
                     notification.remove();
+                    const isMobile = window.innerWidth <= 768;
                     document.querySelectorAll('.notification').forEach((n, i) => {
-                        n.style.top = `${20 + (i * 65)}px`;
+                        const spacing = isMobile ? 75 : 80;
+                        const topOffset = isMobile ? 10 : 25;
+                        n.style.top = `${topOffset + (i * spacing)}px`;
                     });
                 }, 300);
             }, 8000);

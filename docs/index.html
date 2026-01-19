@@ -899,10 +899,11 @@ table {
         
         @media (max-width: 768px) {
             html, body {
-                overflow-x: hidden;
-                width: 100vw;
+                overflow-x: hidden !important;
+                width: 100% !important;
                 overflow-y: auto;
                 font-size: 12px;
+                max-width: 100vw;
             }
             
             .header {
@@ -998,6 +999,7 @@ table {
                 width: 28px !important;
                 height: 28px !important;
                 flex-shrink: 0;
+                margin-right: 8px !important;
             }
             
             .notification-history-icon svg {
@@ -1038,7 +1040,7 @@ table {
                 width: 75px !important;
                 max-width: 75vw !important;
                 padding: 2px 2px !important;
-                font-size: 2.8px !important;
+                font-size: 4.3px !important;
                 right: 6px !important;
                 top: 40px !important;
                 max-height: 150px !important;
@@ -1053,7 +1055,7 @@ table {
             .score-breakdown .score-header,
             .score-breakdown .section-header,
             .score-breakdown .intent-tag {
-                font-size: 2.8px !important;
+                font-size: 4.3px !important;
             }
             
             .score-details-container {
@@ -2289,6 +2291,20 @@ table {
             -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(224,224,224,0.4);
             padding-bottom: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .notification-panel {
+                position: fixed !important;
+                top: auto !important;
+                right: 8px !important;
+                left: auto !important;
+                bottom: auto !important;
+                width: 90vw !important;
+                max-width: 300px !important;
+                max-height: 60vh !important;
+                margin-top: 8px;
+            }
         }
 
         .notification-tab {

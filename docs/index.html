@@ -4290,30 +4290,52 @@ FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && a
             // Ping server to update online user count
             const pingServer = async () => {
                 try {
-                    const response = await fetch(`/api/ping?sessionId=${encodeURIComponent(sessionId)}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        // Update status to online on successful ping
-                        const statusEl = document.getElementById('status');
-                        if (statusEl) statusEl.className = 'status-online';
-                        
-                        if (data.onlineUsers) {
-                            // Try to find and update the online users span
-                            let onlineUsersElement = document.getElementById('online-users');
-                            if (!onlineUsersElement) {
-                                // If the span doesn't exist, recreate it in the status div
-                                const statusEl = document.getElementById('status');
-                                if (statusEl) {
-                                    statusEl.innerHTML = `Online: <span id="online-users">${data.onlineUsers}</span>`;
+                    // Check if viewing from localhost (has local API server)
+                    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                    
+                    if (isLocalhost) {
+                        // Ping local API server
+                        const response = await fetch(`/api/ping?sessionId=${encodeURIComponent(sessionId)}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            // Update status to online on successful ping
+                            const statusEl = document.getElementById('status');
+                            if (statusEl) statusEl.className = 'status-online';
+                            
+                            if (data.onlineUsers) {
+                                // Try to find and update the online users span
+                                let onlineUsersElement = document.getElementById('online-users');
+                                if (!onlineUsersElement) {
+                                    // If the span doesn't exist, recreate it in the status div
+                                    const statusEl = document.getElementById('status');
+                                    if (statusEl) {
+                                        statusEl.innerHTML = `Online: <span id="online-users">${data.onlineUsers}</span>`;
+                                    }
+                                } else {
+                                    onlineUsersElement.textContent = data.onlineUsers;
                                 }
-                            } else {
-                                onlineUsersElement.textContent = data.onlineUsers;
                             }
+                        } else {
+                            // Set status to offline on failed response
+                            const statusEl = document.getElementById('status');
+                            if (statusEl) statusEl.className = 'status-offline';
                         }
                     } else {
-                        // Set status to offline on failed response
+                        // Viewing from GitHub Pages / custom domain - if we got alerts loaded, we're online
                         const statusEl = document.getElementById('status');
-                        if (statusEl) statusEl.className = 'status-offline';
+                        if (statusEl) {
+                            // Check if alert data is loading (indicates bot is pushing updates)
+                            try {
+                                const response = await fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/alert.json');
+                                if (response.ok) {
+                                    statusEl.className = 'status-online';
+                                } else {
+                                    statusEl.className = 'status-offline';
+                                }
+                            } catch (err) {
+                                statusEl.className = 'status-offline';
+                            }
+                        }
                     }
                 } catch (err) {
                     // Silently fail - don't spam console with network errors

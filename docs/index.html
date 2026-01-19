@@ -884,17 +884,6 @@ table {
             padding-bottom: 20px;
         }
         
-        @media (max-width: 768px) {
-            .logo {
-                height: 60px;
-                width: auto;
-            }
-            
-            .dashboard-title {
-                font-size: 14px !important;
-                margin-left: 5px !important;
-            }
-        
         .stat-box {
             border: 1px solid rgba(130,130,130,0.35);
             padding: 10.75px;
@@ -907,44 +896,20 @@ table {
         }
         
         @media (max-width: 768px) {
-            body {
-                overflow-x: hidden;
-            }
-            
-            .container {
-                overflow-x: hidden;
-                padding: 8px 4px;
-            }
-            
-            .logo {
-                height: 50px;
-                width: auto;
-            }
-            
-            .dashboard-title {
-                font-size: 13px !important;
-                margin-left: 5px !important;
-                margin-top: 5px !important;
-            }
-            
             .stat-box {
                 min-width: 100%;
-                padding: 8px;
-                font-size: 12px;
             }
             .stats {
                 grid-template-columns: 1fr;
-                gap: 6px;
-                margin-bottom: 12px;
-                padding-bottom: 12px;
+                gap: 8px;
             }
             
             /* Mobile adjustments for time display */
             .time-display {
                 position: static;
-                font-size: 7px;
-                gap: 1px;
-                margin-top: 0;
+                font-size: 8px;
+                gap: 2px;
+                margin-top: 8px;
                 text-align: left;
                 word-wrap: break-word;
                 width: 100%;
@@ -956,68 +921,31 @@ table {
             .header {
                 flex-direction: column;
                 align-items: flex-start;
-                padding: 3px;
+                padding: 5px;
                 overflow-x: hidden;
-                position: relative;
-                gap: 2px;
             }
             
             .header-top {
                 width: 100%;
                 display: flex;
                 align-items: center;
-                gap: 3px;
-                margin-bottom: 0;
-            }
-            
-            .logo {
-                height: 32px;
-                width: auto !important;
-            }
-            
-            .dashboard-title {
-                font-size: 10px !important;
-                margin-left: 2px !important;
-                margin-top: 0 !important;
-            }
-            
-            .theme-toggle {
-                position: absolute;
-                top: 3px;
-                right: 3px;
-                width: 22px;
-                height: 22px;
-                margin: 0;
-            }
-            
-            .theme-toggle svg {
-                width: 14px;
-                height: 14px;
+                gap: 8px;
+                margin-bottom: 8px;
             }
             
             .header-right {
                 width: 100%;
                 display: flex;
                 flex-direction: column;
-                gap: 1px;
+                gap: 6px;
                 overflow-x: hidden;
-                position: relative;
-                margin-top: 2px;
             }
             
-            /* Mobile adjustments for time display */
-            .time-display {
+            .theme-toggle {
                 position: static;
-                font-size: 5px;
-                gap: 0;
-                margin-top: 0;
-                text-align: left;
-                word-wrap: break-word;
-                width: 100%;
-                flex-wrap: wrap;
-                overflow: visible;
-                white-space: normal;
-                line-height: 1;
+                width: 32px;
+                height: 32px;
+                margin: 0;
             }
             
             .theme-toggle svg {
@@ -2112,10 +2040,10 @@ table {
             display: flex;
             align-items: center;
             gap: 24px;
-            position: relative;
+            position: absolute;
+            right: 88px;
+            top: 12px;
             white-space: nowrap;
-            width: 100%;
-            margin-top: 8px;
         }
 
         .time-display {

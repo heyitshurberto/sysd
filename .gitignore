@@ -1,5 +1,9 @@
 node_modules/
-logs/
+logs/*.csv
+logs/*.log
 .env
 .DS_Store
 *.log
+!logs/alert.json
+!logs/stocks.json
+!logs/quote.json

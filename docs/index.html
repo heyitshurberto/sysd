@@ -2585,7 +2585,7 @@ table {
         }
 
         function loadRecentAlerts() {
-            fetch('/logs/alert.json')
+            fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/alert.json')
                 .then(r => r.json())
                 .then(alerts => {
                     const list = document.getElementById('notification-list');
@@ -2650,7 +2650,7 @@ table {
         }
 
         function loadHistoryAlerts() {
-            fetch('/logs/stocks.json')
+            fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/stocks.json')
                 .then(r => r.json())
                 .then(stocks => {
                     const list = document.getElementById('notification-history-list');
@@ -2866,7 +2866,7 @@ table {
                     this.alerts.clear();
                     this.knownAlerts.clear();
                     
-                    const response = await fetch('/logs/alert.json');
+                    const response = await fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/alert.json');
                     if (!response.ok) {
                         console.error('Failed to fetch alert.json:', response.status, response.statusText);
                         return;
@@ -2877,7 +2877,7 @@ table {
                     // Load performance/PnL data for reverse split adjustments
                     let performanceData = {};
                     try {
-                        const pnlResponse = await fetch('/logs/quote.json');
+                        const pnlResponse = await fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/quote.json');
                         if (pnlResponse.ok) {
                             performanceData = await pnlResponse.json();
                         }
@@ -3344,7 +3344,7 @@ FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && a
 
             async checkForNewAlerts() {
                 try {
-                    const response = await fetch('/logs/alert.json');
+                    const response = await fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/alert.json');
                     if (!response.ok) {
                         console.error('Failed to fetch alert.json for updates:', response.status, response.statusText);
                         return;
@@ -3494,7 +3494,7 @@ FTD: ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && a
                         
                         // Always fetch updated performance data for reverse split adjustments
                         try {
-                            const pnlResp = await fetch('/logs/quote.json');
+                            const pnlResp = await fetch('https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/quote.json');
                             if (pnlResp.ok) {
                                 const pnlData = await pnlResp.json();
                                 const tickerPerf = pnlData[alert.ticker];

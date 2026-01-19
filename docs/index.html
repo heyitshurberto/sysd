@@ -956,40 +956,68 @@ table {
             .header {
                 flex-direction: column;
                 align-items: flex-start;
-                padding: 4px;
+                padding: 3px;
                 overflow-x: hidden;
                 position: relative;
+                gap: 2px;
             }
             
             .header-top {
                 width: 100%;
                 display: flex;
-                align-items: flex-start;
-                gap: 6px;
-                margin-bottom: 6px;
+                align-items: center;
+                gap: 3px;
+                margin-bottom: 0;
+            }
+            
+            .logo {
+                height: 32px;
+                width: auto !important;
+            }
+            
+            .dashboard-title {
+                font-size: 10px !important;
+                margin-left: 2px !important;
+                margin-top: 0 !important;
+            }
+            
+            .theme-toggle {
+                position: absolute;
+                top: 3px;
+                right: 3px;
+                width: 22px;
+                height: 22px;
+                margin: 0;
+            }
+            
+            .theme-toggle svg {
+                width: 14px;
+                height: 14px;
             }
             
             .header-right {
                 width: 100%;
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
+                gap: 1px;
                 overflow-x: hidden;
                 position: relative;
-                margin-top: 4px;
+                margin-top: 2px;
             }
             
-            .theme-toggle {
+            /* Mobile adjustments for time display */
+            .time-display {
                 position: static;
-                width: 28px;
-                height: 28px;
-                margin: 0;
-                flex-shrink: 0;
-            }
-            
-            .theme-toggle svg {
-                width: 18px;
-                height: 18px;
+                font-size: 5px;
+                gap: 0;
+                margin-top: 0;
+                text-align: left;
+                word-wrap: break-word;
+                width: 100%;
+                flex-wrap: wrap;
+                overflow: visible;
+                white-space: normal;
+                line-height: 1;
             }
             
             .theme-toggle svg {

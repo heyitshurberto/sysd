@@ -900,70 +900,84 @@ table {
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
-                align-items: center;
+                align-items: flex-start;
                 padding: 8px 10px !important;
                 margin-bottom: 12px !important;
                 position: relative;
-                justify-content: center;
-                gap: 8px;
+                justify-content: flex-start;
+                gap: 0px;
             }
             
             .header-top {
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                gap: 0px;
                 width: auto;
                 margin: 0 !important;
                 flex: none;
-                justify-content: center;
-            }
-            
-            .logo {
-                height: 40px !important;
-                width: auto !important;
-                margin-right: 6px;
-                flex-shrink: 0;
+                justify-content: flex-start;
             }
             
             .logo {
                 height: 40px !important;
                 width: auto !important;
                 margin-right: 0px !important;
-                margin-left: -10px !important;
+                margin-left: 0px !important;
                 flex-shrink: 0;
             }
             
             .dashboard-title {
                 margin: 0 !important;
-                font-size: 14px !important;
-                white-space: normal !important;
+                font-size: 12px !important;
+                white-space: nowrap !important;
                 flex: none;
                 min-width: 0;
                 overflow: visible !important;
                 text-overflow: clip !important;
                 display: block !important;
                 color: #2c2c2c !important;
-                margin-left: -20px !important;
-                margin-top: 32px !important;
+                margin-left: 0px !important;
+                margin-top: 4px !important;
                 text-align: left !important;
-                padding-left: 10px !important;
-                position: relative !important;
+                padding-left: 0px !important;
+                position: static !important;
             }
             
             div[style*="position: absolute; top: 7px; left: 7px;"] a {
-                font-size: 6px !important;
-                max-width: 60px !important;
-                line-height: 1 !important;
+                font-size: 8px !important;
+                max-width: 80px !important;
+                line-height: 1.2 !important;
             }
             
             .score-breakdown {
-                width: 100px !important;
-                padding: 2px 2px !important;
-                font-size: 4px !important;
-                right: 2px !important;
-                top: 5px !important;
-                max-height: 150px !important;
+                width: 85px !important;
+                padding: 3px 3px !important;
+                font-size: 5px !important;
+                right: 6px !important;
+                top: 8px !important;
+                max-height: 180px !important;
                 overflow-y: auto !important;
+                position: absolute !important;
+                z-index: 1002 !important;
+            }
+            
+            .score-details-toggle {
+                width: 24px !important;
+                height: 24px !important;
+                font-size: 16px !important;
+                top: 8px !important;
+                right: 6px !important;
+                z-index: 1003 !important;
+                pointer-events: auto !important;
+            }
+            
+            .notification {
+                max-width: 280px !important;
+                min-width: 180px !important;
+                padding: 8px 10px !important;
+                font-size: 11px !important;
+                top: 60px !important;
+                right: 10px !important;
             }
             
             .theme-toggle {
@@ -1016,34 +1030,35 @@ table {
             }
             
             .notification-panel {
-                width: 90vw !important;
-                max-width: 400px !important;
-                max-height: 60vh !important;
+                width: 85vw !important;
+                max-width: 350px !important;
+                max-height: 45vh !important;
                 right: 5vw !important;
                 top: auto !important;
                 bottom: 50px !important;
-                font-size: 14px !important;
+                font-size: 12px !important;
+                padding: 8px !important;
             }
             
             .notification-item {
-                padding: 10px 14px !important;
-                font-size: 11px !important;
+                padding: 6px 8px !important;
+                font-size: 10px !important;
             }
             
             .notification-content {
-                font-size: 11px !important;
+                font-size: 10px !important;
             }
             
             .notification-panel-header {
-                font-size: 12px !important;
-            }
-            
-            .notification-tab {
                 font-size: 11px !important;
             }
             
+            .notification-tab {
+                font-size: 10px !important;
+            }
+            
             .notification-duration {
-                font-size: 9px !important;
+                font-size: 8px !important;
             }
             
             html, body {
@@ -1089,14 +1104,6 @@ table {
                 margin-bottom: 8px !important;
                 padding: 7px !important;
                 font-size: 11px !important;
-            }
-            
-            .score-breakdown {
-                width: 150px !important;
-                padding: 2px 3px !important;
-                font-size: 8px !important;
-                right: 2px !important;
-                top: 5px !important;
             }
             
             .score-details-container {
@@ -4423,9 +4430,9 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 // Create the initial HTML content
                 card.innerHTML = `
                     <div class="score-details-container">
+                        <button type="button" class="score-details-toggle" style="background: transparent; border: none; cursor: pointer; padding: 2px 4px; margin-right: 4px; font-size: 12px; color: #666; border-radius: 3px; transition: background-color 0.2s, padding 0.2s;">⋮</button>
                     </div>
                     <div class="ticker ticker-clickable" tabindex="0" style="cursor:pointer;display:inline-block;user-select:none;transition:background 0.15s,border 0.15s; border-radius:4px; padding:2px 6px; margin-bottom:2px; font-size: 8px;">
-                    <button type="button" class="score-details-toggle" style="background: transparent; border: none; cursor: pointer; padding: 2px 4px; margin-right: 4px; font-size: 12px; color: #666; border-radius: 3px; transition: background-color 0.2s, padding 0.2s;">⋮</button>
                     <div class="ticker" style="transition: all 0.15s ease;">
                         <i>$${alert.ticker}</i> 
                         <span style="color: ${alert.isShort ? '#cc0000' : '#00cc00'}; transition: color 0.15s ease;">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>
@@ -4459,15 +4466,15 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                             const url = 'https://www.tradingview.com/chart/?symbol=' + tvSymbol;
                             console.log('Opening URL:', url);
                             customConfirm('Open TradingView Chart for $' + ticker + '?', url);
-                        })()">TradingView</button>
+                        })()">$TradingView</button>
                         <button type="button" class="link-button" onclick="(() => {
                             event.stopPropagation();
                             customConfirm('View Financials for $${alert.ticker}?', \`https://stockanalysis.com/stocks/${alert.ticker}/statistics/\`);
-                        })()">Financials</button>
+                        })()">$Financials</button>
                         <button type="button" class="link-button" onclick="(() => {
                             event.stopPropagation();
                             customConfirm('Open Trading 212 to trade $${alert.ticker}?', 'https://www.trading212.com/en/login');
-                        })()">Trading 212</button>
+                        })()">$Trading212</button>
                     </div>
                 `;
                 // Add hover/click animation to ticker/position

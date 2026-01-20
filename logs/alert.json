@@ -403,5 +403,59 @@
     "recordedAt": "2026-01-20T16:12:16.695Z",
     "recordId": "SRTS-1768925536695",
     "expiresAt": "2026-01-25T16:12:16.695Z"
+  },
+  {
+    "ticker": "THAR",
+    "title": "8-K - Tharimmune, Inc. (0001861657) (Filer)",
+    "price": 3.02,
+    "vwap": 3.02,
+    "signalScore": 0.5,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.15,
+    "volume": 400105,
+    "averageVolume": 1416890,
+    "float": 32910233,
+    "sharesOutstanding": 37386114,
+    "soRatio": "88.03%",
+    "marketCap": 112906056,
+    "isShort": false,
+    "ftd": 909090,
+    "ftdPercent": "2.76",
+    "intent": "M&A Rebrand, Blockchain Initiative",
+    "incorporated": "Wilmington, Delaware",
+    "located": "New Jersey",
+    "filingDate": "2026-01-20",
+    "signals": {
+      "M&A Rebrand": [
+        "Name Change"
+      ],
+      "Blockchain Initiative": [
+        "Blockchain Adoption"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "6-K/A",
+      "8-K",
+      "20-F",
+      "20-F/A",
+      "EX-99.1",
+      "Item 8.01",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 6-K/A, 8-K, 20-F, 20-F/A, EX-99.1, Item 8.01, Item 9.01",
+    "cik": "1861657",
+    "skipReason": "",
+    "recordedAt": "2026-01-20T16:12:31.919Z",
+    "recordId": "THAR-1768925551919",
+    "expiresAt": "2026-01-25T16:12:31.919Z"
   }
 ]

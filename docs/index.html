@@ -22,19 +22,17 @@ table {
     table { font-size: 12px; }
 }
 </style>
-<div style="position: absolute; top: 7px; left: 4.5px;">
-  <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 11px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
+<div style="position: absolute; top: 7px; left: 4.5px;" class="eugene-tag-desktop">
+  <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 10px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
+<div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: none;" class="eugene-tag-mobile">
+  <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 9px; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
 <style>
     @media (max-width: 768px) {
-        div[style*="position: absolute; top: 7px; left: 7px;"] {
-            position: static !important;
-            margin-bottom: 8px !important;
-            margin-top: 4px !important;
-            padding-left: 4px !important;
+        .eugene-tag-desktop {
+            display: none !important;
         }
-        div[style*="position: absolute; top: 7px; left: 7px;"] a {
-            font-size: 5px !important;
-            max-width: 70px !important;
+        .eugene-tag-mobile {
+            display: block !important;
         }
     }
 </style>
@@ -4538,7 +4536,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 // Stack notifications with comfortable spacing
                 const notifications = document.querySelectorAll('.notification');
                 const isMobile = window.innerWidth <= 768;
-                const spacing = isMobile ? 75 : 80; // Better spacing to prevent overlap
+                const spacing = isMobile ? 50 : 55; // Much tighter spacing on both
                 const offset = notifications.length * spacing;
                 const topOffset = isMobile ? 10 : 25; // Higher up on mobile
 
@@ -5245,7 +5243,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             // Rest of the existing notification code...
             const notifications = document.querySelectorAll('.notification');
             const isMobile = window.innerWidth <= 768;
-            const offset = notifications.length * (isMobile ? 75 : 80);
+            const offset = notifications.length * (isMobile ? 50 : 55);
             const topOffset = isMobile ? 10 : 25;
 
             const notification = document.createElement('div');

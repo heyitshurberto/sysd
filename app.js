@@ -47,6 +47,7 @@ const CONFIG = {
   GITHUB_USERNAME: process.env.GITHUB_USERNAME || 'your-github-username', // GitHub username
   GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name', // GitHub repo name
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com', // GitHub Pages domain
+  GITHUB_PUSH_ENABLED: process.env.GITHUB_PUSH_ENABLED !== 'false' && process.env.GITHUB_PUSH_ENABLED !== '0', // Enable/disable GitHub push (default: true)
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '' // Personal Discord webhook URL
 };
 
@@ -1690,6 +1691,11 @@ const sendPersonalWebhook = (alertData) => {
 };
 
 const pushToGitHub = () => {
+  // Check if GitHub push is enabled
+  if (!CONFIG.GITHUB_PUSH_ENABLED) {
+    return; // Skip push if disabled
+  }
+
   try {
     const projectRoot = CONFIG.GITHUB_REPO_PATH;
     // Run git push in background, don't wait for it

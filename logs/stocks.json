@@ -3284,5 +3284,63 @@
     "recordedAt": "2026-01-20T12:00:34.671Z",
     "recordId": "NVAX-1768910434671",
     "expiresAt": "2026-01-25T12:00:34.671Z"
+  },
+  {
+    "ticker": "AIM",
+    "title": "8-K - AIM ImmunoTech Inc. (0000946644) (Filer)",
+    "price": 1.34,
+    "vwap": 1.34,
+    "signalScore": 0.64,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.15,
+    "volume": 131809,
+    "averageVolume": 108942,
+    "float": 2749782,
+    "sharesOutstanding": 2941619,
+    "soRatio": "93.48%",
+    "marketCap": 3941771,
+    "isShort": false,
+    "ftd": 15006,
+    "ftdPercent": "0.55",
+    "intent": "M&A Rebrand, Artificial Inflation, Stock Split",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Florida",
+    "filingDate": "2026-01-20",
+    "signals": {
+      "M&A Rebrand": [
+        "Name Change"
+      ],
+      "Artificial Inflation": [
+        "Share Combination"
+      ],
+      "Stock Split": [
+        "Stock Dividend"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": 27072,
+    "reverseSplitReason": "Listing standard compliance",
+    "formType": [
+      "6-K",
+      "6-K/A",
+      "8-K",
+      "20-F",
+      "20-F/A",
+      "EX-99.1",
+      "EX-99.2",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 6-K/A, 8-K, 20-F, 20-F/A, EX-99.1, EX-99.2, Item 7.01, Item 9.01",
+    "cik": "946644",
+    "skipReason": "",
+    "recordedAt": "2026-01-20T12:01:17.826Z",
+    "recordId": "AIM-1768910477826",
+    "expiresAt": "2026-01-25T12:01:17.826Z"
   }
 ]

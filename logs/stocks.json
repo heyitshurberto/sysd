@@ -3454,5 +3454,79 @@
     "recordedAt": "2026-01-20T15:54:52.322Z",
     "recordId": "BKKT-1768924492322",
     "expiresAt": "2026-01-25T15:54:52.322Z"
+  },
+  {
+    "ticker": "RDZN",
+    "title": "8-K - Roadzen Inc. (0001868640) (Filer)",
+    "price": 1.855,
+    "vwap": 1.855,
+    "signalScore": 0.69,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.1,
+    "volume": 84797,
+    "averageVolume": 322378,
+    "float": 26226965,
+    "sharesOutstanding": 79497576,
+    "soRatio": "32.99%",
+    "marketCap": 147468000,
+    "isShort": true,
+    "ftd": 33317,
+    "ftdPercent": "0.13",
+    "intent": "M&A Rebrand, Share Dilution, Convertible Dilution, Credit Default, Convertible Debt, Partnership, Stock Split, VIE Structure",
+    "incorporated": "Hong Kong",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-20",
+    "signals": {
+      "M&A Rebrand": [
+        "Name Change"
+      ],
+      "Share Dilution": [
+        "Issuance of shares"
+      ],
+      "Convertible Dilution": [
+        "Convertible Notes",
+        "Convertible Securities"
+      ],
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Convertible Debt": [
+        "Convertible Notes"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Stock Split": [
+        "Stock Dividend"
+      ],
+      "VIE Structure": [
+        "variable interest"
+      ]
+    },
+    "bonusSignals": {
+      "NT 10K": "NT 10K Filed"
+    },
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "S-3",
+      "13D",
+      "EX-10.1",
+      "Item 1.01",
+      "Item 2.03",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, S-3, 13D, EX-10.1, Item 1.01, Item 2.03, Item 9.01",
+    "cik": "1868640",
+    "skipReason": "",
+    "recordedAt": "2026-01-20T15:56:27.720Z",
+    "recordId": "RDZN-1768924587720",
+    "expiresAt": "2026-01-25T15:56:27.720Z"
   }
 ]

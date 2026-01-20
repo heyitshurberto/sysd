@@ -15,33 +15,33 @@
     "highest": 8.22,
     "lowest": 8.08,
     "current": 8.22,
-    "currentPrice": 8.08,
+    "currentPrice": 8.1,
     "volume": 118609,
     "averageVolume": 150049,
     "marketCap": 298328224,
-    "performance": -1.7
+    "performance": -1.46
   },
   "AGEN": {
     "alert": 3.34,
     "highest": 3.3499999999999996,
     "lowest": 3.23,
-    "current": 3.2344,
-    "currentPrice": 3.2387,
-    "volume": 309603,
+    "current": 3.24,
+    "currentPrice": 3.24,
+    "volume": 312606,
     "averageVolume": 644270,
-    "marketCap": 116896648,
-    "performance": -3.03
+    "marketCap": 117099040,
+    "performance": -2.99
   },
   "NVAX": {
     "alert": 8.003,
     "highest": 8.29,
     "lowest": 8.003,
     "current": 8.265,
-    "currentPrice": 8.265,
-    "volume": 4524800,
+    "currentPrice": 8.26,
+    "volume": 4529247,
     "averageVolume": 3886703,
     "marketCap": 1343054208,
-    "performance": 3.29
+    "performance": 3.21
   },
   "AIM": {
     "short": false,
@@ -70,5 +70,16 @@
     "volume": 607704,
     "averageVolume": 1041422,
     "marketCap": 56975956
+  },
+  "BKKT": {
+    "alert": 17.4005,
+    "highest": 17.4005,
+    "lowest": 17.4005,
+    "current": 17.4005,
+    "currentPrice": 17.4005,
+    "volume": 1361602,
+    "averageVolume": 1543219,
+    "marketCap": 443962880,
+    "performance": 0
   }
 }

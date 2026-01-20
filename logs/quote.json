@@ -6,7 +6,7 @@
     "current": 29.08,
     "currentPrice": 29.08,
     "volume": 704861,
-    "averageVolume": 139912,
+    "averageVolume": 141820,
     "marketCap": 145363648,
     "performance": 0
   },
@@ -17,7 +17,7 @@
     "current": 8.22,
     "currentPrice": 8.22,
     "volume": 118609,
-    "averageVolume": 148412,
+    "averageVolume": 150049,
     "marketCap": 298328224,
     "performance": 0
   },
@@ -28,8 +28,19 @@
     "current": 3.34,
     "currentPrice": 3.34,
     "volume": 1738937,
-    "averageVolume": 648848,
-    "marketCap": 113587880,
+    "averageVolume": 644270,
+    "marketCap": 120713208,
     "performance": 0
+  },
+  "NVAX": {
+    "short": false,
+    "alert": 8.003,
+    "highest": 8.003,
+    "lowest": 8.003,
+    "current": 8.003,
+    "currentPrice": 8.003,
+    "performance": 0,
+    "date": "2026-01-20T12:00:34.690Z",
+    "reverseSplitRatio": null
   }
 }

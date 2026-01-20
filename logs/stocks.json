@@ -3230,5 +3230,59 @@
     "recordedAt": "2026-01-16T13:31:14.117Z",
     "recordId": "NUKK-1768570274117",
     "expiresAt": "2026-01-21T13:31:14.117Z"
+  },
+  {
+    "ticker": "NVAX",
+    "title": "8-K - NOVAVAX INC (0001000694) (Filer)",
+    "price": 8.003,
+    "vwap": 8.003,
+    "signalScore": 0.49,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.15,
+    "volume": 5448521,
+    "averageVolume": 3886703,
+    "float": 133709048,
+    "sharesOutstanding": 162498995,
+    "soRatio": "82.28%",
+    "marketCap": 1300479488,
+    "isShort": false,
+    "ftd": 911638,
+    "ftdPercent": "0.68",
+    "intent": "Major Contract, Licensing Deal",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Maryland",
+    "filingDate": "2026-01-20",
+    "signals": {
+      "Major Contract": [
+        "Exclusive License"
+      ],
+      "Licensing Deal": [
+        "Exclusive License",
+        "License Agreement"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "6-K/A",
+      "8-K",
+      "S-3",
+      "20-F",
+      "20-F/A",
+      "Item 1.01"
+    ],
+    "filingType": "6-K, 6-K/A, 8-K, S-3, 20-F, 20-F/A, Item 1.01",
+    "cik": "1000694",
+    "skipReason": "",
+    "recordedAt": "2026-01-20T12:00:34.671Z",
+    "recordId": "NVAX-1768910434671",
+    "expiresAt": "2026-01-25T12:00:34.671Z"
   }
 ]

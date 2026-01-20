@@ -24,7 +24,7 @@ table {
 </style>
 <div style="position: absolute; top: 7px; left: 4.5px;" class="eugene-tag-desktop">
   <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 10px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
-<div style="position: sticky; bottom: 0; left: 50%; transform: translateX(-50%); display: none; z-index: 100;" class="eugene-tag-mobile">
+<div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 100;" class="eugene-tag-mobile">
   <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 9px; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
 <style>
     @media (max-width: 768px) {
@@ -3517,7 +3517,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         const type = alertData.isShort ? 'error' : 'success';
                         const ticker = `<b><i>$${alertData.ticker}</i></b>`;
                         // For new stock alerts, link to SEC filing
-                        this.showNotification(`${ticker} ${position} alert addeb (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
+                        this.showNotification(`${ticker} ${position} alert addeq (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
                         this.notifiedAlerts.set(alertKey, now);
                     }
                 }
@@ -4536,7 +4536,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 // Stack notifications with comfortable spacing
                 const notifications = document.querySelectorAll('.notification');
                 const isMobile = window.innerWidth <= 768;
-                const spacing = isMobile ? 38 : 55; // Much tighter spacing on mobile
+                const spacing = isMobile ? 30 : 55; // Much tighter spacing on mobile
                 const offset = notifications.length * spacing;
                 const topOffset = isMobile ? 10 : 25; // Higher up on mobile
 
@@ -4549,7 +4549,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 // Make notification smaller on mobile
                 if (isMobile) {
                     notification.style.padding = '2px 4px';
-                    notification.style.fontSize = '6px';
+                    notification.style.fontSize = '5px';
                     notification.style.maxWidth = '120px';
                     notification.style.minWidth = '80px';
                     notification.style.borderRadius = '1.5px';

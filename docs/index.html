@@ -24,7 +24,7 @@ table {
 </style>
 <div style="position: absolute; top: 7px; left: 4.5px;" class="eugene-tag-desktop">
   <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 10px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
-<div style="position: fixed; bottom: 5px; left: 50%; transform: translateX(-50%); display: none; z-index: 100;" class="eugene-tag-mobile">
+<div style="position: sticky; bottom: 0; left: 50%; transform: translateX(-50%); display: none; z-index: 100;" class="eugene-tag-mobile">
   <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 9px; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
 <style>
     @media (max-width: 768px) {
@@ -5265,7 +5265,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             const contentWrapper = document.createElement('div');
             contentWrapper.style.display = 'flex';
             contentWrapper.style.flexDirection = 'column';
-            contentWrapper.style.gap = isMobile ? '2px' : '4px';
+            contentWrapper.style.gap = isMobile ? '1px' : '4px';
 
             if (link) {
                 const linkElement = document.createElement('div');

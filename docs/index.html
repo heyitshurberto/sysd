@@ -3517,7 +3517,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         const type = alertData.isShort ? 'error' : 'success';
                         const ticker = `<b><i>$${alertData.ticker}</i></b>`;
                         // For new stock alerts, link to SEC filing
-                        this.showNotification(`${ticker} ${position} alert added (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
+                        this.showNotification(`${ticker} ${position} alert adder (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
                         this.notifiedAlerts.set(alertKey, now);
                     }
                 }
@@ -5255,7 +5255,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             // Make smaller on mobile
             if (isMobile) {
                 notification.style.padding = '2px 3px';
-                notification.style.fontSize = '7px';
+                notification.style.fontSize = '5px';
                 notification.style.maxWidth = '120px';
                 notification.style.minWidth = '75px';
                 notification.style.borderRadius = '2px';

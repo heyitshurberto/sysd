@@ -27,7 +27,7 @@
     "lowest": 3.23,
     "current": 3.24,
     "currentPrice": 3.24,
-    "volume": 312606,
+    "volume": 312607,
     "averageVolume": 644270,
     "marketCap": 117099040,
     "performance": -2.99
@@ -37,8 +37,8 @@
     "highest": 8.29,
     "lowest": 8.003,
     "current": 8.265,
-    "currentPrice": 8.26,
-    "volume": 4529247,
+    "currentPrice": 8.2601,
+    "volume": 4529348,
     "averageVolume": 3886703,
     "marketCap": 1343054208,
     "performance": 3.21
@@ -63,8 +63,8 @@
     "highest": 1.62,
     "lowest": 1.54,
     "current": 1.555,
-    "currentPrice": 1.555,
-    "performance": -4.01,
+    "currentPrice": 1.55,
+    "performance": -4.32,
     "date": "2026-01-20T12:11:35.690Z",
     "reverseSplitRatio": null,
     "volume": 607704,
@@ -74,12 +74,22 @@
   "BKKT": {
     "alert": 17.4005,
     "highest": 17.4005,
-    "lowest": 17.4005,
-    "current": 17.4005,
-    "currentPrice": 17.4005,
-    "volume": 1361602,
+    "lowest": 17.3194,
+    "current": 17.3194,
+    "currentPrice": 17.3194,
+    "volume": 1365827,
     "averageVolume": 1543219,
-    "marketCap": 443962880,
-    "performance": 0
+    "marketCap": 441893696,
+    "performance": -0.47
+  },
+  "RDZN": {
+    "alert": 1.855,
+    "highest": 1.855,
+    "lowest": 1.855,
+    "current": 1.855,
+    "currentPrice": 1.855,
+    "volume": 84810,
+    "averageVolume": 322378,
+    "marketCap": 147468000
   }
 }

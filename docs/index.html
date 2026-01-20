@@ -2233,13 +2233,13 @@ table {
         
         @media (max-width: 768px) {
             .notification-history-icon {
-                width: 22px;
-                height: 22px;
+                width: 20px;
+                height: 20px;
             }
             
             .notification-history-icon svg {
-                width: 14px;
-                height: 14px;
+                width: 12px;
+                height: 12px;
             }
         }
         
@@ -3398,7 +3398,7 @@ table {
                 
                 popup.innerHTML = `
                     <div class="popup-content">
-                        <h3 style="font-style: italic; padding-left: 4px;">$${alert.ticker}${cleanTitle ? ' ' + cleanTitle : ''} <span style="color: ${isShort ? '#ff0000' : '#00cc00'};">[${isShort ? 'SHORT' : 'LONG'}]</span></h3>
+                        <h3 style="font-style: italic; padding-left: 4px;">$${alert.ticker} - ${cleanTitle ? ' ' + cleanTitle : ''} <span style="color: ${isShort ? '#ff0000' : '#00cc00'};">[${isShort ? 'SHORT' : 'LONG'}]</span></h3>
                         <div class="popup-details">
                             <div class="popup-section">
                                 <h4>Alert Details</h4>
@@ -3530,7 +3530,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         const type = alertData.isShort ? 'error' : 'success';
                         const ticker = `<b><i>$${alertData.ticker}</i></b>`;
                         // For new stock alerts, link to SEC filing
-                        this.showNotification(`${ticker} ${position} new alert added (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
+                        this.showNotification(`${ticker} ${position} new alert saved (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
                         this.notifiedAlerts.set(alertKey, now);
                     }
                 }
@@ -5423,7 +5423,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
         }
 
     </script>
-<div style="position: static; width: 100%; text-align: center; padding: 1px 0; margin-bottom: 10px;" class="eugene-tag-mobile">
-  <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 6; white-space: nowrap; display: inline-block; padding: 1px 1x; border-radius: 1px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
+<div style="position: static; width: 100%; text-align: center; padding: 1px 0; margin-bottom: 20px;" class="eugene-tag-mobile">
+  <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 4.5; white-space: nowrap; display: inline-block; padding: 1px 1x; border-radius: 1px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
 </body>
 </html>

@@ -3342,5 +3342,54 @@
     "recordedAt": "2026-01-20T12:01:17.826Z",
     "recordId": "AIM-1768910477826",
     "expiresAt": "2026-01-25T12:01:17.826Z"
+  },
+  {
+    "ticker": "SUUN",
+    "title": "6-K - POWERBANK Corp (0002011053) (Filer)",
+    "price": 1.62,
+    "vwap": 1.62,
+    "signalScore": 0.78,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.15,
+    "volume": 1676354,
+    "averageVolume": 1041422,
+    "float": 27742511,
+    "sharesOutstanding": 36640486,
+    "soRatio": "75.72%",
+    "marketCap": 59357592,
+    "isShort": false,
+    "ftd": 2150242,
+    "ftdPercent": "7.75",
+    "intent": "M&A Rebrand, China Risk",
+    "incorporated": "Ottawa, Canada",
+    "located": "Ontario, Canada",
+    "filingDate": "2026-01-20",
+    "signals": {
+      "M&A Rebrand": [
+        "Name Change"
+      ],
+      "China Risk": [
+        "Subject to risks"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "20-F",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, 20-F, EX-99.1",
+    "cik": "2011053",
+    "skipReason": "",
+    "recordedAt": "2026-01-20T12:11:35.663Z",
+    "recordId": "SUUN-1768911095663",
+    "expiresAt": "2026-01-25T12:11:35.663Z"
   }
 ]

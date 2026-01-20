@@ -33,6 +33,13 @@ table {
         }
         .eugene-tag-mobile {
             display: block !important;
+            position: fixed !important;
+            bottom: 5px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            z-index: 9999 !important;
+        }
+    }
         }
     }
 </style>
@@ -3517,7 +3524,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         const type = alertData.isShort ? 'error' : 'success';
                         const ticker = `<b><i>$${alertData.ticker}</i></b>`;
                         // For new stock alerts, link to SEC filing
-                        this.showNotification(`${ticker} ${position} alert adder (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
+                        this.showNotification(`${ticker} ${position} alert added (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
                         this.notifiedAlerts.set(alertKey, now);
                     }
                 }
@@ -5254,11 +5261,11 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             
             // Make smaller on mobile
             if (isMobile) {
-                notification.style.padding = '2px 3px';
-                notification.style.fontSize = '5px';
+                notification.style.padding = '6px 8px';
+                notification.style.fontSize = '6px';
                 notification.style.maxWidth = '120px';
                 notification.style.minWidth = '75px';
-                notification.style.borderRadius = '2px';
+                notification.style.borderRadius = '3px';
             }
 
             // Create a wrapper div for better styling

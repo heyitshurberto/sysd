@@ -2306,8 +2306,8 @@ table {
         @media (max-width: 768px) {
             .notification-panel {
                 position: fixed !important;
-                top: 115px !important;
-                right: 8px !important;
+                top: 100px !important;
+                right: 7px !important;
                 left: auto !important;
                 bottom: auto !important;
                 width: 90vw !important;
@@ -3517,7 +3517,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         const type = alertData.isShort ? 'error' : 'success';
                         const ticker = `<b><i>$${alertData.ticker}</i></b>`;
                         // For new stock alerts, link to SEC filing
-                        this.showNotification(`${ticker} ${position} stock alerted (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
+                        this.showNotification(`${ticker} ${position} new alert (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
                         this.notifiedAlerts.set(alertKey, now);
                     }
                 }
@@ -4536,7 +4536,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 // Stack notifications with comfortable spacing
                 const notifications = document.querySelectorAll('.notification');
                 const isMobile = window.innerWidth <= 768;
-                const spacing = isMobile ? 50 : 55; // Much tighter spacing on both
+                const spacing = isMobile ? 38 : 55; // Much tighter spacing on mobile
                 const offset = notifications.length * spacing;
                 const topOffset = isMobile ? 10 : 25; // Higher up on mobile
 
@@ -4548,12 +4548,12 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 
                 // Make notification smaller on mobile
                 if (isMobile) {
-                    notification.style.padding = '2px 4px';
-                    notification.style.fontSize = '8px';
-                    notification.style.maxWidth = '130px';
-                    notification.style.minWidth = '80px';
+                    notification.style.padding = '2px 3px';
+                    notification.style.fontSize = '7px';
+                    notification.style.maxWidth = '120px';
+                    notification.style.minWidth = '75px';
                     notification.style.borderRadius = '2px';
-                    notification.style.lineHeight = '1.0';
+                    notification.style.lineHeight = '0.9';
                 }
 
                 if (link) {
@@ -5243,7 +5243,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             // Rest of the existing notification code...
             const notifications = document.querySelectorAll('.notification');
             const isMobile = window.innerWidth <= 768;
-            const offset = notifications.length * (isMobile ? 50 : 55);
+            const offset = notifications.length * (isMobile ? 38 : 55);
             const topOffset = isMobile ? 10 : 25;
 
             const notification = document.createElement('div');
@@ -5254,10 +5254,10 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             
             // Make smaller on mobile
             if (isMobile) {
-                notification.style.padding = '2px 4px';
-                notification.style.fontSize = '8px';
-                notification.style.maxWidth = '130px';
-                notification.style.minWidth = '80px';
+                notification.style.padding = '2px 3px';
+                notification.style.fontSize = '7px';
+                notification.style.maxWidth = '120px';
+                notification.style.minWidth = '75px';
                 notification.style.borderRadius = '2px';
             }
 

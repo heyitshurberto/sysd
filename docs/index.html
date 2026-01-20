@@ -2929,7 +2929,7 @@ table {
                         item.innerHTML = `
                             <div style="font-weight: 650; margin-bottom: 8px;">$${alert.ticker} @ $${alert.price}</div>
                             <div style="font-size: 11px; opacity: 0.77; margin-bottom: 4px;">Score: ${alert.signalScore.toFixed(2)} | Float: ${floatStr} | S/O: ${soStr}</div>
-                            <div style="margin-top: 2px; font-size: 12px; opacity: 0.5;">${dateStr} ${timeStr}</div>
+                            <div style="margin-top: 2px; font-size: 16px; opacity: 0.5;">${dateStr} ${timeStr}</div>
                         `;
                         
                         item.addEventListener('click', () => {
@@ -3530,7 +3530,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         const type = alertData.isShort ? 'error' : 'success';
                         const ticker = `<b><i>$${alertData.ticker}</i></b>`;
                         // For new stock alerts, link to SEC filing
-                        this.showNotification(`${ticker} ${position} alert added (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
+                        this.showNotification(`${ticker} ${position} alert saveq (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
                         this.notifiedAlerts.set(alertKey, now);
                     }
                 }
@@ -5239,19 +5239,30 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             
             // Rest of the existing notification code...
             const notifications = document.querySelectorAll('.notification');
-            const offset = notifications.length * 45;
+            const isMobile = window.innerWidth <= 768;
+            const offset = notifications.length * (isMobile ? 38 : 55);
+            const topOffset = isMobile ? 10 : 25;
 
             const notification = document.createElement('div');
             notification.className = `notification ${type}`;
-            notification.style.top = `${20 + (offset * 1.23)}px`; // Slightly increased vertical spacing
-            notification.style.right = '20px';
+            notification.style.top = `${topOffset + offset}px`; // Consistent spacing
+            notification.style.right = isMobile ? '10px' : '20px';
             notification.style.opacity = document.body.classList.contains('dark-mode') ? '0.95' : '0.85'; // More visible in dark mode
+            
+            // Make smaller on mobile
+            if (isMobile) {
+                notification.style.padding = '2px 3px';
+                notification.style.fontSize = '7px';
+                notification.style.maxWidth = '120px';
+                notification.style.minWidth = '75px';
+                notification.style.borderRadius = '2px';
+            }
 
             // Create a wrapper div for better styling
             const contentWrapper = document.createElement('div');
             contentWrapper.style.display = 'flex';
             contentWrapper.style.flexDirection = 'column';
-            contentWrapper.style.gap = '4px';
+            contentWrapper.style.gap = isMobile ? '1px' : '4px';
 
             if (link) {
                 const linkElement = document.createElement('div');
@@ -5298,8 +5309,11 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 notification.classList.remove('show');
                 setTimeout(() => {
                     notification.remove();
+                    const isMobile = window.innerWidth <= 768;
                     document.querySelectorAll('.notification').forEach((n, i) => {
-                        n.style.top = `${20 + (i * 65)}px`;
+                        const spacing = isMobile ? 75 : 80;
+                        const topOffset = isMobile ? 10 : 25;
+                        n.style.top = `${topOffset + (i * spacing)}px`;
                     });
                 }, 300);
             }, 8000);

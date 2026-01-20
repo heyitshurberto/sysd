@@ -457,5 +457,54 @@
     "recordedAt": "2026-01-20T16:12:31.919Z",
     "recordId": "THAR-1768925551919",
     "expiresAt": "2026-01-25T16:12:31.919Z"
+  },
+  {
+    "ticker": "GSIW",
+    "title": "6-K - Garden Stage Ltd (0001954269) (Filer)",
+    "price": 0.1476,
+    "vwap": 0.1476,
+    "signalScore": 0.55,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1,
+    "volume": 427318,
+    "averageVolume": 873885,
+    "float": 14962500,
+    "sharesOutstanding": 218148992,
+    "soRatio": "6.86%",
+    "marketCap": 32198790,
+    "isShort": false,
+    "ftd": 22324,
+    "ftdPercent": "0.15",
+    "intent": "Net Loss, Accumulated Deficit",
+    "incorporated": "Cayman Islands",
+    "located": "Hong Kong",
+    "filingDate": "2026-01-20",
+    "signals": {
+      "Net Loss": [
+        "Net Loss"
+      ],
+      "Accumulated Deficit": [
+        "Accumulated Deficit"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "20-F",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, 20-F, EX-99.1",
+    "cik": "1954269",
+    "skipReason": "",
+    "recordedAt": "2026-01-20T16:26:21.447Z",
+    "recordId": "GSIW-1768926381447",
+    "expiresAt": "2026-01-25T16:26:21.447Z"
   }
 ]

@@ -12,14 +12,14 @@
   },
   "PROF": {
     "alert": 8.22,
-    "highest": 8.22,
+    "highest": 8.2369,
     "lowest": 8.08,
     "current": 8.22,
-    "currentPrice": 8.14,
+    "currentPrice": 8.16,
     "volume": 118609,
     "averageVolume": 150049,
     "marketCap": 298328224,
-    "performance": -0.97
+    "performance": -0.73
   },
   "AGEN": {
     "alert": 3.34,
@@ -34,14 +34,14 @@
   },
   "NVAX": {
     "alert": 8.003,
-    "highest": 8.325,
+    "highest": 8.37,
     "lowest": 8.003,
     "current": 8.29,
-    "currentPrice": 8.2793,
+    "currentPrice": 8.3314,
     "volume": 4854622,
     "averageVolume": 3886703,
     "marketCap": 1347116672,
-    "performance": 3.45
+    "performance": 4.1
   },
   "AIM": {
     "short": false,
@@ -49,8 +49,8 @@
     "highest": 1.34,
     "lowest": 1.1527,
     "current": 1.34,
-    "currentPrice": 1.155,
-    "performance": -13.81,
+    "currentPrice": 1.1566,
+    "performance": -13.69,
     "date": "2026-01-20T12:01:17.838Z",
     "reverseSplitRatio": null,
     "volume": 131809,
@@ -61,10 +61,10 @@
     "short": false,
     "alert": 1.62,
     "highest": 1.62,
-    "lowest": 1.54,
+    "lowest": 1.5304,
     "current": 1.55,
-    "currentPrice": 1.55,
-    "performance": -4.32,
+    "currentPrice": 1.57,
+    "performance": -3.09,
     "date": "2026-01-20T12:11:35.690Z",
     "reverseSplitRatio": null,
     "volume": 679366,
@@ -74,44 +74,46 @@
   "BKKT": {
     "alert": 17.4005,
     "highest": 17.4005,
-    "lowest": 17.12,
+    "lowest": 16.9264,
     "current": 17.2129,
-    "currentPrice": 17.155,
+    "currentPrice": 17.16,
     "volume": 1476824,
     "averageVolume": 1543219,
     "marketCap": 439176416,
-    "performance": -1.41
+    "performance": -1.38
   },
   "RDZN": {
     "alert": 1.855,
     "highest": 1.865,
-    "lowest": 1.855,
+    "lowest": 1.84,
     "current": 1.8626,
-    "currentPrice": 1.8626,
+    "currentPrice": 1.84,
     "volume": 85224,
     "averageVolume": 322378,
     "marketCap": 148072176,
-    "performance": 0.41
+    "performance": -0.81
   },
   "THAR": {
     "alert": 3.03,
     "highest": 3.03,
     "lowest": 2.9912,
     "current": 3.02,
-    "currentPrice": 3.02,
+    "currentPrice": 3.01,
     "volume": 400105,
     "averageVolume": 1416890,
     "marketCap": 112906056,
-    "performance": -0.33
+    "performance": -0.66,
+    "short": false,
+    "reverseSplitRatio": null
   },
   "SRTS": {
     "short": false,
     "alert": 5.2224,
     "highest": 5.2224,
-    "lowest": 5.2224,
+    "lowest": 5.055,
     "current": 5.2224,
-    "currentPrice": 5.2224,
-    "performance": 0,
+    "currentPrice": 5.055,
+    "performance": -3.21,
     "date": "2026-01-20T16:12:16.771Z",
     "reverseSplitRatio": null
   }

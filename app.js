@@ -2614,6 +2614,9 @@ app.listen(PORT, () => {
           const neutralSignals = signalCategories.filter(cat => neutralCategories.includes(cat));
           const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
           
+          // Calculate early for use in multiple filters
+          const hasExtremeSOOrStrongSignal = (soRatioValue !== null && soRatioValue > CONFIG.EXTREME_SO_RATIO) || nonNeutralSignals.length >= 2;
+          
           // Check if country is whitelisted - ONLY for 6-K filings (8-K can be Delaware/US states)
           let countryWhitelisted = true;
           if (filing.formType === '6-K' || filing.formType === '6-K/A') {
@@ -2622,7 +2625,6 @@ app.listen(PORT, () => {
             const isCaymanOrBVI = normalizedIncorporated.toLowerCase().includes('cayman') || normalizedLocated.toLowerCase().includes('cayman') || 
                                   normalizedIncorporated.toLowerCase().includes('virgin') || normalizedLocated.toLowerCase().includes('virgin');
             const hasSPSignal = signalCategories.includes('Artificial Inflation') || signalCategories.includes('Delisting Risk') || signalCategories.includes('Bid Price Delisting') || signalCategories.includes('Nasdaq Delisting');
-            const hasExtremeSOOrStrongSignal = (soRatioValue !== null && soRatioValue > CONFIG.EXTREME_SO_RATIO) || nonNeutralSignals.length >= 2;
             
             // Allow Cayman/BVI if: extreme S/O (>80%) OR death spiral signals
             countryWhitelisted = incorporatedMatch || locatedMatch || (isCaymanOrBVI && (hasExtremeSOOrStrongSignal || hasSPSignal));
@@ -2929,7 +2931,7 @@ app.listen(PORT, () => {
                 alertData.skipReason = 'Not Enough Signals';
               } else if (float !== 'N/A' && parseFloat(float) > CONFIG.MAX_FLOAT * 0.8) {
                 alertData.skipReason = 'High Float';
-              } else if (volume !== 'N/A' && parseFloat(volume) < 100000) {
+              } else if (volume !== 'N/A' && parseFloat(volume) < 10000) {
                 alertData.skipReason = 'Low Volume';
               }
               

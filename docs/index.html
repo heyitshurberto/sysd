@@ -2306,7 +2306,7 @@ table {
         @media (max-width: 768px) {
             .notification-panel {
                 position: fixed !important;
-                top: 125px !important;
+                top: 115px !important;
                 right: 8px !important;
                 left: auto !important;
                 bottom: auto !important;
@@ -4548,12 +4548,12 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 
                 // Make notification smaller on mobile
                 if (isMobile) {
-                    notification.style.padding = '4px 6px';
-                    notification.style.fontSize = '9px';
-                    notification.style.maxWidth = '150px';
-                    notification.style.minWidth = '90px';
-                    notification.style.borderRadius = '3px';
-                    notification.style.lineHeight = '1.1';
+                    notification.style.padding = '2px 4px';
+                    notification.style.fontSize = '8px';
+                    notification.style.maxWidth = '130px';
+                    notification.style.minWidth = '80px';
+                    notification.style.borderRadius = '2px';
+                    notification.style.lineHeight = '1.0';
                 }
 
                 if (link) {
@@ -5254,11 +5254,11 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             
             // Make smaller on mobile
             if (isMobile) {
-                notification.style.padding = '4px 6px';
-                notification.style.fontSize = '9px';
-                notification.style.maxWidth = '150px';
-                notification.style.minWidth = '90px';
-                notification.style.borderRadius = '3px';
+                notification.style.padding = '2px 4px';
+                notification.style.fontSize = '8px';
+                notification.style.maxWidth = '130px';
+                notification.style.minWidth = '80px';
+                notification.style.borderRadius = '2px';
             }
 
             // Create a wrapper div for better styling

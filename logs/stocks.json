@@ -3582,5 +3582,58 @@
     "recordedAt": "2026-01-20T15:58:05.281Z",
     "recordId": "THAR-1768924685281",
     "expiresAt": "2026-01-25T15:58:05.281Z"
+  },
+  {
+    "ticker": "SRTS",
+    "title": "8-K - Sensus Healthcare, Inc. (0001494891) (Filer)",
+    "price": 5.2224,
+    "vwap": 5.2224,
+    "signalScore": 0.48,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": "Structure Only",
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1.15,
+    "volume": 72199,
+    "averageVolume": 111313,
+    "float": 13672028,
+    "sharesOutstanding": 16425036,
+    "soRatio": "83.24%",
+    "marketCap": 85856456,
+    "isShort": true,
+    "ftd": false,
+    "ftdPercent": null,
+    "intent": "M&A Rebrand, Accounting Restatement",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Florida",
+    "filingDate": "2026-01-20",
+    "signals": {
+      "M&A Rebrand": [
+        "Name Change"
+      ],
+      "Accounting Restatement": [
+        "Material Weakness"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "6-K/A",
+      "8-K",
+      "20-F",
+      "20-F/A",
+      "Item 4.01",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 6-K/A, 8-K, 20-F, 20-F/A, Item 4.01, Item 9.01",
+    "cik": "1494891",
+    "skipReason": "",
+    "recordedAt": "2026-01-20T16:12:16.695Z",
+    "recordId": "SRTS-1768925536695",
+    "expiresAt": "2026-01-25T16:12:16.695Z"
   }
 ]

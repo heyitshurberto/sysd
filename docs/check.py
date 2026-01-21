@@ -14,9 +14,9 @@ import time
 import random
 
 # Rate limiting constants
-REQUEST_DELAY = 0.5  # 500ms delay between requests
-MAX_REQUESTS_PER_BATCH = 30  # After 30 requests, add extra delay
-BATCH_DELAY = 2.0  # 2 second delay after every 30 requests
+REQUEST_DELAY = 0.2  # 200ms delay between requests
+MAX_REQUESTS_PER_BATCH = 50  # After 50 requests, add extra delay
+BATCH_DELAY = 0.5  # 0.5 second delay after every 50 requests
 TIMEOUT = 5  # Timeout for API requests in seconds
 
 # Load API key from .env
@@ -101,9 +101,17 @@ def main():
             continue
         
         skip_reason = ticker_rows[0].get('Skip Reason', '')
+        # Remove bonus filter text for cleaner display
+        if '(Bonus:' in skip_reason:
+            skip_reason = skip_reason.split('(Bonus:')[0].strip()
         incorporated = ticker_rows[0].get('Incorporated', 'N/A')[:10]
         located = ticker_rows[0].get('Located', 'N/A')[:10]
-        filed_date = ticker_rows[0].get('Filed Date', 'N/A')[:10]
+        filed_date = ticker_rows[0].get('Filed Date', 'N/A')
+        filed_time = ticker_rows[0].get('Filed Time', 'N/A')
+        if filed_date != 'N/A' and filed_time != 'N/A':
+            filed_display = f"{filed_date} {filed_time[:5]}"
+        else:
+            filed_display = filed_date[:10] if filed_date != 'N/A' else 'N/A'
         
         # Fetch current live price with peak data
         current, high, low, request_count = fetch_stock_price(ticker, request_count)
@@ -144,7 +152,7 @@ def main():
                     'skip_reason': skip_reason,
                     'incorporated': incorporated,
                     'located': located,
-                    'filed_date': filed_date
+                    'filed_display': filed_display
                 })
         else:
             peak_str = "N/A"
@@ -152,7 +160,7 @@ def main():
             na_tickers.append({'ticker': ticker, 'skip_reason': skip_reason})
         
         alert_str = f"${alert_price:.2f}"
-        print(f"{ticker:<8} {alert_str:<10} {current_str:<10} {peak_str:<10} {move_str:<10} {incorporated:<12} {located:<12} {filed_date:<12} {skip_reason}")
+        print(f"{ticker:<8} {alert_str:<10} {current_str:<10} {peak_str:<10} {move_str:<10} {incorporated:<12} {located:<12} {filed_display:<19} {skip_reason}")
     
     print("-" * 180)
     avg_move = total_move / count if count > 0 else 0
@@ -165,13 +173,13 @@ def main():
         print("\n" + "="*180)
         print(f"BIG MOVERS (>= 10% +/- threshold): {len(big_movers)} stocks")
         print("="*180)
-        print(f"{'Ticker':<8} {'Alert Price':<12} {'Current':<12} {'Peak':<12} {'Move %':<10} {'Peak %':<10} {'Inc':<12} {'Ops':<12} {'Filed':<12} {'Skip Reason'}")
+        print(f"{'Ticker':<8} {'Alert Price':<12} {'Current':<12} {'Peak':<12} {'Move %':<10} {'Peak %':<10} {'Inc':<12} {'Ops':<12} {'Filed':<19} {'Skip Reason'}")
         print("-"*180)
         for mover in sorted(big_movers, key=lambda x: abs(x['move_pct']), reverse=True):
             inc = mover.get('incorporated', 'N/A')[:10]
             ops = mover.get('located', 'N/A')[:10]
-            filed = mover.get('filed_date', 'N/A')[:10]
-            print(f"{mover['ticker']:<8} ${mover['alert_price']:<11.2f} ${mover['current_price']:<11.2f} ${mover['peak_price']:<11.2f} {mover['move_pct']:+.1f}%{'':<3} {mover['peak_move_pct']:+.1f}%{'':<2} {inc:<12} {ops:<12} {filed:<12} {mover['skip_reason']}")
+            filed = mover.get('filed_display', 'N/A')
+            print(f"{mover['ticker']:<8} ${mover['alert_price']:<11.2f} ${mover['current_price']:<11.2f} ${mover['peak_price']:<11.2f} {mover['move_pct']:+.1f}%{'':<3} {mover['peak_move_pct']:+.1f}%{'':<2} {inc:<12} {ops:<12} {filed:<19} {mover['skip_reason']}")
     
     # Summary of N/A (rate limited)
     if na_tickers:

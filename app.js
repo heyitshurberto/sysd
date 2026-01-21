@@ -18,7 +18,7 @@ if (fs.existsSync('.env')) {
 
 const CONFIG = {
   // Alert filtering criteria
-  FILE_TIME: 100,                   // Minutes retro to fetch filings
+  FILE_TIME: 10000,                   // Minutes retro to fetch filings
   MIN_ALERT_VOLUME: 20000,        // Lower base, conditional on signal strength
   STRONG_SIGNAL_MIN_VOLUME: 1000, // Very low for penny stocks with extreme S/O
   EXTREME_SO_RATIO: 80,           // 80%+ S/O = tight float (primary volatility driver)

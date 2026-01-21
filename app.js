@@ -103,9 +103,82 @@ const rateLimit = {
   }
 };
 
-// Custodian Bank Detection - verify actual ADR structures with word boundaries
-// Returns object with custodian name or false if not found
-// Maps real filing language: "JPMorgan" as custodian, Form F-6 sections, ADR program language
+// Parse applicant/registrant name from SEC filing text - BULLETPROOF VERSION
+// SEC filings ALWAYS have company name in standardized headers
+const parseApplicantName = (text) => {
+  if (!text) return 'N/A';
+  
+  // Pattern 1: "APPLICANT:" or "Applicant:" with full company info (most common)
+  let match = text.match(/^[^a-z]*?APPLICANT\s*[:\-]?\s*\n?\s*([A-Z][A-Za-z0-9\s&,.\-()/'\']+?)(?:\n|$)/im);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ').substring(0, 150);
+    if (name.length > 2) return name;
+  }
+  
+  // Pattern 2: "REGISTRANT:" field (8-K/6-K standard header)
+  match = text.match(/^[^a-z]*?REGISTRANT\s*[:\-]?\s*\n?\s*([A-Z][A-Za-z0-9\s&,.\-()/'\']+?)(?:\n|$)/im);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ').substring(0, 150);
+    if (name.length > 2) return name;
+  }
+  
+  // Pattern 3: "Name of Registrant" standard SEC label
+  match = text.match(/Name of Registrant\s*[:\-]?\s*\n?\s*([A-Z][A-Za-z0-9\s&,.\-()/'\']+?)(?:\n|$)/i);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ').substring(0, 150);
+    if (name.length > 2) return name;
+  }
+  
+  // Pattern 4: Header with company name + CIK (most reliable format)
+  match = text.match(/([A-Z][A-Za-z0-9\s&,.\-()/'\']*(?:INC|LLC|LTD|CORP|CORPORATION|CO|COMPANY|GROUP|HOLDINGS|PLC|AG|SE|GmbH|Ltd|Inc|LLC)\.?)\s*\n\s*\(?[0-9]{10}\)?/i);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ').substring(0, 150);
+    if (name.length > 2) return name;
+  }
+  
+  // Pattern 5: "Form 8-K" / "Form 6-K" cover page with company name on first real line
+  match = text.match(/(?:FORM\s*(?:8-?K|6-?K|10-?K|10-?Q).*?\n){1,3}\s*([A-Z][A-Za-z0-9\s&,.\-()/'\']+?)(?:\n|$)/i);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ');
+    // Exclude boilerplate
+    if (!/^(SEC|EDGAR|ITEM|EXHIBIT|SCHEDULE|TABLE OF CONTENTS)$/i.test(name) && name.length > 2) {
+      return name.substring(0, 150);
+    }
+  }
+  
+  // Pattern 6: Company name before CIK number (very common)
+  match = text.match(/^([A-Z][A-Za-z0-9\s&,.\-()/'\']*?)\s{2,}\d{10}/im);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ').substring(0, 150);
+    if (name.length > 2 && !/^(SEC|EDGAR|FORM|ITEM)$/i.test(name)) return name;
+  }
+  
+  // Pattern 7: After "UNITED STATES OF AMERICA" SEC header
+  match = text.match(/UNITED STATES OF AMERICA[^\n]*\n\s*([A-Z][A-Za-z0-9\s&,.\-()/'\']+?)(?:\n|$)/i);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ').substring(0, 150);
+    if (name.length > 2) return name;
+  }
+  
+  // Pattern 8: "SEC File No" followed by company name
+  match = text.match(/(?:SEC File No|File Number)[^\n]*\n\s*([A-Z][A-Za-z0-9\s&,.\-()/'\']+?)(?:\n|$)/i);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ').substring(0, 150);
+    if (name.length > 2) return name;
+  }
+  
+  // Pattern 9: First substantive capitalized line (fallback)
+  match = text.match(/^[^a-z\n]{0,50}([A-Z][A-Za-z0-9\s&,.\-()/'\']{10,}?)(?:\n|$)/m);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ').substring(0, 150);
+    if (name.length > 3 && !/^(EXHIBIT|TABLE|SCHEDULE|FORM|ITEM|PART)$/i.test(name)) {
+      return name;
+    }
+  }
+  
+  return 'N/A';
+};
+
 const detectCustodianBanks = (text) => {
   if (!text) return false;
   
@@ -852,7 +925,7 @@ const cleanupStaleAlerts = () => {
 const saveToCSV = (alertData) => {
   try {
     const csvPath = CONFIG.CSV_FILE;
-    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Price,Score,Float,Shares Outstanding,S/O Ratio,VWAP,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Bonus Signals,Skip Reason\n';
+    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Registrant Name,Price,Score,Float,Shares Outstanding,S/O Ratio,VWAP,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Bonus Signals,Skip Reason\n';
     
     // Create file with headers if it doesn't exist
     if (!fs.existsSync(csvPath)) {
@@ -923,6 +996,7 @@ const saveToCSV = (alertData) => {
       escapeCSV(scannedTime),
       escapeCSV(alertData.cik || 'N/A'),
       escapeCSV(alertData.ticker || 'N/A'),
+      escapeCSV(alertData.companyName || 'N/A'),
       escapeCSV(alertData.price || 'N/A'),
       escapeCSV(alertData.signalScore || 'N/A'),
       escapeCSV(alertData.float || 'N/A'),
@@ -1413,7 +1487,9 @@ async function getCountryAndTicker(cik) {
       return {
         incorporated: incorporatedDisplay,
         located: locatedDisplay,
-        ticker: data.tickers?.[0] || 'Unknown'
+        ticker: data.tickers?.[0] || 'Unknown',
+        companyName: data.name || data.entityName || data.conformed_name || 'Unknown',
+        cikNumber: data.cik_str || data.cik || cik
       };
     } catch (err) {
       log('WARN', `SEC lookup attempt ${attempt} failed for CIK ${cik}: ${err.message}`);
@@ -2194,12 +2270,24 @@ app.listen(PORT, () => {
           let ticker = 'Unknown';
           let normalizedIncorporated = 'Unknown';
           let normalizedLocated = 'Unknown';
+          let companyName = 'N/A';
           
           if (filing.cik) {
             const secData = await getCountryAndTicker(filing.cik);
             ticker = secData.ticker || 'Unknown';
             normalizedIncorporated = secData.incorporated || 'Unknown';
             normalizedLocated = secData.located || 'Unknown';
+            companyName = secData.companyName || 'Unknown';
+          }
+          
+          // If still no company name from SEC, parse from filing text
+          if (companyName === 'Unknown' || companyName === 'N/A') {
+            const parsedName = parseApplicantName(text);
+            if (parsedName && parsedName !== 'N/A') {
+              companyName = parsedName;
+            } else {
+              companyName = 'N/A';
+            }
           }
           
           // Better jurisdiction parsing - Cayman/BVI often show as "Unknown" in normalized data
@@ -2215,6 +2303,12 @@ app.listen(PORT, () => {
             log('INFO', `Incorporated: ${normalizedIncorporated}, Located: ${normalizedLocated}`);
           } else {
             log('INFO', `Incorporated: ${normalizedIncorporated}`);
+          }
+          
+          // Fallback: Parse applicant name from filing text if SEC data returned "Unknown"
+          if (companyName === 'Unknown') {
+            const parsedName = parseApplicantName(text);
+            if (parsedName) companyName = parsedName;
           }
 
           
@@ -2410,17 +2504,22 @@ app.listen(PORT, () => {
           const isShortCombo = hasReverseSplit && (hasDilution || hasStockSplit);
           
           // Bearish signals that force SHORT regardless
-          const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Product Discontinuation', 'Loss of Major Customer'];
-          const hasBearishSignal = sigKeys.some(cat => bearishCats.includes(cat));
+          const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Product Discontinuation', 'Loss of Major Customer', 'Going Dark', 'Bid Price Delisting', 'Asset Sale', 'Share Recall', 'Board Change', 'Artificial Inflation', 'Share Dilution', 'Convertible Dilution', 'Stock Split', 'Reverse Split', 'Convertible Debt', 'Operating Loss', 'Net Loss', 'Cash Burn', 'Accumulated Deficit', 'Warrant Dilution', 'Compensation Dilution', 'Warrant Call', 'Regulatory Violation', 'Executive Liquidation', 'China Risk', 'VIE Structure', 'Stock Dividend'];
+          const bearishCount = sigKeys.filter(cat => bearishCats.includes(cat)).length;
+          const bullishCats = ['Major Contract', 'Earnings Beat', 'Revenue Growth', 'Partnership', 'Licensing Deal', 'Stock Buyback', 'Merger/Acquisition'];
+          const bullishCount = sigKeys.filter(cat => bullishCats.includes(cat)).length;
           
-          // Determine SHORT or LONG
-          if (isShortCombo || hasBearishSignal) {
+          // Determine SHORT or LONG - bearish signals override bullish
+          if (isShortCombo || bearishCount >= 2) {
             shortOpportunity = true;
-          } else if (sigKeys.length > 0) {
-            // Has signals but they're not bearish/short signals = LONG
+          } else if (bearishCount > 0 && bullishCount > 0) {
+            shortOpportunity = true;
+          } else if (bearishCount > 0) {
+            shortOpportunity = true;
+          } else if (bullishCount > 0) {
             longOpportunity = true;
           }
-          // If sigKeys.length === 0 (pure Press Release), leave both null for "N/A"
+          // If no signals, leave both null for "N/A"
           
           const now = new Date();
           const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
@@ -2901,6 +3000,7 @@ app.listen(PORT, () => {
           const alertData = {
             ticker: ticker || filing.cik || 'Unknown',
             title: filing.title ? filing.title.replace(/\s*\(\d{10}\)\s*$/, '').trim() : 'Unknown Company',
+            companyName: companyName !== 'Unknown' ? companyName : null,
             price: price,
             vwap: vwapValue,
             signalScore: signalScoreData.score,

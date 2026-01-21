@@ -21,7 +21,7 @@ const CONFIG = {
   FILE_TIME: 1,                   // Minutes retro to fetch filings
   MIN_ALERT_VOLUME: 20000,        // Lower base, conditional on signal strength
   STRONG_SIGNAL_MIN_VOLUME: 1000, // Very low for penny stocks with extreme S/O
-  EXTREME_SO_RATIO: 90,           // >90% S/O = tight float (primary volatility driver)
+  EXTREME_SO_RATIO: 75,           // >75% S/O = tight float (primary volatility driver)
   MAX_FLOAT_6K: 100000000,        // Max float size for 6-K
   MAX_FLOAT_8K: 250000000,        // Max float size for 8-K (higher threshold - less reliable)
   MAX_SO_RATIO: 150.0,            // Max short interest ratio
@@ -248,7 +248,7 @@ const getSOBonus = (float, sharesOutstanding) => {
 
 // Signal Score Calculator - Probabilistic weighted model
 // Volume (50%) + Float (25%) + S/O (25%) with signal multipliers
-const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signalCategories = [], incorporated = null, located = null, filingText = '', companyName = '', itemCode = null, financingType = null, maClosureData = null) => {
+const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signalCategories = [], incorporated = null, located = null, filingText = '', companyName = '', itemCode = null, financingType = null, maClosureData = null, foundForms = new Set()) => {
   // Float Score - micro-cap advantage but tempered (smaller is slightly better)
   let floatScore = 0.3;
   const floatMillion = float / 1000000;
@@ -261,18 +261,18 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   else if (floatMillion < 100) floatScore = 0.30;
   else floatScore = 0.25;
   
-  // S/O Score - lower baseline (float/shares ratio is just one factor)
+  // S/O Score - neutral scoring (both tight and diluted floats are tradeable, just different signals)
   let soScore = 0.35;
   const numFloat = parseFloat(float) || 1;
   const numShares = parseFloat(sharesOutstanding) || 1;
   const soPercent = numShares > 0 ? (numFloat / numShares) * 100 : 50;
 
-  if (soPercent < 5) soScore = 0.50;
-  else if (soPercent < 15) soScore = 0.48;
-  else if (soPercent < 30) soScore = 0.45;
-  else if (soPercent < 50) soScore = 0.42;
-  else if (soPercent < 75) soScore = 0.40;
-  else soScore = 0.35;
+  if (soPercent < 10) soScore = 0.50;        // Tight float
+  else if (soPercent < 25) soScore = 0.46;  // Very tight
+  else if (soPercent < 50) soScore = 0.44;  // Tight
+  else if (soPercent < 75) soScore = 0.42;  // Moderate
+  else if (soPercent < 90) soScore = 0.48;  // Diluted
+  else soScore = 0.38;                      // Heavily diluted
 
   let volumeScore = 0.25;
   const volumeRatio = avgVolume > 0 ? volume / avgVolume : 0.5;
@@ -295,32 +295,25 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   else if (hasSqueeze) signalMultiplier = 1.10;        // Supply shocks
   else signalMultiplier = 1.0;
 
-  // ADR Detection - verify actual custodian banks + incorporated != located structure
-  // Checks for custodian keywords OR ADR structure (not just country mismatch)
+  // ADR Detection - verify ONLY actual custodian banks, NOT mere country mismatch
+  // Removed strict ADR structure matching (incorporated != located) as it filters low-float plays
   let adrMultiplier = 1.0;
   let isCustodianVerified = false;
   let custodianName = null;
   
-  // MAXIMUM RED FLAG: "Not Applicable" = Ghost company (no origin, pure shell)
+  // Critical Signal: "Not Applicable" = Shell entity (no origin disclosure)
   if ((incorporated && incorporated.includes('Not Applicable')) || (located && located.includes('Not Applicable')) || (companyName && companyName.includes('Not Applicable'))) {
-    adrMultiplier = 1.15;  // 50% MEGA BONUS - absolute scam signal
+    adrMultiplier = 1.15;  // High priority boost - shell/special entity signal
     isCustodianVerified = false;
-    custodianName = 'Ghost Company (N/A)';
+    custodianName = 'Shell Entity (N/A)';
   }
-  // First check for actual custodian bank keywords in filing text
+  // Apply boost only for verified custodian banks (JPMorgan, BNY Mellon, etc.)
   else {
     const custodianResult = detectCustodianBanks(filingText);
-    if (custodianResult) {
-      adrMultiplier = 1.2;  // Boost for verified custodian-controlled ADRs
+    if (custodianResult && custodianResult.verified) {
+      adrMultiplier = 1.2;  // Boost ONLY for verified custodian-controlled ADRs
       isCustodianVerified = true;
       custodianName = custodianResult.custodian;
-    }
-    // Fallback: ADR structure detection (incorporated != located) if no custodian bank found
-    else if (incorporated && located && incorporated.toLowerCase() !== located.toLowerCase()) {
-      // Only apply reduced boost (1.15x) since not verified via text scan
-      adrMultiplier = 1.15; // 15% boost for ADR-like structure without custodian verification
-      isCustodianVerified = false;
-      custodianName = 'ADR Structure (Unverified)';
     }
   }
   
@@ -370,9 +363,31 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
       }
     }
   }
+  
+  let lowFloatMomentumBonus = 1.0;
+  const floatUnderThreshold = numFloat < 5000000; // Under 5M shares = momentum candidate
+  const hasCleanCatalyst = signalCategories?.some(cat => 
+    ['Partnership', 'Major Contract', 'Licensing Deal', 'Revenue Growth', 'Earnings Beat'].includes(cat)
+  );
+  // Allow ALL catalysts for low float - catches shorts too (reverse splits, dilution, etc on low float = SHORT setup)
+  const hasTradingCatalyst = signalCategories && Object.keys(signalCategories).length > 0;
+  
+  if (floatUnderThreshold && hasTradingCatalyst) {
+    lowFloatMomentumBonus = 1.25; // 25% bonus for <5M float + Any trading catalyst (long or short)
+  }
+
+  // Layer 6: FORM TYPE MULTIPLIER - neutral on filing type combinations
+  let formTypeMultiplier = 1.0;
+  const has6K = foundForms.has('6-K') || foundForms.has('6-K/A');
+  const has20F = foundForms.has('20-F') || foundForms.has('20-F/A');
+  const has8K = foundForms.has('8-K') || foundForms.has('8-K/A');
+  
+  if (has6K && has20F) {
+    formTypeMultiplier = 1.10; // Slight boost: 6-K + 20-F (frequent combo, good signal coverage)
+  }
 
   // Weighted calculation (volume 50%, float 25%, S/O 25%) - but with lower base scores
-  const signalScore = (floatScore * 0.25 + soScore * 0.25 + volumeScore * 0.5) * signalMultiplier * adrMultiplier * soBonus * financingMultiplier * maMultiplier * item801Multiplier;
+  const signalScore = (floatScore * 0.25 + soScore * 0.25 + volumeScore * 0.5) * signalMultiplier * adrMultiplier * soBonus * financingMultiplier * maMultiplier * item801Multiplier * lowFloatMomentumBonus * formTypeMultiplier;
   
   return {
     score: parseFloat(Math.min(1.0, signalScore).toFixed(2)),
@@ -501,7 +516,7 @@ const log = (level, message) => {
 const FORM_TYPES = ['6-K', '6-K/A', '8-K', '8-K/A', 'S-1', 'S-3', 'S-4', 'S-8', 'F-1', 'F-3', '	SC TO-C', 'SC14D9C', 'S-9', 'F-4', 'FWG', '424B1', '424B2', '424B3', '424B4', '424B5', '424H8', '20-F', '20-F/A', '13G', '13G/A', '13D', '13D/A', 'Form D', 'EX-99.1', 'EX-99.2', 'EX-10.1', 'EX-10.2', 'EX-3.1', 'EX-3.2', 'EX-4.1', 'EX-4.2', 'EX-10.3', 'EX-1.1', 'Item 1.01', 'Item 1.02', 'Item 1.03', 'Item 1.04', 'Item 1.05', 'Item 2.01', 'Item 2.02', 'Item 2.03', 'Item 2.04', 'Item 2.05', 'Item 2.06', 'Item 3.01', 'Item 3.02', 'Item 3.03', 'Item 4.01', 'Item 5.01', 'Item 5.02', 'Item 5.03', 'Item 5.04', 'Item 5.05', 'Item 5.06', 'Item 5.07', 'Item 5.08', 'Item 5.09', 'Item 5.10', 'Item 5.11', 'Item 5.12', 'Item 5.13', 'Item 5.14', 'Item 5.15', 'Item 6.01', 'Item 7.01', 'Item 8.01', 'Item 9.01'];
 const SEMANTIC_KEYWORDS = {
   'Merger/Acquisition': ['Merger Agreement', 'Acquisition Agreement', 'Agreed To Acquire', 'Merger Consideration', 'Premium Valuation', 'Going Private', 'Take Private', 'Acquisition Closing', 'Closing Of Acquisition', 'Completed Acquisition'],
-  'M&A Rebrand': ['Name Change', 'Corporate Name Change', 'Ticker Change', 'Trading Name Change', 'Change Of Company Name'],
+  'M&A Rebrand': ['Corporate Name Change', 'Ticker Change', 'Trading Name Change', 'Change Of Company Name', 'Formerly Known As', 'Name Changed To'],
   'FDA Approved': ['FDA Approval', 'FDA Clearance', 'Approval Granted', 'Approval Letter', 'Approves', 'Approving', 'EMA Approval', 'Post-Market Approval'],
   'FDA Breakthrough': ['Breakthrough Therapy', 'Breakthrough Designation', 'Fast Track Designation', 'Priority Review', 'Priority Status'],
   'FDA Filing': ['NDA Submission', 'NDA Filed', 'BLA Submission', 'BLA Filed', 'IND Application', 'Regulatory Filing'],
@@ -540,6 +555,7 @@ const SEMANTIC_KEYWORDS = {
   'Material Lawsuit': ['Material Litigation', 'Lawsuit Filed', 'Major Lawsuit', 'SEC Investigation', 'DOJ Investigation'],
   'Supply Chain Crisis': ['Supply Chain Disruption', 'Production Halt', 'Factory Closure', 'Supplier Bankruptcy', 'Shipping Delays'],
   'Executive Departure': ['CEO Departed', 'CFO Departed', 'CEO Resigned', 'Chief Officer Left', 'CEO Resignation', 'CFO Departure'],
+  'Executive Detention/Investigation': ['CEO Detained', 'Chairman Detained', 'Officer Detained', 'Notice Of Detention', 'Notice Of Investigation', 'Under Investigation', 'Supervisory Commission'],
   'Board Change': ['Board Resignation', 'Director Appointed', 'Board Member Appointed', 'Director Elected', 'Director Resigned'],
   'Deal Termination': ['Deal Terminated', 'Merger Terminated', 'Acquisition Terminated', 'Agreement Terminated', 'Transaction Terminated', 'Deal Break', 'Termination Of Agreement', 'Failed To Close', 'Terminated The'],
   'Auditor Change': ['Auditor Resigned', 'Audit Firm Changed', 'Auditor Departure', 'Internal Controls Weakness', 'Material Weakness', 'Auditor No Longer', 'Changes Auditor', 'Change Of Auditor'],
@@ -925,7 +941,7 @@ const cleanupStaleAlerts = () => {
 const saveToCSV = (alertData) => {
   try {
     const csvPath = CONFIG.CSV_FILE;
-    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Registrant Name,Price,Score,Float,Shares Outstanding,S/O Ratio,VWAP,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Bonus Signals,Skip Reason\n';
+    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Registrant Name,Price,Score,Float,Shares Outstanding,S/O Ratio,VWAP,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Bonus Signals,Alert Type,Skip Reason\n';
     
     // Create file with headers if it doesn't exist
     if (!fs.existsSync(csvPath)) {
@@ -1015,6 +1031,7 @@ const saveToCSV = (alertData) => {
       escapeCSV(alertData.filingTimeBonus ? `${alertData.filingTimeBonus}x Filing Time` : 'No'),
       escapeCSV(alertData.soBonus && alertData.soBonus > 1.0 ? `${alertData.soBonus}x S/O` : 'No'),
       escapeCSV(bonusSignalsStr),
+      escapeCSV(alertData.alertType || 'N/A'),
       escapeCSV(alertData.skipReason || ''),
     ];
 
@@ -2500,7 +2517,7 @@ app.listen(PORT, () => {
           const hasDilution = sigKeys.includes('Dilution');
           const hasStockSplit = sigKeys.includes('Stock Split');
           
-          // ONLY SHORT if: Reverse Split + Dilution/Stock Split (structural destruction)
+          // Flag as SHORT if: Reverse Split + Dilution/Stock Split (structural destruction)
           const isShortCombo = hasReverseSplit && (hasDilution || hasStockSplit);
           
           // Bearish signals that force SHORT regardless
@@ -2564,7 +2581,7 @@ app.listen(PORT, () => {
             }
           }
           
-          const signalScoreData = calculatesignalScore(numFloat, numShares, numVolume, numAvgVol, signalCategories, normalizedIncorporated, normalizedLocated, text, filing.title, itemCode, financingType, maClosureData);
+          const signalScoreData = calculatesignalScore(numFloat, numShares, numVolume, numAvgVol, signalCategories, normalizedIncorporated, normalizedLocated, text, filing.title, itemCode, financingType, maClosureData, foundForms);
                     
           // DTC Chill Lift
           if (bonusSignals['DTC Chill Lift']) {
@@ -3031,7 +3048,8 @@ app.listen(PORT, () => {
             formType: Array.from(foundForms),
             filingType: formLogMessage,
             cik: filing.cik,
-            skipReason: skipReason
+            skipReason: skipReason,
+            alertType: null  // Will be set to 'Toxic Structure', 'High Velocity', or 'Composite' if alerted
           };
           
           // Calculate signal score (already calculated above)
@@ -3078,18 +3096,34 @@ app.listen(PORT, () => {
               
               // Only save to alerts if NO skip reason (real alert)
               if (!alertData.skipReason) {
-                // NEW FILTER: Only alert on Structure Only + (S/O Bonus OR Filing Time Bonus)
-                const hasStructureOnly = signalScoreData.adrMultiplier > 1.0; // Structure Only gives ADR multiplier
+                // Path 1: Structure Only + (S/O Bonus OR Filing Time Bonus) = Toxic corporate action
+                // Path 2: Low Float Momentum (<2M float + clean catalyst + no death flags) = Momentum play
+                
+                const hasStructureOnly = signalScoreData.adrMultiplier > 1.0;
                 const hasSoBonus = signalScoreData.soBonus > 1.0;
                 const hasFilingBonus = filingTimeMultiplier > 1.0 || globalAttentionData.bonus > 1.0;
+                const hasLowFloatMomentumBonus = signalScoreData.signalMultiplier > 1.2; // lowFloatMomentumBonus is 1.25, reflected in final score
                 
-                const meetsWinningPattern = hasStructureOnly && (hasSoBonus || hasFilingBonus);
+                // Path 1: Toxic structure plays
+                const meetsStructurePath = hasStructureOnly && (hasSoBonus || hasFilingBonus);
                 
-                if (meetsWinningPattern) {
+                // Path 2: Low-float momentum plays
+                const meetsLowFloatPath = hasLowFloatMomentumBonus && signalScoreData.score > 0.55;
+                
+                if (meetsStructurePath || meetsLowFloatPath) {
+                  // Set alertType to distinguish which path triggered
+                  if (meetsStructurePath && meetsLowFloatPath) {
+                    alertData.alertType = 'Composite';
+                  } else if (meetsStructurePath) {
+                    alertData.alertType = 'Toxic Structure';
+                  } else {
+                    alertData.alertType = 'High Velocity';
+                  }
                   saveAlert(alertData);
                 } else {
                   // Doesn't meet winning pattern - save to CSV only for tracking
-                  alertData.skipReason = 'Pattern Filter (no S/O Bonus, Filing Time Bonus or ADR setup)';
+                  alertData.skipReason = 'Pattern Filter (no S/O Bonus, Filing Time Bonus or Low Float Momentum)';
+
                   saveToCSV(alertData);
                 }
               } else {

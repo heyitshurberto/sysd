@@ -9,6 +9,7 @@ import json
 import sys
 import os
 import urllib.request
+import urllib.error
 import time
 import random
 
@@ -16,6 +17,7 @@ import random
 REQUEST_DELAY = 0.5  # 500ms delay between requests
 MAX_REQUESTS_PER_BATCH = 30  # After 30 requests, add extra delay
 BATCH_DELAY = 2.0  # 2 second delay after every 30 requests
+TIMEOUT = 5  # Timeout for API requests in seconds
 
 # Load API key from .env
 FINNHUB_API_KEY = None
@@ -31,9 +33,8 @@ def fetch_stock_price(ticker, request_count):
     if not FINNHUB_API_KEY:
         return None, None, None, request_count
     
-    # Rate limiting: pause after every 30 requests
+    # Rate limiting: pause after every 30 requests (silently, no log)
     if request_count > 0 and request_count % MAX_REQUESTS_PER_BATCH == 0:
-        print(f"  [Rate limit: pausing {BATCH_DELAY}s after {request_count} requests...]")
         time.sleep(BATCH_DELAY)
     
     # Small delay before each request
@@ -42,15 +43,15 @@ def fetch_stock_price(ticker, request_count):
     try:
         url = f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_API_KEY}"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
             data = json.loads(response.read().decode())
-            if 'c' in data:  # c = current price, h = high, l = low
+            if 'c' in data and data['c']:  # c = current price, h = high, l = low
                 current = float(data['c'])
                 high = float(data.get('h', current))  # daily high
                 low = float(data.get('l', current))   # daily low
                 return current, high, low, request_count + 1
-    except Exception as e:
-        print(f"    Error fetching {ticker}: {str(e)}")
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, Exception) as e:
+        # Silently skip on timeout/connection errors
         pass
     return None, None, None, request_count + 1
 
@@ -78,9 +79,9 @@ def main():
         sys.exit(1)
     
     print(f"\nAlerts ({len(tickers)})")
-    print("-" * 100)
-    print(f"{'Ticker':<8} {'Alert':<10} {'Current':<10} {'Peak':<10} {'Change':<10} {'Reason':<30}")
-    print("-" * 100)
+    print("-" * 180)
+    print(f"{'Ticker':<8} {'Alert':<10} {'Current':<10} {'Peak':<10} {'Change':<10} {'Inc':<12} {'Ops':<12} {'Filed':<19} {'Reason'}")
+    print("-" * 180)
     
     total_move = 0
     winners = 0
@@ -100,6 +101,9 @@ def main():
             continue
         
         skip_reason = ticker_rows[0].get('Skip Reason', '')
+        incorporated = ticker_rows[0].get('Incorporated', 'N/A')[:10]
+        located = ticker_rows[0].get('Located', 'N/A')[:10]
+        filed_date = ticker_rows[0].get('Filed Date', 'N/A')[:10]
         
         # Fetch current live price with peak data
         current, high, low, request_count = fetch_stock_price(ticker, request_count)
@@ -137,7 +141,10 @@ def main():
                     'peak_price': peak_price,
                     'move_pct': move_pct,
                     'peak_move_pct': peak_move_pct,
-                    'skip_reason': skip_reason
+                    'skip_reason': skip_reason,
+                    'incorporated': incorporated,
+                    'located': located,
+                    'filed_date': filed_date
                 })
         else:
             peak_str = "N/A"
@@ -145,10 +152,9 @@ def main():
             na_tickers.append({'ticker': ticker, 'skip_reason': skip_reason})
         
         alert_str = f"${alert_price:.2f}"
-        reason_display = skip_reason[:28] if skip_reason else "No skip"
-        print(f"{ticker:<8} {alert_str:<10} {current_str:<10} {peak_str:<10} {move_str:<10} {reason_display:<30}")
+        print(f"{ticker:<8} {alert_str:<10} {current_str:<10} {peak_str:<10} {move_str:<10} {incorporated:<12} {located:<12} {filed_date:<12} {skip_reason}")
     
-    print("-" * 100)
+    print("-" * 180)
     avg_move = total_move / count if count > 0 else 0
     print(f"Average: {avg_move:+.1f}%")
     print(f"Successful: {winners}/{count}")
@@ -156,23 +162,26 @@ def main():
     
     # Summary of big movers (>= 10%)
     if big_movers:
-        print("\n" + "="*100)
+        print("\n" + "="*180)
         print(f"BIG MOVERS (>= 10% +/- threshold): {len(big_movers)} stocks")
-        print("="*100)
-        print(f"{'Ticker':<8} {'Alert Price':<12} {'Current':<12} {'Peak':<12} {'Move %':<10} {'Peak %':<10} {'Skip Reason':<38}")
-        print("-"*100)
+        print("="*180)
+        print(f"{'Ticker':<8} {'Alert Price':<12} {'Current':<12} {'Peak':<12} {'Move %':<10} {'Peak %':<10} {'Inc':<12} {'Ops':<12} {'Filed':<12} {'Skip Reason'}")
+        print("-"*180)
         for mover in sorted(big_movers, key=lambda x: abs(x['move_pct']), reverse=True):
-            print(f"{mover['ticker']:<8} ${mover['alert_price']:<11.2f} ${mover['current_price']:<11.2f} ${mover['peak_price']:<11.2f} {mover['move_pct']:+.1f}%{'':<3} {mover['peak_move_pct']:+.1f}%{'':<2} {mover['skip_reason'][:36]}")
+            inc = mover.get('incorporated', 'N/A')[:10]
+            ops = mover.get('located', 'N/A')[:10]
+            filed = mover.get('filed_date', 'N/A')[:10]
+            print(f"{mover['ticker']:<8} ${mover['alert_price']:<11.2f} ${mover['current_price']:<11.2f} ${mover['peak_price']:<11.2f} {mover['move_pct']:+.1f}%{'':<3} {mover['peak_move_pct']:+.1f}%{'':<2} {inc:<12} {ops:<12} {filed:<12} {mover['skip_reason']}")
     
     # Summary of N/A (rate limited)
     if na_tickers:
-        print("\n" + "="*100)
+        print("\n" + "="*180)
         print(f"RATE LIMITED / NOT AVAILABLE: {len(na_tickers)} stocks (exceeded 30 req limit)")
-        print("="*100)
-        print(f"{'Ticker':<8} {'Skip Reason':<80}")
-        print("-"*100)
+        print("="*180)
+        print(f"{'Ticker':<8} {'Skip Reason'}")
+        print("-"*180)
         for na in sorted(na_tickers, key=lambda x: x['ticker']):
-            print(f"{na['ticker']:<8} {na['skip_reason'][:78]}")
+            print(f"{na['ticker']:<8} {na['skip_reason']}")
 
 if __name__ == '__main__':
     main()

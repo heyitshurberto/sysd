@@ -3435,7 +3435,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
 <span style="opacity: 0.7;">Float:</span> ${alert.float ? alert.float.toLocaleString() : 'N/A'}
 <span style="opacity: 0.7;">S/O Ratio:</span> ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (' + alert.soBonus.toFixed(2) + 'x)' : ''}
 <span style="opacity: 0.7;">VWAP:</span> ${alert.vwap ? '$' + parseFloat(alert.vwap).toFixed(2) + (alert.currentPrice && alert.vwap ? ` (Spread: ${((alert.currentPrice - alert.vwap) / alert.vwap * 100).toFixed(2)}%)` : '') : 'N/A'}
-<span style="opacity: 0.7;">FTD:</span> ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && alert.ftd !== 'False' ? (typeof alert.ftd === 'number' ? alert.ftd.toLocaleString() : alert.ftd) + (alert.ftdPercent ? ' (' + alert.ftdPercent + '%)' : '') : 'False'}${alert.custodianName ? '\n<span style="opacity: 0.7;">Banks:</span> ' + alert.custodianName : ''}
+<span style="opacity: 0.7;">FTD:</span> ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && alert.ftd !== 'False' ? (typeof alert.ftd === 'number' ? alert.ftd.toLocaleString() : alert.ftd) + (alert.ftdPercent ? ' (' + alert.ftdPercent + '%)' : '') : 'False'}${alert.custodianName ? '\n<span style="opacity: 0.7;">Custodian:</span> ' + alert.custodianName : ''}${alert.filerName ? '\n<span style="opacity: 0.7;">Filer:</span> ' + alert.filerName : ''}
 <span style="opacity: 0.7;">Bonus:</span> ${alert.hasTuesdayBonus ? 'Tuesday Window' : 'None'}${alert.bonusSignals && typeof alert.bonusSignals === 'object' ? Object.entries(alert.bonusSignals).map(([bonus, value]) => {
         if (bonus === 'DTC Chill Lift' && value) return '\nDTC Chill Lift';
         if (bonus === 'Shell Recycling' && value) return '\nShell Recycling';
@@ -4434,17 +4434,18 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         percentChange = alert.performance.adjustedPercent.toFixed(2);
                     } else {
                         // Recalculate if not available
-                        // Convert post-split price BACK to pre-split basis for accurate comparison
+                        // Convert both prices to pre-split basis for accurate comparison
                         const currentPricePreSplit = alert.currentPrice / alert.reverseSplitRatio;
+                        const alertPricePreSplit = alert.alertPrice / alert.reverseSplitRatio;
                         
                         if (isShortSetup) {
                             // SHORT: profit when price GOES DOWN from entry
                             // Use pre-split basis: (entry - current) / entry × 100
-                            percentChange = (((alert.alertPrice - currentPricePreSplit) / alert.alertPrice) * 100).toFixed(2);
+                            percentChange = (((alertPricePreSplit - currentPricePreSplit) / alertPricePreSplit) * 100).toFixed(2);
                         } else {
                             // LONG: profit when price GOES UP from entry
                             // Use pre-split basis: (current - entry) / entry × 100
-                            percentChange = (((currentPricePreSplit - alert.alertPrice) / alert.alertPrice) * 100).toFixed(2);
+                            percentChange = (((currentPricePreSplit - alertPricePreSplit) / alertPricePreSplit) * 100).toFixed(2);
                         }
                     }
                 } else if (isShortSetup) {

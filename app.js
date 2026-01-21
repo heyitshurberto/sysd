@@ -18,10 +18,10 @@ if (fs.existsSync('.env')) {
 
 const CONFIG = {
   // Alert filtering criteria
-  FILE_TIME: 1,                   // Minutes retro to fetch filings
+  FILE_TIME: 100,                   // Minutes retro to fetch filings
   MIN_ALERT_VOLUME: 20000,        // Lower base, conditional on signal strength
   STRONG_SIGNAL_MIN_VOLUME: 1000, // Very low for penny stocks with extreme S/O
-  EXTREME_SO_RATIO: 75,           // >75% S/O = tight float (primary volatility driver)
+  EXTREME_SO_RATIO: 80,           // 80%+ S/O = tight float (primary volatility driver)
   MAX_FLOAT_6K: 100000000,        // Max float size for 6-K
   MAX_FLOAT_8K: 250000000,        // Max float size for 8-K (higher threshold - less reliable)
   MAX_SO_RATIO: 150.0,            // Max short interest ratio
@@ -179,6 +179,90 @@ const parseApplicantName = (text) => {
   return 'N/A';
 };
 
+// Extract the actual person/entity filing the document (not company name)
+// Look for "Applicant" or explicit filer signatures
+const parseFilerName = (text) => {
+  if (!text) return null;
+  
+  // Helper to validate if text looks like a real person/officer name
+  const isValidName = (str) => {
+    if (!str || str.length < 2 || str.length > 150) return false;
+    
+    // Reject explicit non-names
+    if (/^(N\/A|NA|UNKNOWN|Unknown|None|NONE|Yes|No|True|False)$/i.test(str)) return false;
+    
+    // Reject if it's obviously boilerplate/instructions
+    if (/Translation of registrant|as specified in|charter|agreement|contract|Please see|Exhibit|Form \d|SEC|EDGAR|Item \d|Schedule|pursuant to|hereby/i.test(str)) return false;
+    
+    // Reject URLs, emails, pure special chars
+    if (/www\.|http|@|\.com|^[\d\s,.\-()'"\/&;:]+$/.test(str)) return false;
+    
+    // Reject pure numbers
+    if (/^\d+$/.test(str)) return false;
+    
+    // Reject if mostly numbers (>40% numeric)
+    const numCount = (str.match(/\d/g) || []).length;
+    if (numCount > str.length * 0.4) return false;
+    
+    // Reject street addresses (numbered streets, compass directions in addresses)
+    if (/^\d+\s+(?:Front|Queen|Main|Broadway|Street|St\.|Avenue|Ave\.|Road|Rd\.|Suite|Apt\.|Floor|Circle|Drive|Lane|Place|Boulevard|Blvd|North|South|East|West|N\.|S\.|E\.|W\.)/i.test(str)) return false;
+    if (/Street|Avenue|Suite|Floor|Building|P\.O\.|Box\s+\d|Chicago|New York|London|Tokyo|Singapore|Toronto|Vancouver|Sydney|Hong Kong|India|Korea|Israel|Germany|France|UK|USA|Inc\.|Ltd\.|Corp\.|Company|plc|Corp|International|Inc|CORPORATION|HOLDINGS|MANAGEMENT|SYSTEMS/i.test(str)) return false;
+    
+    // Must have actual letters (not just numbers/symbols)
+    if (!/[a-zA-Z]/.test(str)) return false;
+    
+    // Should have at least 2 letters (rules out single initials or weird chars)
+    if ((str.match(/[a-zA-Z]/g) || []).length < 2) return false;
+    
+    return true;
+  };
+  
+  // Pattern 1: Signature block - "Name: XXXXX" after /s/ or "By:" line
+  // Captures: "Name: Rajesh Magow" or "Name: Wes Levitt" or "Name: CHUN Sang Yung"
+  let match = text.match(/Name\s*[:\-]\s*\n?\s*([^\n\/,]+?)(?:\n|$)/i);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ');
+    if (isValidName(name)) return name.substring(0, 150);
+  }
+  
+  // Pattern 2: "By: /s/ XXXXX" signature line - extract name after /s/
+  match = text.match(/By\s*:?\s*\/s\/\s*([^\n\/]+?)(?:\n|$)/i);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ');
+    if (isValidName(name)) return name.substring(0, 150);
+  }
+  
+  // Pattern 3: Direct "APPLICANT:" label with name on next line
+  match = text.match(/APPLICANT\s*[:\-]?\s*\n\s*([^\n]+?)(?:\n|$)/i);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ');
+    if (isValidName(name)) return name.substring(0, 150);
+  }
+  
+  // Pattern 4: "Applicant Name: XXXXX"
+  match = text.match(/Applicant\s+Name\s*[:\-]\s*([^\n,]+?)(?:\n|$)/i);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ');
+    if (isValidName(name)) return name.substring(0, 150);
+  }
+  
+  // Pattern 5: Officer title + name (CEO, President, Secretary, CFO, etc.)
+  match = text.match(/(?:Chief\s+Executive\s+Officer|CEO|President|Secretary|Chief\s+Financial\s+Officer|CFO|Chief\s+Investment\s+Officer|CIO|Deputy\s+Company\s+Secretary)\s*[:\-]?\s*\n\s*([^\n\/]+?)(?:\n|$)/i);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ');
+    if (isValidName(name)) return name.substring(0, 150);
+  }
+  
+  // Pattern 6: "Filer Name: XXXXX" or "Registrant Name: XXXXX"
+  match = text.match(/(?:Filer|Registrant)\s+Name\s*[:\-]\s*([^\n,]+?)(?:\n|$)/i);
+  if (match && match[1]) {
+    let name = match[1].trim().replace(/\s+/g, ' ');
+    if (isValidName(name)) return name.substring(0, 150);
+  }
+  
+  return null;
+};
+
 const detectCustodianBanks = (text) => {
   if (!text) return false;
   
@@ -228,12 +312,29 @@ const detectCustodianBanks = (text) => {
 
 // S/O Bonus Multiplier - tighter float = stronger move potential
 // High S/O (tight float) = 1.0-1.1x bonus based on float percentage
-// Calculate VWAP - estimated from price and volume
-const calculateVWAP = (price, volume) => {
-  if (!price || !volume || isNaN(price) || isNaN(volume) || price === 'N/A' || volume === 'N/A') return 'N/A';
-  const numPrice = typeof price === 'number' ? price : parseFloat(price);
-  if (isNaN(numPrice) || numPrice <= 0) return 'N/A';
-  return numPrice; // Current price is VWAP estimate for single-point data
+// Fetch quote data using Finnhub (has reliable current price)
+const fetchVWAP = async (ticker) => {
+  if (!ticker || ticker === 'UNKNOWN') return 'N/A';
+  try {
+    const finnhubKey = process.env.FINNHUB_API_KEY;
+    if (!finnhubKey) return 'N/A';
+    
+    const res = await Promise.race([
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+    ]);
+    
+    if (!res.ok) return 'N/A';
+    
+    const data = await res.json();
+    if (data && data.c && data.c > 0) {
+      return data.c.toFixed(2);  // c = current/close price
+    }
+  } catch (e) {
+    // Finnhub failed, return N/A
+  }
+  
+  return 'N/A';
 };
 
 const getSOBonus = (float, sharesOutstanding) => {
@@ -267,12 +368,12 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   const numShares = parseFloat(sharesOutstanding) || 1;
   const soPercent = numShares > 0 ? (numFloat / numShares) * 100 : 50;
 
-  if (soPercent < 10) soScore = 0.50;        // Tight float
-  else if (soPercent < 25) soScore = 0.46;  // Very tight
-  else if (soPercent < 50) soScore = 0.44;  // Tight
-  else if (soPercent < 75) soScore = 0.42;  // Moderate
-  else if (soPercent < 90) soScore = 0.48;  // Diluted
-  else soScore = 0.38;                      // Heavily diluted
+  if (soPercent < 5) soScore = 0.50;        // Tight float
+  else if (soPercent < 25) soScore = 0.48;  // Very tight
+  else if (soPercent < 50) soScore = 0.45;  // Tight
+  else if (soPercent < 0) soScore = 0.42;  // Moderate
+  else if (soPercent < 80) soScore = 0.50;  // Diluted
+  else soScore = 0.38;                      // Heavily diluted (still tradeable)
 
   let volumeScore = 0.25;
   const volumeRatio = avgVolume > 0 ? volume / avgVolume : 0.5;
@@ -296,18 +397,18 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   else signalMultiplier = 1.0;
 
   // ADR Detection - verify ONLY actual custodian banks, NOT mere country mismatch
-  // Removed strict ADR structure matching (incorporated != located) as it filters low-float plays
+  // Removed strict ADR structure matching (incorporated != located) as it filters pumps
   let adrMultiplier = 1.0;
   let isCustodianVerified = false;
   let custodianName = null;
   
-  // Critical Signal: "Not Applicable" = Shell entity (no origin disclosure)
+  // MAXIMUM RED FLAG: "Not Applicable" = Ghost company (no origin, pure shell)
   if ((incorporated && incorporated.includes('Not Applicable')) || (located && located.includes('Not Applicable')) || (companyName && companyName.includes('Not Applicable'))) {
-    adrMultiplier = 1.15;  // High priority boost - shell/special entity signal
+    adrMultiplier = 1.15;  // MEGA BONUS - absolute scam signal
     isCustodianVerified = false;
-    custodianName = 'Shell Entity (N/A)';
+    custodianName = 'Ghost Company (N/A)';
   }
-  // Apply boost only for verified custodian banks (JPMorgan, BNY Mellon, etc.)
+  // ONLY apply boost for verified custodian banks (JPMorgan, BNY Mellon, etc.)
   else {
     const custodianResult = detectCustodianBanks(filingText);
     if (custodianResult && custodianResult.verified) {
@@ -364,30 +465,34 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
     }
   }
   
-  let lowFloatMomentumBonus = 1.0;
-  const floatUnderThreshold = numFloat < 5000000; // Under 5M shares = momentum candidate
+  // Layer 5: LOW FLOAT PUMP DETECTION - catches momentum plays your system filters
+  let lowFloatPumpBonus = 1.0;
+  const floatUnderThreshold = numFloat < 5000000; // Under 5M shares = pump candidate
   const hasCleanCatalyst = signalCategories?.some(cat => 
     ['Partnership', 'Major Contract', 'Licensing Deal', 'Revenue Growth', 'Earnings Beat'].includes(cat)
   );
-  // Allow ALL catalysts for low float - catches shorts too (reverse splits, dilution, etc on low float = SHORT setup)
-  const hasTradingCatalyst = signalCategories && Object.keys(signalCategories).length > 0;
+  const hasNoClumsyDeathFlag = !signalCategories?.some(cat =>
+    ['Reverse Split', 'Artificial Inflation', 'Share Dilution', 'Convertible Dilution', 'Credit Default', 'Going Dark'].includes(cat)
+  );
   
-  if (floatUnderThreshold && hasTradingCatalyst) {
-    lowFloatMomentumBonus = 1.25; // 25% bonus for <5M float + Any trading catalyst (long or short)
+  if (floatUnderThreshold && hasCleanCatalyst && hasNoClumsyDeathFlag) {
+    lowFloatPumpBonus = 1.25; // 25% bonus for <5M float + clean news
   }
 
-  // Layer 6: FORM TYPE MULTIPLIER - neutral on filing type combinations
+  // Layer 6: FORM TYPE MULTIPLIER - 6-K + 20-F combo proves winners
   let formTypeMultiplier = 1.0;
   const has6K = foundForms.has('6-K') || foundForms.has('6-K/A');
   const has20F = foundForms.has('20-F') || foundForms.has('20-F/A');
   const has8K = foundForms.has('8-K') || foundForms.has('8-K/A');
   
-  if (has6K && has20F) {
-    formTypeMultiplier = 1.10; // Slight boost: 6-K + 20-F (frequent combo, good signal coverage)
+  if (has6K && has20F && !has8K) {
+    formTypeMultiplier = 1.15; // 15% boost: 6-K + 20-F (proven winner combo) - clean catalysts only
+  } else if ((has6K && has8K) || (has8K && !has6K)) {
+    formTypeMultiplier = 0.90; // 10% penalty: 6-K + 8-K or 8-K alone (structure/toxic plays)
   }
 
   // Weighted calculation (volume 50%, float 25%, S/O 25%) - but with lower base scores
-  const signalScore = (floatScore * 0.25 + soScore * 0.25 + volumeScore * 0.5) * signalMultiplier * adrMultiplier * soBonus * financingMultiplier * maMultiplier * item801Multiplier * lowFloatMomentumBonus * formTypeMultiplier;
+  const signalScore = (floatScore * 0.25 + soScore * 0.25 + volumeScore * 0.5) * signalMultiplier * adrMultiplier * soBonus * financingMultiplier * maMultiplier * item801Multiplier * lowFloatPumpBonus * formTypeMultiplier;
   
   return {
     score: parseFloat(Math.min(1.0, signalScore).toFixed(2)),
@@ -582,7 +687,11 @@ const SEMANTIC_KEYWORDS = {
   'Financing Events': ['IPO Announced', 'Debt Offering', 'Credit Facility', 'Loan Facility', 'Financing Secured', 'Capital Structure', 'Bond Issuance'],
   'Analyst Coverage': ['Analyst Initiation', 'Analyst Upgrade', 'Analyst Initiation Buy', 'Rating Upgrade', 'Price Target Increase', 'Outperform Rating', 'Buy Rating Initiated'],
   'Product Discontinuation': ['Product Discontinuation', 'Product Discontinue', 'Discontinuing Product', 'Product Line Discontinued', 'End Of Life Product', 'Phase Out Product'],
-  'Loss of Major Customer': ['Major Customer Loss', 'Lost Major Customer', 'Significant Customer Left', 'Key Customer Departure', 'Primary Customer Loss']
+  'Loss of Major Customer': ['Major Customer Loss', 'Lost Major Customer', 'Significant Customer Left', 'Key Customer Departure', 'Primary Customer Loss'],
+  'Late Filing Notice': ['Unable To File', 'Form 12b-25', 'Unreasonable Effort', 'Late Filing Notification', 'Delayed Quarterly Report', 'Delayed Annual Report', 'Notification Of Late Filing'],
+  'Executive Departure Non-Planned': ['Stepped Down', 'Stepped Down From Role', 'Step Down', 'Departure Of Directors', 'Departure Of Officers', 'General Manager Departed', 'Vice President Departed', 'VP Departed', 'EVP Departed', 'Executive VP Departed', 'Planned Leadership Transition'],
+  'Bankruptcy Risk - Negative ROE': ['Negative Return On Equity', 'Negative ROE', 'Negative ROIC', 'Bankruptcy Risk', 'Bankruptcy Warning', 'Going Concern', 'Substantial Doubt', 'Continue As A Going Concern'],
+  'Recent Reverse Split': ['Recent Reverse Split', 'Reverse Split Completed','Reverse Consolidation', 'Recent Consolidation'],
 };
 
 
@@ -723,7 +832,7 @@ const detectThirdPartyServices = (text) => {
   return detected.length > 0 ? detected : null;
 };
 
-const SEC_CODE_TO_COUNTRY = {'C2':'Shanghai, China','F4':'Shadong, China','F8':'Bogota, Columbia','6A':'Shanghai, China','D8':'Hong Kong','H0':'Hong Kong','K3':'Kowloon Bay, Hong Kong','S4':'Singapore','U0':'Singapore','C0':'Cayman Islands','K2':'Cayman Islands','E9':'Cayman Islands','1E':'Charlotte Amalie, U.S. Virgin Islands','VI':'Road Town, British Virgin Islands','A1':'Toronto, Canada','A2':'Winnipeg, Canada','A6':'Ottawa, Canada','A9':'Vancouver, Canada','A0':'Calgary, Canada','CA':'Toronto, Canada','C4':'Toronto, Canada','D0':'Hamilton, Canada','D9':'Toronto, Canada','Q0':'Toronto, Canada','L3':'Tel Aviv, Israel','J1':'Tokyo, Japan','M0':'Tokyo, Japan','E5':'Dublin, Ireland','I0':'Dublin, Ireland','L2':'Dublin, Ireland','DE':'Wilmington, Delaware','1T':'Athens, Greece','B2':'Bridgetown, Barbados','B6':'Nassau, Bahamas','B9':'Hamilton, Bermuda','C1':'Buenos Aires, Argentina','C3':'Brisbane, Australia','C7':'St. Helier, Channel Islands','D2':'Hamilton, Bermuda','D4':'Hamilton, Bermuda','D5':'Sao Paulo, Brazil','D6':'Bridgetown, Barbados','E4':'Hamilton, Bermuda','F2':'Frankfurt, Germany','F3':'Paris, France','F5':'Johannesburg, South Africa','G0':'St. Helier, Jersey','G1':'St. Peter Port, Guernsey','G4':'New York, United States','G7':'Copenhagen, Denmark','H1':'St. Helier, Jersey','I1':'Douglas, Isle of Man','J0':'St. Helier, Jersey','J2':'St. Helier, Jersey','J3':'St. Helier, Jersey','K1':'Seoul, South Korea','K7':'New York, United States','L0':'Hamilton, Bermuda','L6':'Milan, Italy','M1':'Majuro, Marshall Islands','N0':'Amsterdam, Netherlands','N2':'Amsterdam, Netherlands','N4':'Amsterdam, Netherlands','O5':'Mexico City, Mexico','P0':'Lisbon, Portugal','P3':'Manila, Philippines','P7':'Madrid, Spain','P8':'Warsaw, Poland','R0':'Milan, Italy','S0':'Madrid, Spain','T0':'Lisbon, Portugal','T3':'Johannesburg, South Africa','U1':'London, United Kingdom','U5':'London, United Kingdom','V0':'Zurich, Switzerland','V8':'Geneva, Switzerland','W0':'Frankfurt, Germany','X0':'London, UK','X1':'Luxembourg City, Luxembourg','Y0':'Nicosia, Cyprus','Y1':'Nicosia, Cyprus','Z0':'Johannesburg, South Africa','Z1':'Johannesburg, South Africa','Z4':'Vancouver, British Columbia, Canada','1A':'Pago Pago, American Samoa','1B':'Saipan, Northern Mariana Islands','1C':'Hagatna, Guam','1D':'San Juan, Puerto Rico','3A':'Sydney, Australia','4A':'Auckland, New Zealand','5A':'Apia, Samoa','7A':'Moscow, Russia','8A':'Mumbai, India','9A':'Jakarta, Indonesia','2M':'Frankfurt, Germany','U3':'Madrid, Spain','Y9':'Nicosia, Cyprus','AL':'Birmingham, UK','Q8':'Oslo, Norway','R1':'Panama City, Panama','V7':'Stockholm, Sweden','K8':'Jakarta, Indonesia','O9':'Monaco','W8':'Istanbul, Turkey','R5':'Lima, Peru','N8':'Kuala Lumpur, Malaysia'};
+const SEC_CODE_TO_COUNTRY = {'C2':'Shanghai, China','F4':'Shadong, China','F8':'Bogota, Columbia','6A':'Shanghai, China','D8':'Hong Kong','H0':'Hong Kong','K3':'Kowloon Bay, Hong Kong','S4':'Singapore','U0':'Singapore','C0':'Cayman Islands','K2':'Cayman Islands','E9':'Cayman Islands','1E':'Charlotte Amalie, U.S. Virgin Islands','VI':'Road Town, British Virgin Islands','A1':'Toronto, Canada','A2':'Winnipeg, Canada','A6':'Ottawa, Canada','A9':'Vancouver, Canada','A0':'Calgary, Canada','CA':'Toronto, Canada','C4':'Toronto, Canada','D0':'Hamilton, Canada','D9':'Toronto, Canada','Q0':'Toronto, Canada','L3':'Tel Aviv, Israel','J1':'Tokyo, Japan','M0':'Tokyo, Japan','E5':'Dublin, Ireland','I0':'Dublin, Ireland','L2':'Dublin, Ireland','DE':'Wilmington, Delaware','1T':'Athens, Greece','B2':'Bridgetown, Barbados','B6':'Nassau, Bahamas','B9':'Hamilton, Bermuda','C1':'Buenos Aires, Argentina','C3':'Brisbane, Australia','C7':'St. Helier, Channel Islands','D2':'Hamilton, Bermuda','D4':'Hamilton, Bermuda','D5':'Sao Paulo, Brazil','D6':'Bridgetown, Barbados','E4':'Hamilton, Bermuda','F2':'Frankfurt, Germany','F3':'Paris, France','F5':'Johannesburg, South Africa','G0':'St. Helier, Jersey','G1':'St. Peter Port, Guernsey','G4':'New York, United States','G7':'Copenhagen, Denmark','H1':'St. Helier, Jersey','I1':'Douglas, Isle of Man','J0':'St. Helier, Jersey','J2':'St. Helier, Jersey','J3':'St. Helier, Jersey','K1':'Seoul, South Korea','K7':'New York, United States','L0':'Hamilton, Bermuda','L6':'Milan, Italy','M1':'Majuro, Marshall Islands','N0':'Amsterdam, Netherlands','N2':'Amsterdam, Netherlands','N4':'Amsterdam, Netherlands','O5':'Mexico City, Mexico','P0':'Lisbon, Portugal','P3':'Manila, Philippines','P7':'Madrid, Spain','P8':'Warsaw, Poland','R0':'Milan, Italy','S0':'Madrid, Spain','T0':'Lisbon, Portugal','T3':'Johannesburg, South Africa','U1':'London, United Kingdom','U5':'London, United Kingdom','V0':'Zurich, Switzerland','V8':'Geneva, Switzerland','W0':'Frankfurt, Germany','X0':'London, UK','X1':'Luxembourg City, Luxembourg','Y0':'Nicosia, Cyprus','Y1':'Nicosia, Cyprus','Y7':'St. Peter Port, Guernsey','Z0':'Johannesburg, South Africa','Z1':'Johannesburg, South Africa','Z4':'Vancouver, British Columbia, Canada','1A':'Pago Pago, American Samoa','1B':'Saipan, Northern Mariana Islands','1C':'Hagatna, Guam','1D':'San Juan, Puerto Rico','3A':'Sydney, Australia','4A':'Auckland, New Zealand','5A':'Apia, Samoa','7A':'Moscow, Russia','8A':'Mumbai, India','9A':'Jakarta, Indonesia','2M':'Frankfurt, Germany','U3':'Madrid, Spain','Y9':'Nicosia, Cyprus','AL':'Birmingham, UK','Q8':'Oslo, Norway','R1':'Panama City, Panama','V7':'Stockholm, Sweden','K8':'Jakarta, Indonesia','O9':'Monaco','W8':'Istanbul, Turkey','R5':'Lima, Peru','N8':'Kuala Lumpur, Malaysia'};
 
 const parseSemanticSignals = (text) => {
   if (!text) return {};
@@ -746,11 +855,43 @@ const parseSemanticSignals = (text) => {
 
 const extractReverseSplitRatio = (text) => {
   if (!text) return null;
-  // Match patterns like "1-for-10", "1-for-20", "1 for 10", etc.
-  const ratioMatch = text.match(/1\s*(?:-|for)\s*(\d+)/i);
-  if (ratioMatch && ratioMatch[1]) {
-    return `1-for-${ratioMatch[1]}`;
+  
+  // Priority 1: Look for explicit reverse split announcements with ratios
+  // Pattern: "reverse split of... at a ratio of 1-for-X" or "1-for-X reverse stock split"
+  let match = text.match(/reverse\s+(?:split|combination|consolidation).*?(?:ratio|at)\s+(?:of\s+)?1\s*(?:-|for)\s*(\d+)/i);
+  if (match && match[1]) {
+    return `1-for-${match[1]}`;
   }
+  
+  // Priority 2: Look for "approved a ... 1-for-X" followed by "reverse"
+  match = text.match(/approved.*?1\s*(?:-|for)\s*(\d+)\s*.*?reverse/i);
+  if (match && match[1]) {
+    return `1-for-${match[1]}`;
+  }
+  
+  // Priority 3: Look for announcements with explicit ratio like "1-for-60"
+  match = text.match(/(?:announces?|announced)\s+(?:a\s+)?1\s*(?:-|for)\s*(\d+)\s+reverse/i);
+  if (match && match[1]) {
+    return `1-for-${match[1]}`;
+  }
+  
+  // Priority 4: Match "every X shares will be combined into one" pattern
+  match = text.match(/every\s+(\d+)\s+(?:shares|ordinary shares).*?(?:will\s+)?(?:be\s+)?combined?\s+into\s+(?:one|1)\s+(?:share|post)/i);
+  if (match && match[1]) {
+    return `1-for-${match[1]}`;
+  }
+  
+  // Priority 5: Context-aware 1-for-X match (avoids file numbers like 001-38857)
+  // Must have "reverse", "split", "consolidation", "combination", or "stock" nearby
+  match = text.match(/(reverse|split|consolidation|combination|stock)\s+.*?1\s*(?:-|for)\s*(\d{2,3})/i);
+  if (match && match[2]) {
+    const ratio = parseInt(match[2]);
+    // Validate it's a reasonable split ratio (between 2 and 1000, not file number)
+    if (ratio >= 2 && ratio <= 1000) {
+      return `1-for-${match[2]}`;
+    }
+  }
+  
   return null;
 };
 
@@ -1004,7 +1145,7 @@ const saveToCSV = (alertData) => {
     }
     
     // Build CSV row with data
-    const csvVWAP = calculateVWAP(alertData.price, alertData.volume);
+    const csvVWAP = alertData.vwapValue || 'N/A';
     const row = [
       escapeCSV(filedDate),
       escapeCSV(filedTime),
@@ -1696,6 +1837,231 @@ async function getFilingText(indexUrl) {
   return '';
 }
 
+// Get shares outstanding from SEC 10-K/10-Q XBRL filings
+async function getSharesOutstandingFromSEC(cik) {
+  try {
+    const padded = cik.toString().padStart(10, '0');
+    await rateLimit.wait();
+    
+    const res = await fetchWithTimeout(`https://data.sec.gov/submissions/CIK${padded}.json`, CONFIG.SEC_FETCH_TIMEOUT, {
+      headers: {
+        'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
+        'Accept': 'application/json'
+      }
+    });
+    
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const data = await res.json();
+    
+    // Get the most recent 10-K or 10-Q filing
+    const filings = data.filings?.recent?.filings || [];
+    const recentTenK = filings.find(f => f.form === '10-K' || f.form === '10-Q');
+    
+    if (!recentTenK) {
+      log('WARN', `No recent 10-K/10-Q found for CIK ${cik}`);
+      return null;
+    }
+    
+    // Fetch the XBRL data for this filing
+    const accessionNumber = recentTenK.accession_number?.replace(/-/g, '') || '';
+    const xbrlUrl = `https://www.sec.gov/Archives/edgar/${padded}/${accessionNumber}/${accessionNumber}-index.json`;
+    
+    await rateLimit.wait();
+    const xbrlRes = await fetchWithTimeout(xbrlUrl, CONFIG.SEC_FETCH_TIMEOUT, {
+      headers: {
+        'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
+        'Accept': 'application/json'
+      }
+    });
+    
+    if (!xbrlRes.ok) throw new Error(`XBRL fetch failed: ${xbrlRes.status}`);
+    const xbrlData = await xbrlRes.json();
+    
+    // Find the XBRL file
+    const xbrlFile = xbrlData.files?.find(f => f.name?.endsWith('_htm.xml'));
+    if (!xbrlFile) {
+      log('WARN', `No XBRL file found for CIK ${cik}`);
+      return null;
+    }
+    
+    const xmlUrl = `https://www.sec.gov/Archives/edgar/${padded}/${accessionNumber}/${xbrlFile.name}`;
+    await rateLimit.wait();
+    
+    const xmlRes = await fetchWithTimeout(xmlUrl, CONFIG.SEC_FETCH_TIMEOUT, {
+      headers: {
+        'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
+        'Accept': 'application/xml'
+      }
+    });
+    
+    if (!xmlRes.ok) throw new Error(`XML fetch failed: ${xmlRes.status}`);
+    const xmlText = await xmlRes.text();
+    
+    // Extract CommonStockSharesOutstanding from XML
+    const match = xmlText.match(/<us-gaap:CommonStockSharesOutstanding[^>]*>(\d+(?:,\d{3})*)<\/us-gaap:CommonStockSharesOutstanding>/);
+    
+    if (match && match[1]) {
+      const sharesOutstanding = parseInt(match[1].replace(/,/g, ''));
+      log('INFO', `SEC shares outstanding for CIK ${cik}: ${sharesOutstanding.toLocaleString()}`);
+      return sharesOutstanding;
+    }
+    
+    log('WARN', `Could not extract CommonStockSharesOutstanding from XBRL for CIK ${cik}`);
+    return null;
+  } catch (err) {
+    log('WARN', `Failed to fetch shares outstanding from SEC for CIK ${cik}: ${err.message}`);
+    return null;
+  }
+}
+
+// Get float from SEC 10-K/10-Q XBRL filings
+async function getFloatFromSEC(cik) {
+  try {
+    const padded = cik.toString().padStart(10, '0');
+    await rateLimit.wait();
+    
+    // Get the most recent 10-K or 10-Q filing
+    const res = await fetchWithTimeout(`https://data.sec.gov/submissions/CIK${padded}.json`, CONFIG.SEC_FETCH_TIMEOUT, {
+      headers: {
+        'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
+        'Accept': 'application/json'
+      }
+    });
+    
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const data = await res.json();
+    
+    const filings = data.filings?.recent?.filings || [];
+    const recentTenK = filings.find(f => f.form === '10-K' || f.form === '10-Q');
+    
+    if (!recentTenK) {
+      log('WARN', `No recent 10-K/10-Q found for CIK ${cik} to get float`);
+      return null;
+    }
+    
+    // Fetch the XBRL data for this filing
+    const accessionNumber = recentTenK.accession_number?.replace(/-/g, '') || '';
+    const xbrlUrl = `https://www.sec.gov/Archives/edgar/${padded}/${accessionNumber}/${accessionNumber}-index.json`;
+    
+    await rateLimit.wait();
+    const xbrlRes = await fetchWithTimeout(xbrlUrl, CONFIG.SEC_FETCH_TIMEOUT, {
+      headers: {
+        'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
+        'Accept': 'application/json'
+      }
+    });
+    
+    if (!xbrlRes.ok) throw new Error(`XBRL fetch failed: ${xbrlRes.status}`);
+    const xbrlData = await xbrlRes.json();
+    
+    // Find the XBRL file
+    const xbrlFile = xbrlData.files?.find(f => f.name?.endsWith('_htm.xml'));
+    if (!xbrlFile) {
+      log('WARN', `No XBRL file found for CIK ${cik}`);
+      return null;
+    }
+    
+    const xmlUrl = `https://www.sec.gov/Archives/edgar/${padded}/${accessionNumber}/${xbrlFile.name}`;
+    await rateLimit.wait();
+    
+    const xmlRes = await fetchWithTimeout(xmlUrl, CONFIG.SEC_FETCH_TIMEOUT, {
+      headers: {
+        'User-Agent': 'SEC-Bot/1.0 (sendmebsvv@outlook.com)',
+        'Accept': 'application/xml'
+      }
+    });
+    
+    if (!xmlRes.ok) throw new Error(`XML fetch failed: ${xmlRes.status}`);
+    const xmlText = await xmlRes.text();
+    
+    // Try PublicFloat tag (most direct float from SEC 10-K)
+    let floatMatch = xmlText.match(/<us-gaap:PublicFloat[^>]*>(\d+(?:,\d{3})*)<\/us-gaap:PublicFloat>/);
+    
+    if (floatMatch && floatMatch[1]) {
+      const publicFloat = parseInt(floatMatch[1].replace(/,/g, ''));
+      log('INFO', `SEC public float for CIK ${cik}: ${publicFloat.toLocaleString()}`);
+      return publicFloat;
+    }
+    
+    log('WARN', `Could not extract float from XBRL for CIK ${cik}`);
+    return null;
+  } catch (err) {
+    log('WARN', `Failed to fetch float from SEC for CIK ${cik}: ${err.message}`);
+    return null;
+  }
+}
+
+// Get ownership metrics from SEC, fallback to FMP
+async function getOwnershipMetrics(ticker, cik) {
+  try {
+    log('DEBUG', `Fetching ownership metrics for ${ticker} (CIK ${cik})`);
+    
+    // Try SEC first for shares outstanding (free, no rate limit issues)
+    const sharesOutstanding = await getSharesOutstandingFromSEC(cik);
+    
+    if (!sharesOutstanding) {
+      // Fallback to FMP for both shares outstanding and float
+      log('INFO', `SEC lookup failed for ${ticker}, falling back to FMP`);
+      const fmpKey = process.env.FMP_API_KEY || 'demo';
+      const fmpRes = await fetchWithTimeout(`https://financialmodelingprep.com/api/v4/shares-float?symbol=${ticker}&apikey=${fmpKey}`, 10000);
+      
+      if (fmpRes.ok) {
+        const fmpData = await fmpRes.json();
+        if (fmpData[0]) {
+          return {
+            sharesOutstanding: fmpData[0].weightedAverageShsOut,
+            float: fmpData[0].floatShares,
+            source: 'FMP'
+          };
+        }
+      }
+      
+      log('WARN', `Both SEC and FMP lookups failed for ${ticker}`);
+      return null;
+    }
+    
+    // Got shares outstanding from SEC, try SEC for float first
+    let floatData = null;
+    let floatSource = null;
+    
+    try {
+      floatData = await getFloatFromSEC(cik);
+      if (floatData) {
+        floatSource = 'SEC';
+      }
+    } catch (err) {
+      log('DEBUG', `SEC float lookup failed for ${ticker}: ${err.message}`);
+    }
+    
+    // Fallback to FMP if SEC float didn't work
+    if (!floatData) {
+      try {
+        const fmpKey = process.env.FMP_API_KEY || 'demo';
+        const fmpRes = await fetchWithTimeout(`https://financialmodelingprep.com/api/v4/shares-float?symbol=${ticker}&apikey=${fmpKey}`, 10000);
+        
+        if (fmpRes.ok) {
+          const fmpData = await fmpRes.json();
+          if (fmpData[0]) {
+            floatData = fmpData[0].floatShares;
+            floatSource = 'FMP';
+          }
+        }
+      } catch (err) {
+        log('DEBUG', `FMP float lookup failed for ${ticker}: ${err.message}`);
+      }
+    }
+    
+    return {
+      sharesOutstanding,
+      float: floatData || null,
+      source: floatSource ? `SEC+${floatSource}` : 'SEC'
+    };
+  } catch (err) {
+    log('ERROR', `Failed to get ownership metrics for ${ticker}: ${err.message}`);
+    return null;
+  }
+}
+
 const sendPersonalWebhook = (alertData) => {
   try {
     // Skip if no webhook URL configured
@@ -1774,8 +2140,8 @@ const sendPersonalWebhook = (alertData) => {
     const floatDisplay = alertData.float && alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A';
     const signalScoreBold = alertData.signalScore ? `**${alertData.signalScore}**` : 'N/A';
     const signalScoreDisplay = alertData.signalScore ? alertData.signalScore : 'N/A';
-    const vwap = calculateVWAP(alertData.price, alertData.volume);
-    const vwapDisplay = vwap !== 'N/A' ? `$${vwap.toFixed(2)}` : 'N/A';
+    const vwap = alertData.vwapValue || 'N/A';
+    const vwapDisplay = vwap !== 'N/A' ? `$${parseFloat(vwap).toFixed(2)}` : 'N/A';
     
     const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, ${reason}, vol/avg: ${volDisplay}/${avgDisplay}${volumeMultiplier}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, vwap: ${vwapDisplay}
     https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
@@ -1984,7 +2350,7 @@ app.get('/api/quote/:ticker', async (req, res) => {
     
     const quotePrice = quote?.regularMarketPrice || 'N/A';
     const quoteVolume = quote?.regularMarketVolume || 0;
-    const quoteVWAP = calculateVWAP(quotePrice, quoteVolume);
+    const quoteVWAP = await fetchVWAP(ticker);
     
     res.json({
       symbol: ticker,
@@ -2288,6 +2654,7 @@ app.listen(PORT, () => {
           let normalizedIncorporated = 'Unknown';
           let normalizedLocated = 'Unknown';
           let companyName = 'N/A';
+          let filerName = null;
           
           if (filing.cik) {
             const secData = await getCountryAndTicker(filing.cik);
@@ -2296,6 +2663,9 @@ app.listen(PORT, () => {
             normalizedLocated = secData.located || 'Unknown';
             companyName = secData.companyName || 'Unknown';
           }
+          
+          // Try to extract actual filer name from the filing text
+          filerName = parseFilerName(text);
           
           // If still no company name from SEC, parse from filing text
           if (companyName === 'Unknown' || companyName === 'N/A') {
@@ -2396,6 +2766,10 @@ app.listen(PORT, () => {
           }
           if (!formLogMessage) formLogMessage = 'None';
           log('INFO', `Forms: ${formLogMessage}`);
+          
+          if (filerName) {
+            log('INFO', `Registrant: ${filerName}`);
+          }
           
           if (signalKeys.length > 0) {
             log('INFO', `${direction}: ${signalKeys.join(', ')}`);
@@ -2517,14 +2891,15 @@ app.listen(PORT, () => {
           const hasDilution = sigKeys.includes('Dilution');
           const hasStockSplit = sigKeys.includes('Stock Split');
           
-          // Flag as SHORT if: Reverse Split + Dilution/Stock Split (structural destruction)
+          // ONLY SHORT if: Reverse Split + Dilution/Stock Split (structural destruction)
           const isShortCombo = hasReverseSplit && (hasDilution || hasStockSplit);
           
           // Bearish signals that force SHORT regardless
-          const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Product Discontinuation', 'Loss of Major Customer', 'Going Dark', 'Bid Price Delisting', 'Asset Sale', 'Share Recall', 'Board Change', 'Artificial Inflation', 'Share Dilution', 'Convertible Dilution', 'Stock Split', 'Reverse Split', 'Convertible Debt', 'Operating Loss', 'Net Loss', 'Cash Burn', 'Accumulated Deficit', 'Warrant Dilution', 'Compensation Dilution', 'Warrant Call', 'Regulatory Violation', 'Executive Liquidation', 'China Risk', 'VIE Structure', 'Stock Dividend'];
+          const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Product Discontinuation', 'Loss of Major Customer', 'Going Dark', 'Bid Price Delisting', 'Asset Sale', 'Share Recall', 'Board Change', 'Artificial Inflation', 'Share Dilution', 'Convertible Dilution', 'Stock Split', 'Reverse Split', 'Convertible Debt', 'Operating Loss', 'Net Loss', 'Cash Burn', 'Accumulated Deficit', 'Warrant Dilution', 'Compensation Dilution', 'Warrant Call', 'Regulatory Violation', 'Executive Liquidation', 'China Risk', 'VIE Structure', 'Stock Dividend', 'Asset Impairment', 'Junk Debt', 'Executive Departure', 'Executive Detention/Investigation', 'Deal Termination', 'Auditor Change', 'Asian Regulation Risk', 'Nasdaq Delisting'];
           const bearishCount = sigKeys.filter(cat => bearishCats.includes(cat)).length;
-          const bullishCats = ['Major Contract', 'Earnings Beat', 'Revenue Growth', 'Partnership', 'Licensing Deal', 'Stock Buyback', 'Merger/Acquisition'];
+          const bullishCats = ['Major Contract', 'Earnings Beat', 'Revenue Growth', 'Licensing Deal', 'Stock Buyback', 'Merger/Acquisition', 'FDA Approved', 'FDA Breakthrough', 'Clinical Success', 'Insider Buying', 'Insider Confidence', 'Insider Block Buy', 'DTC Eligible Restored', 'Dividend Increase', 'Government Contract'];
           const bullishCount = sigKeys.filter(cat => bullishCats.includes(cat)).length;
+          const hasPartnership = sigKeys.includes('Partnership');
           
           // Determine SHORT or LONG - bearish signals override bullish
           if (isShortCombo || bearishCount >= 2) {
@@ -2535,6 +2910,10 @@ app.listen(PORT, () => {
             shortOpportunity = true;
           } else if (bullishCount > 0) {
             longOpportunity = true;
+          } else if (hasPartnership && bullishCount === 0) {
+            // Partnership alone is neutral - don't mark as long or short
+            shortOpportunity = null;
+            longOpportunity = null;
           }
           // If no signals, leave both null for "N/A"
           
@@ -2660,7 +3039,7 @@ app.listen(PORT, () => {
           if (shortOpportunity || longOpportunity) {
             log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, FTD: ${ftdDisplay}, ${directionLabel}`);
           } else {
-            log('INFO', `Stock: ${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, FTD: ${ftdDisplay}`);
+            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, FTD: ${ftdDisplay}`);
           }
           
           // Check for FDA Approvals and Chinese/Cayman reverse splits that bypass time window filter
@@ -2985,7 +3364,12 @@ app.listen(PORT, () => {
           // Filing time bonus: stronger when filed near open/close (9:30am & 3:30pm ET)
           const filingTimeBonus = filingTimeMultiplier > 1.0 ? parseFloat(filingTimeMultiplier.toFixed(2)) : null;
           
-          const vwapValue = calculateVWAP(price, volume);
+          let vwapValue = 'N/A';
+          try {
+            vwapValue = await fetchVWAP(ticker);
+          } catch (vwapErr) {
+            vwapValue = 'N/A';
+          }
           
           // Detect reverse split ratio and reason
           let reverseSplitRatio = null;
@@ -3018,6 +3402,7 @@ app.listen(PORT, () => {
             ticker: ticker || filing.cik || 'Unknown',
             title: filing.title ? filing.title.replace(/\s*\(\d{10}\)\s*$/, '').trim() : 'Unknown Company',
             companyName: companyName !== 'Unknown' ? companyName : null,
+            filerName: filerName || null,
             price: price,
             vwap: vwapValue,
             signalScore: signalScoreData.score,
@@ -3096,36 +3481,8 @@ app.listen(PORT, () => {
               
               // Only save to alerts if NO skip reason (real alert)
               if (!alertData.skipReason) {
-                // Path 1: Structure Only + (S/O Bonus OR Filing Time Bonus) = Toxic corporate action
-                // Path 2: Low Float Momentum (<2M float + clean catalyst + no death flags) = Momentum play
-                
-                const hasStructureOnly = signalScoreData.adrMultiplier > 1.0;
-                const hasSoBonus = signalScoreData.soBonus > 1.0;
-                const hasFilingBonus = filingTimeMultiplier > 1.0 || globalAttentionData.bonus > 1.0;
-                const hasLowFloatMomentumBonus = signalScoreData.signalMultiplier > 1.2; // lowFloatMomentumBonus is 1.25, reflected in final score
-                
-                // Path 1: Toxic structure plays
-                const meetsStructurePath = hasStructureOnly && (hasSoBonus || hasFilingBonus);
-                
-                // Path 2: Low-float momentum plays
-                const meetsLowFloatPath = hasLowFloatMomentumBonus && signalScoreData.score > 0.55;
-                
-                if (meetsStructurePath || meetsLowFloatPath) {
-                  // Set alertType to distinguish which path triggered
-                  if (meetsStructurePath && meetsLowFloatPath) {
-                    alertData.alertType = 'Composite';
-                  } else if (meetsStructurePath) {
-                    alertData.alertType = 'Toxic Structure';
-                  } else {
-                    alertData.alertType = 'High Velocity';
-                  }
-                  saveAlert(alertData);
-                } else {
-                  // Doesn't meet winning pattern - save to CSV only for tracking
-                  alertData.skipReason = 'Pattern Filter (no S/O Bonus, Filing Time Bonus or Low Float Momentum)';
-
-                  saveToCSV(alertData);
-                }
+                // Save all valid alerts that passed signal and filter checks
+                saveAlert(alertData);
               } else {
                 // Save borderline stocks to CSV only
                 saveToCSV(alertData);

@@ -211,12 +211,15 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   else volumeScore = 0.15;
 
   let signalMultiplier = 1.0;
+  const structuralMovers = ['Credit Default', 'Going Dark', 'Warrant Call', 'Asset Sale', 'Share Recall', 'Deal Termination', 'Auditor Change', 'Preferred Redemption', 'DTC Eligible Restored'];
+  const hasStructuralMover = signalCategories?.some(cat => structuralMovers.includes(cat));
   const deathSpiralCats = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Loss', 'Net Loss', 'Cash Burn', 'Accumulated Deficit', 'Share Dilution', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Accounting Restatement', 'Regulatory Violation', 'Executive Liquidation', 'Credit Default'];
   const hasDeathSpiral = signalCategories?.some(cat => deathSpiralCats.includes(cat));
   const hasSqueeze = signalCategories?.some(cat => cat === 'Artificial Inflation');
   
-  if (hasDeathSpiral) signalMultiplier = 1.15;
-  else if (hasSqueeze) signalMultiplier = 1.10;
+  if (hasStructuralMover) signalMultiplier = 1.30;  // Structural events with mechanical execution
+  else if (hasDeathSpiral) signalMultiplier = 1.15;    // Death spirals force selling
+  else if (hasSqueeze) signalMultiplier = 1.10;        // Supply shocks
   else signalMultiplier = 1.0;
 
   // ADR Detection - verify actual custodian banks + incorporated != located structure
@@ -244,7 +247,7 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
       // Only apply reduced boost (1.15x) since not verified via text scan
       adrMultiplier = 1.15; // 15% boost for ADR-like structure without custodian verification
       isCustodianVerified = false;
-      custodianName = 'Structure Only';
+      custodianName = 'ADR Structure (Unverified)';
     }
   }
   
@@ -422,12 +425,15 @@ const log = (level, message) => {
   console.log(`\x1b[90m[${new Date().toISOString()}] ${titleColor}${level}: ${messageColor}${message}\x1b[0m`);
 };
 
-const FORM_TYPES = ['6-K', '6-K/A', '8-K', '8-K/A', 'S-1', 'S-3', 'S-4', 'S-8', 'F-1', 'F-3', 'F-4', '424B1', '424B2', '424B3', '424B4', '424B5', '424H8', '20-F', '20-F/A', '13G', '13G/A', '13D', '13D/A', 'Form D', 'EX-99.1', 'EX-99.2', 'EX-10.1', 'EX-10.2', 'EX-3.1', 'EX-3.2', 'EX-4.1', 'EX-4.2', 'EX-10.3', 'EX-1.1', 'Item 1.01', 'Item 1.02', 'Item 1.03', 'Item 1.04', 'Item 1.05', 'Item 2.01', 'Item 2.02', 'Item 2.03', 'Item 2.04', 'Item 2.05', 'Item 2.06', 'Item 3.01', 'Item 3.02', 'Item 3.03', 'Item 4.01', 'Item 5.01', 'Item 5.02', 'Item 5.03', 'Item 5.04', 'Item 5.05', 'Item 5.06', 'Item 5.07', 'Item 5.08', 'Item 5.09', 'Item 5.10', 'Item 5.11', 'Item 5.12', 'Item 5.13', 'Item 5.14', 'Item 5.15', 'Item 6.01', 'Item 7.01', 'Item 8.01', 'Item 9.01'];
+const FORM_TYPES = ['6-K', '6-K/A', '8-K', '8-K/A', 'S-1', 'S-3', 'S-4', 'S-8', 'F-1', 'F-3', '	SC TO-C', 'SC14D9C', 'S-9', 'F-4', 'FWG', '424B1', '424B2', '424B3', '424B4', '424B5', '424H8', '20-F', '20-F/A', '13G', '13G/A', '13D', '13D/A', 'Form D', 'EX-99.1', 'EX-99.2', 'EX-10.1', 'EX-10.2', 'EX-3.1', 'EX-3.2', 'EX-4.1', 'EX-4.2', 'EX-10.3', 'EX-1.1', 'Item 1.01', 'Item 1.02', 'Item 1.03', 'Item 1.04', 'Item 1.05', 'Item 2.01', 'Item 2.02', 'Item 2.03', 'Item 2.04', 'Item 2.05', 'Item 2.06', 'Item 3.01', 'Item 3.02', 'Item 3.03', 'Item 4.01', 'Item 5.01', 'Item 5.02', 'Item 5.03', 'Item 5.04', 'Item 5.05', 'Item 5.06', 'Item 5.07', 'Item 5.08', 'Item 5.09', 'Item 5.10', 'Item 5.11', 'Item 5.12', 'Item 5.13', 'Item 5.14', 'Item 5.15', 'Item 6.01', 'Item 7.01', 'Item 8.01', 'Item 9.01'];
 const SEMANTIC_KEYWORDS = {
   'Merger/Acquisition': ['Merger Agreement', 'Acquisition Agreement', 'Agreed To Acquire', 'Merger Consideration', 'Premium Valuation', 'Going Private', 'Take Private', 'Acquisition Closing', 'Closing Of Acquisition', 'Completed Acquisition'],
   'M&A Rebrand': ['Name Change', 'Corporate Name Change', 'Ticker Change', 'Trading Name Change', 'Change Of Company Name'],
-  'FDA Granted': ['FDA Approval', 'FDA Clearance', 'EMA Approval', 'Breakthrough Therapy', 'Fast Track Designation', 'Priority Review'],
-  'Clinical Success': ['Positive Trial Results', 'Phase 3 Success', 'Topline Results Beat', 'Efficacy Demonstrated', 'Safety Profile Met'],
+  'FDA Approved': ['FDA Approval', 'FDA Clearance', 'Approval Granted', 'Approval Letter', 'Approves', 'Approving', 'EMA Approval', 'Post-Market Approval'],
+  'FDA Breakthrough': ['Breakthrough Therapy', 'Breakthrough Designation', 'Fast Track Designation', 'Priority Review', 'Priority Status'],
+  'FDA Filing': ['NDA Submission', 'NDA Filed', 'BLA Submission', 'BLA Filed', 'IND Application', 'Regulatory Filing'],
+  'Clinical Success': ['Positive Trial Results', 'Phase 3 Success', 'Topline Results Beat', 'Efficacy Demonstrated', 'Safety Profile Met', 'Positive Results', 'Phase 1', 'Phase 2', 'Phase 3', 'Trial Results', 'Efficacy', 'Safety Profile', 'Cohort Results', 'Primary Endpoint', 'Enrollment Complete', 'Data Readout', 'Topline Data', 'Meaningful Improvement', 'Beat Placebo', 'Indication', 'Mechanism Of Action', 'Biomarker', 'Immune Rebalancing', 'Comparator', 'Patient Population', 'Favorable Safety', 'Separation From Placebo', 'Demonstrated Benefit', 'Clinical Benefit', 'Strong Efficacy'],
+  'Clinical Milestone': ['Phase Advancement', 'Phase 2 Initiation', 'Phase 3 Initiation', 'Enrollment Opened', 'Enrollment Initiated', 'Trial Initiation', 'Investigational New Drug', 'IND Application', 'NDA Filing', 'PMA Submission', 'Clinical Trial Site', 'Patient Enrollment', 'First Patient', 'Program Initiation', 'Patient Dosed', 'First Dose', 'Dose Escalation', 'Cohort Complete'],
   'Capital Raise': ['Oversubscribed', 'Institutional Participation', 'Lead Investor', 'Top-Tier Investor', 'Strategic Investor'],
   'Bought Deal': ['Bought Deal', 'Underwritten Offering', 'Underwriter Commitment', 'Underwritten Bought Deal'],
   'Earnings Beat': ['Earnings Beat', 'Beat Expectations', 'Beat Consensus', 'Exceeded Guidance', 'Record Revenue'],
@@ -447,17 +453,29 @@ const SEMANTIC_KEYWORDS = {
   'Convertible Dilution': ['Convertible Notes', 'Convertible Bonds', 'Convertible Securities'],
   'Warrant Dilution': ['Warrant Issuance', 'Warrant Redemption Notice', 'Forced Exercise', 'Warrant Call Notice'],
   'Compensation Dilution': ['Option Grants Excessive', 'Employee Incentive', 'Equity Compensation', 'RSU Grant', 'Restricted Stock Unit', 'Equity incentive plan increase'],
-  'Nasdaq Delisting': ['Nasdaq Deficiency', 'Listing Standards Warning', 'Nasdaq Notification', 'Nasdaq Letter', 'Delisting Risk', 'Delisting Threat'],
+  'Nasdaq Delisting': ['Nasdaq Deficiency', 'Listing Standards Warning', 'Nasdaq Notification', 'Delisting Determination', 'Nasdaq Letter', 'Delisting Risk', 'Delisting Threat'],
   'Bid Price Delisting': ['Minimum Bid Price', 'Regained Compliance'],
   'Executive Liquidation': ['Director Sale', 'Officer Sale', 'CEO Selling', 'CFO Selling', 'Massive Liquidation'],
   'Accounting Restatement': ['Financial Restatement', 'Audit Non-Reliance', 'Material Weakness', 'Control Deficiency', 'Audit Adjustment'],
-  'Credit Default': ['Loan Default', 'Debt Covenant Breach', 'Event Of Default', 'Credit Agreement Violation'],
-  'Senior Debt': ['Senior Debt Issued', 'High Leverage'],
+  'Credit Default': ['Loan Default', 'Debt Covenant Breach', 'Event Of Default', 'Credit Agreement Violation', 'Covenant Breach', 'Default Event', 'Acceleration Of Debt', 'Mandatory Prepayment'],
+  'Going Dark': ['Form 15', 'Deregistration', 'Going Dark', 'Stop Reporting', 'Cease Reporting', 'Edgar Delisting', 'No Longer Report', 'Deregister', 'Terminate Registration', 'Exit From SEC Reporting', 'Shall No Longer File'],
+  'Warrant Call': ['Warrant Redemption Notice', 'Forced Exercise', 'Call Notice', 'Redemption Notice', 'Warrant Call', 'Forced Redemption', 'Warrant Exercised', 'Warrant Expiration', 'Warrant Notice'],
+  'Asset Sale': ['Asset Sale', 'Asset Disposition', 'Business Disposition', 'Sold Assets', 'Divest', 'Divesting', 'Asset Divestiture', 'Strategic Sale', 'Sale Of Assets', 'Disposed Of', 'Disposition Of', 'Divested'],
+  'Share Recall': ['Share Recall', 'Share Call', 'Shareholder Vote', 'Recalled Shares', 'Voting Agreement', 'Recapitalization', 'Consolidation', 'Reverse Recapitalization', 'Stock Consolidation', 'Recapitalize'],
   'Convertible Debt': ['Convertible Bonds', 'Convertible Notes'],
   'Junk Debt': ['Junk Bond Offering'],
   'Material Lawsuit': ['Material Litigation', 'Lawsuit Filed', 'Major Lawsuit', 'SEC Investigation', 'DOJ Investigation'],
   'Supply Chain Crisis': ['Supply Chain Disruption', 'Production Halt', 'Factory Closure', 'Supplier Bankruptcy', 'Shipping Delays'],
-  'Executive Departure': ['CEO Departed', 'CFO Departed', 'CEO Resigned', 'Board Resignation', 'Chief Officer Left'],
+  'Executive Departure': ['CEO Departed', 'CFO Departed', 'CEO Resigned', 'Chief Officer Left', 'CEO Resignation', 'CFO Departure'],
+  'Board Change': ['Board Resignation', 'Director Appointed', 'Board Member Appointed', 'Director Elected', 'Director Resigned'],
+  'Deal Termination': ['Deal Terminated', 'Merger Terminated', 'Acquisition Terminated', 'Agreement Terminated', 'Transaction Terminated', 'Deal Break', 'Termination Of Agreement', 'Failed To Close', 'Terminated The'],
+  'Auditor Change': ['Auditor Resigned', 'Audit Firm Changed', 'Auditor Departure', 'Internal Controls Weakness', 'Material Weakness', 'Auditor No Longer', 'Changes Auditor', 'Change Of Auditor'],
+  'Preferred Redemption': ['Preferred Redemption', 'Preferred Call Notice', 'Redemption Notice', 'Preferred Redeemed', 'Series Redeemed', 'Redemption Of Preferred'],
+  'Debt Refinance': ['Debt Refinanced', 'Refinancing Completed', 'Extended Maturity', 'Debt Extension', 'Loan Refinanced', 'Refinance Debt', 'Facility Refinanced', 'Extension Agreement'],
+  'Debt Restructure': ['Debt Restructured', 'Restructure Agreement', 'Debt Modification', 'Amended Restated', 'Debt Covenant Waiver', 'Forbearance Agreement'],
+  'Spinoff Completed': ['Spinoff Completed', 'Separation Completed', 'Split-Off', 'Pro-Rata Distribution', 'Distributed Shares'],
+  'DTC Eligible Restored': ['DTC Eligible', 'DTC Chill Lifted', 'Eligibility Restored', 'DTC Restoration', 'Chill Status', 'Chill Removed', 'Resume Trading'],
+  'Insider Block Buy': ['Meaningful Accumulation', 'Accumulated Shares', 'Block Purchase', 'Significant Accumulation'],
   'Asset Impairment': ['Goodwill Impairment', 'Asset Write-Down', 'Impairment Charge', 'Valuation Adjustment'],
   'Restructuring': ['Organizational Restructure', 'Cost Reduction Program', 'Efficiency Initiative', 'Division Realignment'],
   'Stock Buyback': ['Share Repurchase', 'Buyback Authorization', 'Accelerated Buyback', 'Repurchase Program'],
@@ -469,13 +487,13 @@ const SEMANTIC_KEYWORDS = {
   'Stock Split': ['Stock Split Announced', 'Forward Split', 'Stock Dividend', 'Share Split'],
   'Dividend Increase': ['Dividend Increase', 'Dividend Hike', 'Special Dividend', 'Increased Dividend', 'Quarterly Dividend Raised', 'Annual Dividend Increase'],
   'Regulatory Violation': ['Regulatory Violation', 'FDA Warning', 'Product Recall', 'Safety Recall', 'Warning Letter'],
-  'VIE Structure': ['VIE structure', 'VIE agreement', 'variable interest'],
-  'China Risk': ['PRC regulations', 'regulatory risk', 'Chinese regulatory', 'capital control', 'foreign exchange restriction', 'dividend limitation', 'SAFE Circular', 'Subject to risks', 'Uncertainty of interpretation'],
+  'VIE Structure': ['VIE Structure', 'VIE Agreement', 'Variable Interest'],
+  'Asian Regulation Risk': ['PRC Regulations', 'Regulatory Risk', 'Chinese Regulatory', 'Capital Control', 'Foreign Exchange Restriction', 'Dividend Limitation', 'SAFE Circular', 'Subject To Risks', 'Uncertainty Of Interpretation'],
   'Mining Operations': ['Mining Operation', 'Cryptocurrency Mining', 'Blockchain Mining', 'Bitcoin Mining', 'Ethereum Mining', 'Mining Facility', 'Mining Expansion', 'Hash Rate Growth'],
   'Financing Events': ['IPO Announced', 'Debt Offering', 'Credit Facility', 'Loan Facility', 'Financing Secured', 'Capital Structure', 'Bond Issuance'],
   'Analyst Coverage': ['Analyst Initiation', 'Analyst Upgrade', 'Analyst Initiation Buy', 'Rating Upgrade', 'Price Target Increase', 'Outperform Rating', 'Buy Rating Initiated'],
   'Product Discontinuation': ['Product Discontinuation', 'Product Discontinue', 'Discontinuing Product', 'Product Line Discontinued', 'End Of Life Product', 'Phase Out Product'],
-  'Loss of Major Customer': ['Major Customer Loss', 'Lost Major Customer', 'Customer Concentration Risk', 'Significant Customer Left', 'Key Customer Departure', 'Primary Customer Loss']
+  'Loss of Major Customer': ['Major Customer Loss', 'Lost Major Customer', 'Significant Customer Left', 'Key Customer Departure', 'Primary Customer Loss']
 };
 
 
@@ -992,11 +1010,11 @@ const saveAlert = (alertData) => {
     const bonusIndicator = bonusItems.length > 0 ? ` (Bonus: ${bonusItems.join(' + ')})` : '';
     alertData.skipReason = `Alert sent: [${direction}] ${reason}${bonusIndicator}`;
     
-    // Save to CSV for analysis
-    saveToCSV(alertData);
+    // Save to CSV for analysis (non-blocking)
+    setImmediate(() => saveToCSV(alertData));
     
-    // Cleanup stale alerts based on day of week
-    cleanupStaleAlerts();
+    // Cleanup stale alerts based on day of week (non-blocking)
+    setImmediate(() => cleanupStaleAlerts());
     
     if (Object.keys(alertData.signals || {}).length > 0) {
       let stocks = [];
@@ -1018,8 +1036,8 @@ const saveAlert = (alertData) => {
     
     sendPersonalWebhook(alertData);
     
-    // Update performance tracking data for HTML dashboard
-    updatePerformanceData(alertData);
+    // Update performance tracking data for HTML dashboard (non-blocking)
+    setImmediate(() => updatePerformanceData(alertData));
     
     log('INFO', `Log: Alert saved ${alertData.ticker} (pushed to GitHub)`);
     
@@ -1199,7 +1217,7 @@ const getSharesOutstanding = async (ticker) => {
   try {
     const finnhubKey = process.env.FINNHUB_API_KEY;
     if (finnhubKey) {
-      const res = await fetchWithTimeout(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`, 3000);
+      const res = await fetchWithTimeout(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`, 8000);
       if (res.ok) {
         const data = await res.json();
         if (data.shareOutstanding && data.shareOutstanding > 0) {
@@ -1218,7 +1236,7 @@ const getFloatData = async (ticker) => {
   try {
     const avKey = process.env.ALPHA_VANTAGE_API_KEY;
     if (avKey) {
-      const res = await fetchWithTimeout(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${avKey}`, 3000);
+      const res = await fetchWithTimeout(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${avKey}`, 8000);
       if (res.ok) {
         const data = await res.json();
         if (data.SharesFloat && data.SharesFloat !== 'None') {
@@ -1235,7 +1253,7 @@ const getFloatData = async (ticker) => {
     if (!fmpKey) return 'N/A';
     
     const url = `https://financialmodelingprep.com/stable/shares-float?symbol=${ticker}&apikey=${fmpKey}`;
-    const res = await fetchWithTimeout(url, 3000);
+    const res = await fetchWithTimeout(url, 8000);
     if (!res.ok) return 'N/A';
     
     const data = await res.json();
@@ -2279,20 +2297,37 @@ app.listen(PORT, () => {
               let quoteData = null;
               const finnhubKey = process.env.FINNHUB_API_KEY;
               
-              // Try Yahoo FIRST as primary source
+              // FAST PATH: Use cached performance data first (non-blocking)
+              try {
+                if (fs.existsSync(CONFIG.PERFORMANCE_FILE)) {
+                  const perfContent = fs.readFileSync(CONFIG.PERFORMANCE_FILE, 'utf8').trim();
+                  if (perfContent) {
+                    const perfData = JSON.parse(perfContent);
+                    if (perfData[ticker]) {
+                      price = perfData[ticker].current || 'N/A';
+                      averageVolume = perfData[ticker].avgVol || 0;
+                    }
+                  }
+                }
+              } catch (e) {}
+              
+              // Try Yahoo FIRST with generous timeout
               try {
                 quoteData = await Promise.race([
                   yahooFinance.quote(ticker, {
                     fields: ['regularMarketPrice', 'regularMarketVolume', 'marketCap', 'sharesOutstanding', 'averageDailyVolume3Month']
                   }),
-                  new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
                 ]).catch(() => null);
               } catch (e) {}
               
-              // If Yahoo didn't work, try Finnhub
+              // If Yahoo didn't work, try Finnhub 
               if (!quoteData && finnhubKey) {
                 try {
-                  const fhRes = await fetchWithTimeout(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`, 5000);
+                  const fhRes = await Promise.race([
+                    fetchWithTimeout(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${finnhubKey}`, 6000),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 6500))
+                  ]);
                   if (fhRes.ok) {
                     const fhQuote = await fhRes.json();
                     if (fhQuote.c && fhQuote.c > 0) {
@@ -2303,47 +2338,37 @@ app.listen(PORT, () => {
                         sharesOutstanding: 'N/A',
                         averageDailyVolume3Month: 0
                       };
-                      
-                      // Get profile for shares and market cap
-                      try {
-                        const profRes = await fetchWithTimeout(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${finnhubKey}`, 5000);
-                        if (profRes.ok) {
-                          const prof = await profRes.json();
-                          if (prof.shareOutstanding && prof.shareOutstanding > 0) {
-                            quoteData.sharesOutstanding = Math.round(prof.shareOutstanding);
-                          }
-                          if (prof.marketCapitalization && prof.marketCapitalization > 0) {
-                            quoteData.marketCap = Math.round(prof.marketCapitalization * 1000000);
-                          }
-                        }
-                      } catch (e) {}
                     }
                   }
                 } catch (e) {}
               }
               
-              // If still no data, try FMP (has shares outstanding and float)
-              if (!quoteData) {
-                const fmpData = await getFMPQuote(ticker);
-                if (fmpData) {
-                  quoteData = fmpData;
-                }
-              }
-              
               if (quoteData) {
-                price = quoteData.regularMarketPrice || 'N/A';
+                price = quoteData.regularMarketPrice || price;
                 volume = quoteData.regularMarketVolume || 0;
                 marketCap = quoteData.marketCap || 'N/A';
                 sharesOutstanding = quoteData.sharesOutstanding || 'N/A';
-                averageVolume = quoteData.averageDailyVolume3Month || 0;
-                
-                // Use float from quoteData if available, else fetch separately
-                float = quoteData.floatShares || await getFloatData(ticker);
-              
+                averageVolume = quoteData.averageDailyVolume3Month || averageVolume;
               }
-              // If sharesOutstanding still missing, try: Alpha Vantage → Finnhub → FMP
-              if (sharesOutstanding === 'N/A' || !sharesOutstanding) {
-                sharesOutstanding = await getSharesOutstanding(ticker);
+              
+              // Fetch float data with generous timeout (max 5s)
+              if (float === 'N/A') {
+                try {
+                  float = await Promise.race([
+                    getFloatData(ticker),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                  ]);
+                } catch (e) {}
+              }
+              
+              // Fetch shares outstanding if missing (max 5s)
+              if (sharesOutstanding === 'N/A') {
+                try {
+                  sharesOutstanding = await Promise.race([
+                    getSharesOutstanding(ticker),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                  ]);
+                } catch (e) {}
               }
             } catch (err) {}
           }
@@ -2406,10 +2431,10 @@ app.listen(PORT, () => {
           const endMin = 18 * 60; // 6:00pm = 1080 minutes
           
           // Calculate signal score early for logging
-          const numFloat = (() => { const v = typeof float === 'number' ? float : (typeof float === 'string' && float !== 'N/A' ? parseInt(float) : NaN); return isNaN(v) ? 0 : v; })();
-          const numVolume = (() => { const v = typeof volume === 'number' ? volume : (typeof volume === 'string' && volume !== 'N/A' ? parseInt(volume) : NaN); return isNaN(v) ? 0 : v; })();
-          const numAvgVol = (() => { const v = typeof averageVolume === 'number' ? averageVolume : (typeof averageVolume === 'string' && averageVolume !== 'N/A' ? parseInt(averageVolume) : NaN); return isNaN(v) ? 1 : v; })();
-          const numShares = (() => { const v = typeof sharesOutstanding === 'number' ? sharesOutstanding : (typeof sharesOutstanding === 'string' && sharesOutstanding !== 'N/A' ? parseInt(sharesOutstanding) : NaN); return isNaN(v) ? 1 : v; })();
+          const numFloat = (() => { const v = typeof float === 'number' ? float : (typeof float === 'string' && float !== 'N/A' ? parseFloat(float) : NaN); return isNaN(v) ? null : v; })();
+          const numVolume = (() => { const v = typeof volume === 'number' ? volume : (typeof volume === 'string' && volume !== 'N/A' ? parseFloat(volume) : NaN); return isNaN(v) ? 0 : v; })();
+          const numAvgVol = (() => { const v = typeof averageVolume === 'number' ? averageVolume : (typeof averageVolume === 'string' && averageVolume !== 'N/A' ? parseFloat(averageVolume) : NaN); return isNaN(v) ? 1 : v; })();
+          const numShares = (() => { const v = typeof sharesOutstanding === 'number' ? sharesOutstanding : (typeof sharesOutstanding === 'string' && sharesOutstanding !== 'N/A' ? parseFloat(sharesOutstanding) : NaN); return isNaN(v) ? null : v; })();
           
           // Get signal categories early for scoring function
           const signalCategories = Object.keys(semanticSignals || {});
@@ -2523,7 +2548,7 @@ app.listen(PORT, () => {
           }
           
           // Check for FDA Approvals and Chinese/Cayman reverse splits that bypass time window filter
-          const hasFDAApproval = signalCategories.includes('FDA Granted');
+          const hasFDAApproval = signalCategories.some(cat => ['FDA Approved', 'FDA Breakthrough', 'FDA Filing'].includes(cat));
           const isChinaOrCaymanReverseSplit = (normalizedIncorporated === 'China' || normalizedLocated === 'China' || normalizedIncorporated === 'Cayman Islands' || normalizedLocated === 'Cayman Islands') && signalCategories.includes('Artificial Inflation');
           const highScoreOverride = signalScoreData.score > 0.7; // Score above threshold can bypass time window IF it passes all other filters
           
@@ -2723,7 +2748,7 @@ app.listen(PORT, () => {
           
           // Dynamic volume threshold based on signal strength
           // If S/O ratio >80% OR strong non-neutral signals, allow much lower volume
-          const isBiotechSignal = hasFDAApproval || signalCategories.includes('Clinical Success');
+          const isBiotechSignal = hasFDAApproval || signalCategories.includes('Clinical Success') || signalCategories.includes('Clinical Milestone');
           const minVolumeThreshold = isBiotechSignal ? 20000 : (hasExtremeSOOrStrongSignal ? CONFIG.STRONG_SIGNAL_MIN_VOLUME : CONFIG.MIN_ALERT_VOLUME);
           
           // Check volume after knowing signal type
@@ -2767,14 +2792,24 @@ app.listen(PORT, () => {
           
           let validSignals = false;
           
+          // Structural movers - mechanical algos execute on these
+          const structuralMovers = ['Credit Default', 'Going Dark', 'Warrant Call', 'Asset Sale', 'Share Recall', 'Deal Termination', 'Auditor Change', 'Preferred Redemption', 'DTC Eligible Restored', 'Debt Restructure', 'Spinoff Completed'];
+          const hasStructuralMover = signalCategories.some(cat => structuralMovers.includes(cat));
+          
           // Death spiral categories always trigger alerts regardless of score
           const deathSpiralCategories = ['Going Concern', 'Accounting Restatement', 'Bankruptcy Filing', 'Dilution', 'Reverse Split', 'Compliance Issue'];
           const hasDeathSpiralSignal = nonNeutralSignals.some(cat => deathSpiralCategories.includes(cat));
           
           if (isChinaOrCaymanReverseSplit) {
             validSignals = true; // China/Cayman Islands reverse splits always trigger
+          } else if (hasStructuralMover) {
+            validSignals = true; // Structural movers - algos execute mechanically
           } else if (hasFDAApproval) {
             validSignals = true; // FDA Approval is strong enough alone
+          } else if (signalCategories.includes('Clinical Success')) {
+            validSignals = true; // Clinical trial success is strong bullish signal
+          } else if (signalCategories.includes('Clinical Milestone')) {
+            validSignals = true; // Clinical trial milestones (enrollment, phase advancement) drive movement
           } else if (hasDeathSpiralSignal) {
             validSignals = true; // Death spirals always trigger
           } else if (highScoreOverride && signalCategories.length === 1) {
@@ -2954,7 +2989,7 @@ app.listen(PORT, () => {
                   saveAlert(alertData);
                 } else {
                   // Doesn't meet winning pattern - save to CSV only for tracking
-                  alertData.skipReason = 'Pattern Filter (no Structure Only + Bonuses)';
+                  alertData.skipReason = 'Pattern Filter (no S/O Bonus, Filing Time Bonus or ADR setup)';
                   saveToCSV(alertData);
                 }
               } else {

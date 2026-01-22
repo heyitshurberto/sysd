@@ -993,7 +993,7 @@ table {
                 position: static !important;
                 top: auto !important;
                 right: auto !important;
-                font-size: 7px !important;
+                font-size: 9px !important;
                 gap: 3px !important;
                 margin: 0 !important;
                 text-align: left;
@@ -3440,15 +3440,25 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
 <span style="opacity: 0.7;">Float:</span> ${alert.float ? alert.float.toLocaleString() : 'N/A'}
 <span style="opacity: 0.7;">S/O Ratio:</span> ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (' + alert.soBonus.toFixed(2) + 'x)' : ''}${alert.wa && alert.wa !== 'N/A' && !isNaN(parseFloat(alert.wa)) ? `\n<span style="opacity: 0.7;">WA:</span> $${parseFloat(alert.wa).toFixed(2)}${alert.currentPrice ? ` (Spread: ${((alert.currentPrice - parseFloat(alert.wa)) / parseFloat(alert.wa) * 100).toFixed(2)}%)` : ''}` : ''}
 <span style="opacity: 0.7;">FTD:</span> ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && alert.ftd !== 'False' ? (typeof alert.ftd === 'number' ? alert.ftd.toLocaleString() : alert.ftd) + (alert.ftdPercent ? ' (' + alert.ftdPercent + '%)' : '') : 'False'}${alert.custodianName ? '\n<span style="opacity: 0.7;">Custodian:</span> ' + alert.custodianName : ''}${alert.filerName ? '\n<span style="opacity: 0.7;">Filer:</span> ' + alert.filerName : ''}
-${(alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals === 'object' && Object.keys(alert.bonusSignals).length > 0)) ? '<span style="opacity: 0.7;">Bonus:</span> ' + (alert.hasTuesdayBonus ? 'Tuesday Window' : '') + (alert.bonusSignals && typeof alert.bonusSignals === 'object' ? Object.entries(alert.bonusSignals).map(([bonus, value]) => {
-        if (bonus === 'DTC Chill Lift' && value) return '\nDTC Chill Lift';
-        if (bonus === 'Shell Recycling' && value) return '\nShell Recycling';
-        if (bonus === 'VStock' && value) return '\nVStock Setup';
-        if (bonus === 'NT 10K' && value === 'NT 10K Filed') return '\nNT 10-K Filed';
-        if (bonus === 'NT 10K' && value === 'Actual 10K Filed') return '\nActual 10-K';
-        if (bonus === 'Third Party' && Array.isArray(value) && value.length > 0) return '\nServices: ' + value.join(', ');
-        return '';
-    }).filter(x => x).join('') : '') : ''} ${alert.reverseSplitRatio ? '<span style="opacity: 0.7;">Stock Split:</span> 1 for ' + alert.reverseSplitRatio : ''}</pre>
+${(alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals === 'object' && Object.keys(alert.bonusSignals).length > 0)) ? '<span style="opacity: 0.7;">Bonus:</span> ' + (() => {
+        let bonusItems = [];
+        let services = [];
+        if (alert.hasTuesdayBonus) bonusItems.push('Tuesday Window');
+        if (alert.bonusSignals && typeof alert.bonusSignals === 'object') {
+            Object.entries(alert.bonusSignals).forEach(([bonus, value]) => {
+                if (bonus === 'DTC Chill Lift' && value) bonusItems.push('DTC Chill Lift');
+                if (bonus === 'Shell Recycling' && value) bonusItems.push('Shell Recycling');
+                if (bonus === 'VStock' && value) bonusItems.push('Agent Reassignment');
+                if (bonus === 'NT 10K' && value === 'NT 10K Filed') bonusItems.push('NT 10-K Filed');
+                if (bonus === 'NT 10K' && value === 'Actual 10K Filed') bonusItems.push('Actual 10-K');
+                if (bonus === 'Third Party' && Array.isArray(value) && value.length > 0) services.push(value.join(', '));
+            });
+        }
+        let result = bonusItems.join(', ');
+        if (services.length > 0) result += '\n' + services.join('\n');
+        if (alert.reverseSplitRatio) result += (result ? '\n' : '') + '<span style="opacity: 0.7;">Stock Split:</span> 1 for ' + alert.reverseSplitRatio;
+        return result;
+    })() : (alert.reverseSplitRatio ? '<span style="opacity: 0.7;">Stock Split:</span> 1 for ' + alert.reverseSplitRatio : '')}</pre>
                             </div>
                         </div>
                         <div class="popup-footer">
@@ -3537,7 +3547,7 @@ ${(alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals ===
                         const type = alertData.isShort ? 'error' : 'success';
                         const ticker = `<b><i>$${alertData.ticker}</i></b>`;
                         // For new stock alerts, link to SEC filing
-                        this.showNotification(`${ticker} ${position} alert received (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
+                        this.showNotification(`${ticker} ${position} alert receiveq (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
                         this.notifiedAlerts.set(alertKey, now);
                     }
                 }

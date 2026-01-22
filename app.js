@@ -2922,7 +2922,7 @@ app.listen(PORT, () => {
           if (filerName) {
             const formerNameHidden = detectFormerNameHidden(text);
             const registrantLog = filerName + (formerNameHidden ? ' (N/A)' : '');
-            log('INFO', `Registrant: ${registrantLog}`);
+            log('INFO', `Author: ${registrantLog}`);
           }
           
           let price = 'N/A', volume = 0, marketCap = 'N/A', averageVolume = 0, float = 'N/A', sharesOutstanding = 'N/A';

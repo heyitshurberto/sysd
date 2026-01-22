@@ -796,7 +796,7 @@ table {
 
         @media (max-width: 768px) {
             .time-display {
-                font-size: 16px;
+                font-size: 14px;
             }
         }
 
@@ -3314,7 +3314,7 @@ table {
                                 filingTimeBonus: alert.filingTimeBonus || null,
                                 soBonus: alert.soBonus || null,
                                 formType: alert.formType || null,
-                                vwap: alert.vwap || null,
+                                weightedAverage: alert.wa || null,
                             });
 
                             // Mark as known
@@ -3438,9 +3438,9 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                                 <pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.4; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);"><span style="opacity: 0.7;">Market Cap:</span> ${alert.marketCap ? '$' + (alert.marketCap / 1000000).toFixed(2) + 'M' : 'N/A'}
 <span style="opacity: 0.7;">Shares:</span> ${alert.sharesOutstanding ? alert.sharesOutstanding.toLocaleString() : 'N/A'}
 <span style="opacity: 0.7;">Float:</span> ${alert.float ? alert.float.toLocaleString() : 'N/A'}
-<span style="opacity: 0.7;">S/O Ratio:</span> ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (' + alert.soBonus.toFixed(2) + 'x)' : ''}${alert.vwap && alert.vwap !== 'N/A' && !isNaN(parseFloat(alert.vwap)) ? `\n<span style="opacity: 0.7;">VWAP:</span> $${parseFloat(alert.vwap).toFixed(2)}${alert.currentPrice ? ` (Spread: ${((alert.currentPrice - parseFloat(alert.vwap)) / parseFloat(alert.vwap) * 100).toFixed(2)}%)` : ''}` : ''}
+<span style="opacity: 0.7;">S/O Ratio:</span> ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (' + alert.soBonus.toFixed(2) + 'x)' : ''}${alert.wa && alert.wa !== 'N/A' && !isNaN(parseFloat(alert.wa)) ? `\n<span style="opacity: 0.7;">WA:</span> $${parseFloat(alert.wa).toFixed(2)}${alert.currentPrice ? ` (Spread: ${((alert.currentPrice - parseFloat(alert.wa)) / parseFloat(alert.wa) * 100).toFixed(2)}%)` : ''}` : ''}
 <span style="opacity: 0.7;">FTD:</span> ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && alert.ftd !== 'False' ? (typeof alert.ftd === 'number' ? alert.ftd.toLocaleString() : alert.ftd) + (alert.ftdPercent ? ' (' + alert.ftdPercent + '%)' : '') : 'False'}${alert.custodianName ? '\n<span style="opacity: 0.7;">Custodian:</span> ' + alert.custodianName : ''}${alert.filerName ? '\n<span style="opacity: 0.7;">Filer:</span> ' + alert.filerName : ''}
-<span style="opacity: 0.7;">Bonus:</span> ${alert.hasTuesdayBonus ? 'Tuesday Window' : 'None'}${alert.bonusSignals && typeof alert.bonusSignals === 'object' ? Object.entries(alert.bonusSignals).map(([bonus, value]) => {
+${(alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals === 'object' && Object.keys(alert.bonusSignals).length > 0)) ? '<span style="opacity: 0.7;">Bonus:</span> ' + (alert.hasTuesdayBonus ? 'Tuesday Window' : '') + (alert.bonusSignals && typeof alert.bonusSignals === 'object' ? Object.entries(alert.bonusSignals).map(([bonus, value]) => {
         if (bonus === 'DTC Chill Lift' && value) return '\nDTC Chill Lift';
         if (bonus === 'Shell Recycling' && value) return '\nShell Recycling';
         if (bonus === 'VStock' && value) return '\nVStock Setup';
@@ -3448,7 +3448,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
         if (bonus === 'NT 10K' && value === 'Actual 10K Filed') return '\nActual 10-K';
         if (bonus === 'Third Party' && Array.isArray(value) && value.length > 0) return '\nServices: ' + value.join(', ');
         return '';
-    }).filter(x => x).join('') : ''}${alert.reverseSplitRatio ? '\n<span style="opacity: 0.7;">Stock Split:</span> 1 for ' + alert.reverseSplitRatio : ''}</pre>
+    }).filter(x => x).join('') : '') : ''} ${alert.reverseSplitRatio ? '<span style="opacity: 0.7;">Stock Split:</span> 1 for ' + alert.reverseSplitRatio : ''}</pre>
                             </div>
                         </div>
                         <div class="popup-footer">

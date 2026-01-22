@@ -312,8 +312,8 @@ const detectCustodianBanks = (text) => {
 
 // S/O Bonus Multiplier - tighter float = stronger move potential
 // High S/O (tight float) = 1.0-1.1x bonus based on float percentage
-// Calculate VWAP from intraday data (High, Low, Close, Volume)
-const calculateVWAPFromBars = (bars) => {
+// Calculate WA from intraday data (High, Low, Close, Volume)
+const calculateWAFromBars = (bars) => {
   if (!bars || bars.length === 0) return null;
   
   let totalVolumePrice = 0;
@@ -339,29 +339,29 @@ const calculateVWAPFromBars = (bars) => {
   return null;
 };
 
-// Fetch VWAP by calculating from price and volume data
-const fetchVWAP = async (ticker, price = null, volume = null, averageVolume = null) => {
+// Fetch WA by calculating from price and volume data
+const fetchWA = async (ticker, price = null, volume = null, averageVolume = null) => {
   if (!ticker || ticker === 'UNKNOWN') return 'N/A';
   
-  // Calculate VWAP from provided price and volume data
-  // VWAP formula: weight current price by volume vs average volume
+  // WA approximation: use current price weighted by volume dynamics
+  // Formula: WA ≈ price × (volume / (volume + avgVolume))
+  // This approximates where the weighted average entry price is based on current volume vs average
   if (price && price !== 'N/A' && !isNaN(parseFloat(price))) {
     const numPrice = parseFloat(price);
     const numVolume = volume && volume > 0 ? parseFloat(volume) : 0;
     const numAvgVol = averageVolume && averageVolume > 0 ? parseFloat(averageVolume) : 0;
     
-    // VWAP: price adjusted by volume spike factor
-    // If volume > avgVolume (spike), VWAP drops below price
-    // If volume < avgVolume (normal), VWAP approaches price
-    let vwap = numPrice;
+    // If we have volume data, weight the price by volume ratio
     if (numVolume > 0 && numAvgVol > 0) {
-      const volumeRatio = numVolume / numAvgVol;
-      // Use moving average of price with volume weighting
-      // Lower VWAP for volume spikes (entry confirmation)
-      vwap = numPrice / (1 + (volumeRatio - 1) * 0.3);
+      // Volume ratio: current volume vs total (current + average)
+      const volumeRatio = numVolume / (numVolume + numAvgVol);
+      // WA = current price weighted by volume participation
+      // Higher volume spike = lower WA (more aggressive buying at lower levels)
+      const wa = numPrice * volumeRatio + (numPrice * 0.5) * (1 - volumeRatio);
+      return parseFloat(wa).toFixed(2);
     }
     
-    return parseFloat(vwap).toFixed(2);
+    return parseFloat(numPrice).toFixed(2);
   }
   
   // Final fallback: return N/A if no data available
@@ -672,7 +672,7 @@ const FORM_TYPES = ['6-K', '6-K/A', '8-K', '8-K/A', 'S-1', 'S-3', 'S-4', 'S-8', 
 const SEMANTIC_KEYWORDS = {
   'Merger/Acquisition': ['Merger Agreement', 'Acquisition Agreement', 'Agreed To Acquire', 'Merger Consideration', 'Premium Valuation', 'Going Private', 'Take Private', 'Acquisition Closing', 'Closing Of Acquisition', 'Completed Acquisition'],
   'M&A Rebrand': ['Corporate Name Change', 'Ticker Change', 'Trading Name Change', 'Change Of Company Name', 'Formerly Known As', 'Name Changed To'],
-  'FDA Approved': ['FDA Approval', 'FDA Clearance', 'Approval Granted', 'Approval Letter', 'Approves', 'Approving', 'EMA Approval', 'Post-Market Approval'],
+  'FDA Approved': ['FDA Approval', 'FDA Clearance', 'Approval Granted', 'Approval Letter', 'Approves', 'EMA Approval', 'Post-Market Approval'],
   'FDA Breakthrough': ['Breakthrough Therapy', 'Breakthrough Designation', 'Fast Track Designation', 'Priority Review', 'Priority Status'],
   'FDA Filing': ['NDA Submission', 'NDA Filed', 'BLA Submission', 'BLA Filed', 'IND Application', 'Regulatory Filing'],
   'Clinical Success': ['Positive Trial Results', 'Phase 3 Success', 'Topline Results Beat', 'Efficacy Demonstrated', 'Safety Profile Met', 'Positive Results', 'Phase 1', 'Phase 2', 'Phase 3', 'Trial Results', 'Efficacy', 'Safety Profile', 'Cohort Results', 'Primary Endpoint', 'Enrollment Complete', 'Data Readout', 'Topline Data', 'Meaningful Improvement', 'Beat Placebo', 'Indication', 'Mechanism Of Action', 'Biomarker', 'Immune Rebalancing', 'Comparator', 'Patient Population', 'Favorable Safety', 'Separation From Placebo', 'Demonstrated Benefit', 'Clinical Benefit', 'Strong Efficacy'],
@@ -694,7 +694,7 @@ const SEMANTIC_KEYWORDS = {
   'Public Offering': ['Public Offering Announced', 'Secondary Offering', 'Follow-On Offering', 'Shelf Offering', 'At-The-Market Offering'],
   'Share Issuance': ['Share Dilution', 'New Shares Issued', 'Shares Outstanding Increased', 'Dilutive issuance', 'Shares increased', 'Share increase', 'Offering shares', 'Issuance of shares'],
   'Convertible Dilution': ['Convertible Notes', 'Convertible Bonds', 'Convertible Securities'],
-  'Warrant Dilution': ['Warrant Issuance', 'Warrant Redemption Notice', 'Forced Exercise', 'Warrant Call Notice'],
+  'Warrant Dilution': ['Warrant Issuance', 'Forced Exercise'],
   'Compensation Dilution': ['Option Grants Excessive', 'Employee Incentive', 'Equity Compensation', 'RSU Grant', 'Restricted Stock Unit', 'Equity incentive plan increase'],
   'Nasdaq Delisting': ['Nasdaq Deficiency', 'Listing Standards Warning', 'Nasdaq Notification', 'Delisting Determination', 'Nasdaq Letter', 'Delisting Risk', 'Delisting Threat'],
   'Bid Price Delisting': ['Minimum Bid Price', 'Regained Compliance'],
@@ -702,7 +702,7 @@ const SEMANTIC_KEYWORDS = {
   'Accounting Restatement': ['Financial Restatement', 'Audit Non-Reliance', 'Material Weakness', 'Control Deficiency', 'Audit Adjustment'],
   'Credit Default': ['Loan Default', 'Debt Covenant Breach', 'Event Of Default', 'Credit Agreement Violation', 'Covenant Breach', 'Default Event', 'Acceleration Of Debt', 'Mandatory Prepayment'],
   'Going Dark': ['Form 15', 'Deregistration', 'Stop Reporting', 'Cease Reporting', 'Edgar Delisting', 'No Longer Report', 'Deregister', 'Terminate Registration', 'Exit From SEC Reporting', 'Shall No Longer File'],
-  'Warrant Redemption': ['Warrant Redemption Notice', 'Warrant Call', 'Forced Exercise', 'Call Notice', 'Redemption Notice', 'Forced Redemption', 'Warrant Exercised', 'Warrant Expiration', 'Warrant Notice'],
+  'Warrant Redemption': ['Warrant Redemption Notice', 'Warrant Call', 'Call Notice', 'Forced Redemption', 'Warrant Exercised', 'Warrant Expiration', 'Warrant Notice'],
   'Asset Disposition': ['Asset Sale', 'Asset Disposition', 'Business Disposition', 'Sold Assets', 'Divest', 'Divesting', 'Asset Divestiture', 'Strategic Sale', 'Sale Of Assets', 'Disposed', 'Disposition', 'Divested'],
   'Share Consolidation': ['Share Recall', 'Share Call', 'Shareholder Vote', 'Recalled Shares', 'Voting Agreement', 'Recapitalization', 'Consolidation', 'Reverse Recapitalization', 'Stock Consolidation', 'Recapitalize'],
   'Convertible Debt': ['Convertible Bonds', 'Convertible Notes'],
@@ -714,7 +714,7 @@ const SEMANTIC_KEYWORDS = {
   'Board Change': ['Board Resignation', 'Director Appointed', 'Board Member Appointed', 'Director Elected', 'Director Resigned'],
   'Deal Termination': ['Deal Terminated', 'Merger Terminated', 'Acquisition Terminated', 'Agreement Terminated', 'Transaction Terminated', 'Deal Break', 'Termination Of Agreement', 'Failed To Close', 'Terminated The'],
   'Auditor Change': ['Auditor Resigned', 'Audit Firm Changed', 'Auditor Departure', 'Internal Controls Weakness', 'Material Weakness', 'Auditor No Longer', 'Changes Auditor', 'Change Of Auditor'],
-  'Preferred Call': ['Preferred Redemption', 'Preferred Call Notice', 'Redemption Notice', 'Preferred Redeemed', 'Series Redeemed', 'Redemption Of Preferred'],
+  'Preferred Call': ['Preferred Redemption', 'Preferred Call Notice', 'Preferred Redeemed', 'Series Redeemed', 'Redemption Of Preferred'],
   'Debt Refinance': ['Debt Refinanced', 'Refinancing Completed', 'Extended Maturity', 'Debt Extension', 'Loan Refinanced', 'Refinance Debt', 'Facility Refinanced', 'Extension Agreement'],
   'Debt Restructure': ['Debt Restructured', 'Restructure Agreement', 'Debt Modification', 'Amended Restated', 'Debt Covenant Waiver', 'Forbearance Agreement'],
   'Corporate Separation': ['Spinoff Completed', 'Separation Completed', 'Split-Off', 'Pro-Rata Distribution', 'Distributed Shares'],
@@ -1132,7 +1132,7 @@ const cleanupStaleAlerts = () => {
 const saveToCSV = (alertData) => {
   try {
     const csvPath = CONFIG.CSV_FILE;
-    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Registrant Name,Price,Score,Float,Shares Outstanding,S/O Ratio,VWAP,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Bonus Signals,Alert Type,Skip Reason\n';
+    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Registrant Name,Price,Score,Float,Shares Outstanding,S/O Ratio,Weighted Average,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Bonus Signals,Alert Type,Skip Reason\n';
     
     // Create file with headers if it doesn't exist
     if (!fs.existsSync(csvPath)) {
@@ -1195,7 +1195,7 @@ const saveToCSV = (alertData) => {
     }
     
     // Build CSV row with data
-    const csvVWAP = alertData.vwap || 'N/A';
+    const csvWA = alertData.wa || 'N/A';
     const row = [
       escapeCSV(filedDate),
       escapeCSV(filedTime),
@@ -1209,7 +1209,7 @@ const saveToCSV = (alertData) => {
       escapeCSV(alertData.float || 'N/A'),
       escapeCSV(alertData.sharesOutstanding || 'N/A'),
       escapeCSV(alertData.soRatio || 'N/A'),
-      escapeCSV(csvVWAP !== 'N/A' ? parseFloat(csvVWAP).toFixed(2) : 'N/A'),
+      escapeCSV(csvWA !== 'N/A' ? parseFloat(csvWA).toFixed(2) : 'N/A'),
       escapeCSV(alertData.ftd || 'false'),
       escapeCSV(alertData.ftdPercent || 'N/A'),
       escapeCSV(alertData.volume || 'N/A'),
@@ -1495,7 +1495,7 @@ const getSharesFromFinnhub = async (ticker) => {
 
 // Get shares outstanding with priority: Alpha Vantage → Finnhub → FMP
 const getSharesOutstanding = async (ticker) => {
-  // Try Finnhub first (most reliable, already called for profile)
+  // Try Finnhub first (most reliable)
   try {
     const finnhubKey = process.env.FINNHUB_API_KEY;
     if (finnhubKey) {
@@ -1509,9 +1509,104 @@ const getSharesOutstanding = async (ticker) => {
     }
   } catch (e) {}
   
+  // Fallback to FMP shares-float endpoint which has outstandingShares
+  try {
+    const fmpKey = process.env.FMP_API_KEY;
+    if (!fmpKey) return 'N/A';
+    
+    const res = await fetchWithTimeout(`https://financialmodelingprep.com/stable/shares-float?symbol=${ticker}&apikey=${fmpKey}`, 8000);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data[0] && data[0].outstandingShares) {
+        const shares = Math.round(data[0].outstandingShares);
+        if (shares > 0) return shares;
+      }
+    }
+  } catch (e) {}
+  
   return 'N/A';
 };
 
+// Extract float shares from SEC filing text (10-K, 10-Q, 6-K, 8-K)
+const extractFloatFromFiling = (text, sharesOutstanding) => {
+  if (!text) return null;
+  
+  // Remove HTML tags and normalize whitespace
+  let cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+  
+  // Debug: log text size
+  if (cleanText.length < 100) {
+    return null; // Text too short to contain shares data
+  }
+  
+  // Pattern 1: "outstanding shares of common stock as of [date]: [number]"
+  let match = cleanText.match(/outstanding shares of (?:common )?stock as of [^:]*:\s*([0-9,]+)/i);
+  if (match) {
+    const shares = parseInt(match[1].replace(/,/g, ''));
+    if (shares > 0) return shares;
+  }
+  
+  // Pattern 2: "indicate the number of shares outstanding of each class: [number]"
+  match = cleanText.match(/indicate the number of shares outstanding[^0-9]*?([0-9]{6,})/i);
+  if (match) {
+    const shares = parseInt(match[1].replace(/,/g, ''));
+    if (shares > 1000) return shares; // At least 1000 shares to be valid
+  }
+  
+  // Pattern 3: "class [A-Z] common stock.*[number] shares outstanding"
+  match = cleanText.match(/(?:class [a-z]+ )?common stock[^0-9]*?([0-9,]+)\s+shares? outstanding/i);
+  if (match) {
+    const shares = parseInt(match[1].replace(/,/g, ''));
+    if (shares > 1000) return shares;
+  }
+  
+  // Pattern 4: "shares outstanding" followed by number (flexible spacing)
+  match = cleanText.match(/shares? outstanding[:\s]*([0-9,]+)/i);
+  if (match) {
+    const shares = parseInt(match[1].replace(/,/g, ''));
+    if (shares > 1000) return shares;
+  }
+  
+  // Pattern 5: "Number of shares outstanding" (common in 6-K)
+  match = cleanText.match(/number of shares outstanding[:\s]*([0-9,]+)/i);
+  if (match) {
+    const shares = parseInt(match[1].replace(/,/g, ''));
+    if (shares > 1000) return shares;
+  }
+  
+  // Pattern 6: Look for cover page format: "as of [date]" followed by number (often first large number in text)
+  match = cleanText.match(/as of\s+[^0-9]*([0-9]{1,2},\d{3},\d{3}|\d{9,})/i);
+  if (match) {
+    const shares = parseInt(match[1].replace(/,/g, ''));
+    if (shares > 1000) return shares;
+  }
+  
+  // Pattern 7: Look for Form cover page shares outstanding (usually in first 2000 chars)
+  const firstPart = cleanText.substring(0, 3000);
+  match = firstPart.match(/([0-9]{1,2},\d{3},\d{3}(?:,\d{3})?)\s+(?:shares|common stock outstanding|issued and outstanding)/i);
+  if (match) {
+    const shares = parseInt(match[1].replace(/,/g, ''));
+    if (shares > 1000) return shares;
+  }
+  
+  // Pattern 8: Just look for "shares" or "outstanding" with a large number anywhere
+  match = cleanText.match(/([0-9]{1,2},\d{3},\d{3}(?:,\d{3})?)\s+(?:shares?|common)/i);
+  if (match) {
+    const shares = parseInt(match[1].replace(/,/g, ''));
+    if (shares > 100000) return shares; // Higher threshold for non-specific pattern
+  }
+  
+  // Pattern 9: Cover page indicator number format (X,XXX,XXX)
+  const coverPageMatch = firstPart.match(/\b([0-9]{1,3},\d{3},\d{3})\b/);
+  if (coverPageMatch) {
+    const shares = parseInt(coverPageMatch[1].replace(/,/g, ''));
+    if (shares > 1000000) return shares; // Very high threshold for generic number
+  }
+  
+  return null;
+};
+
+// Get float data from Alpha Vantage first, then Polygon, then FMP as fallback
 // Get float data from Alpha Vantage first, then FMP as fallback
 const getFloatData = async (ticker) => {
   // Try Alpha Vantage first (has both SharesFloat and SharesOutstanding)
@@ -1529,7 +1624,7 @@ const getFloatData = async (ticker) => {
     }
   } catch (e) {}
   
-  // Fallback to FMP
+  // Fallback to FMP - this endpoint has both float and shares outstanding
   try {
     const fmpKey = process.env.FMP_API_KEY;
     if (!fmpKey) return 'N/A';
@@ -1540,8 +1635,16 @@ const getFloatData = async (ticker) => {
     
     const data = await res.json();
     if (Array.isArray(data) && data[0] && data[0].floatShares) {
-      return Math.round(data[0].floatShares);
+      const float = Math.round(data[0].floatShares);
+      if (float > 0) return float;
     }
+    
+    // If floatShares not available but outstandingShares is, use that as fallback
+    if (Array.isArray(data) && data[0] && data[0].outstandingShares) {
+      const shares = Math.round(data[0].outstandingShares);
+      if (shares > 0) return shares;
+    }
+    
     return 'N/A';
   } catch (e) {
     return 'N/A';
@@ -2190,14 +2293,14 @@ const sendPersonalWebhook = (alertData) => {
     const floatDisplay = alertData.float && alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A';
     const signalScoreBold = alertData.signalScore ? `**${alertData.signalScore}**` : 'N/A';
     const signalScoreDisplay = alertData.signalScore ? alertData.signalScore : 'N/A';
-    const vwap = alertData.vwap || 'N/A';
-    const vwapDisplay = vwap !== 'N/A' ? `$${parseFloat(vwap).toFixed(2)}` : 'N/A';
+    const wa = alertData.wa || 'N/A';
+    const waDisplay = wa !== 'N/A' ? `$${parseFloat(wa).toFixed(2)}` : 'N/A';
     
-    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, ${reason}, vol/avg: ${volDisplay}/${avgDisplay}${volumeMultiplier}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, vwap: ${vwapDisplay}
+    const personalAlertContent = `↳ [${direction}] **$${ticker}** @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreBold}, ${reason}, vol/avg: ${volDisplay}/${avgDisplay}${volumeMultiplier}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, wa: ${waDisplay}
     https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
     const personalMsg = { content: personalAlertContent };
     
-    const vwapLog = vwap !== 'N/A' ? `$${vwap.toFixed(2)}` : 'N/A';
+    const waLog = wa !== 'N/A' ? `$${wa.toFixed(2)}` : 'N/A';
     log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}`);
     
     // Non-blocking fetch with timeout
@@ -2401,7 +2504,7 @@ app.get('/api/quote/:ticker', async (req, res) => {
     const quotePrice = quote?.regularMarketPrice || 'N/A';
     const quoteVolume = quote?.regularMarketVolume || 0;
     const quoteAvgVol = fundamentals.averageVolume || quote?.averageDailyVolume3Month || 0;
-    const quoteVWAP = await fetchVWAP(ticker, quotePrice, quoteVolume, quoteAvgVol);
+    const quoteWA = await fetchWA(ticker, quotePrice, quoteVolume, quoteAvgVol);
     
     res.json({
       symbol: ticker,
@@ -2413,7 +2516,7 @@ app.get('/api/quote/:ticker', async (req, res) => {
       float: fundamentals.float || 'N/A',
       sharesOutstanding: fundamentals.sharesOutstanding || 'N/A',
       soRatio: fundamentals.soRatio || 'N/A',
-      vwap: quoteVWAP
+      wa: quoteWA
     });
     
     // Update performance data if price is available
@@ -2804,8 +2907,6 @@ app.listen(PORT, () => {
           
           const bearishCategories = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Deficit', 'Negative Earnings', 'Cash Burn', 'Going Concern Risk', 'Public Offering', 'Share Issuance', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Nasdaq Delisting', 'Bid Price Delisting', 'Executive Liquidation', 'Accounting Restatement', 'Credit Default', 'Senior Debt', 'Convertible Debt', 'Junk Debt', 'Material Lawsuit', 'Supply Chain Crisis', 'Regulatory Breach', 'VIE Arrangement', 'China Risk', 'Product Sunset', 'Loss of Major Customer'];
           const signalKeys = Object.keys(semanticSignals);
-          const hasBearish = signalKeys.some(cat => bearishCategories.includes(cat));
-          const direction = hasBearish ? 'Short' : 'Long';
           
           let formLogMessage = '';
           if (formsDisplay && formsDisplay !== '') {
@@ -2822,10 +2923,6 @@ app.listen(PORT, () => {
             const formerNameHidden = detectFormerNameHidden(text);
             const registrantLog = filerName + (formerNameHidden ? ' (N/A)' : '');
             log('INFO', `Registrant: ${registrantLog}`);
-          }
-          
-          if (signalKeys.length > 0) {
-            log('INFO', `${direction}: ${signalKeys.join(', ')}`);
           }
           
           let price = 'N/A', volume = 0, marketCap = 'N/A', averageVolume = 0, float = 'N/A', sharesOutstanding = 'N/A';
@@ -2892,11 +2989,20 @@ app.listen(PORT, () => {
               // Fetch float data with generous timeout (max 5s)
               if (float === 'N/A') {
                 try {
-                  float = await Promise.race([
-                    getFloatData(ticker),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-                  ]);
-                } catch (e) {}
+                  // FIRST: Try extracting from SEC filing text
+                  const floatFromFiling = extractFloatFromFiling(text, sharesOutstanding);
+                  if (floatFromFiling && floatFromFiling > 0) {
+                    float = floatFromFiling;
+                  } else {
+                    // FALLBACK: Try API calls
+                    float = await Promise.race([
+                      getFloatData(ticker),
+                      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+                    ]);
+                  }
+                } catch (e) {
+                  float = 'N/A';
+                }
               }
               
               // Fetch shares outstanding if missing (max 5s)
@@ -2969,6 +3075,12 @@ app.listen(PORT, () => {
             longOpportunity = null;
           }
           // If no signals, leave both null for "N/A"
+          
+          // Log the intent prefix based on actual SHORT/LONG determination
+          if (signalKeys.length > 0) {
+            const intentPrefix = shortOpportunity ? 'Short' : (longOpportunity ? 'Long' : 'Neutral');
+            log('INFO', `${intentPrefix}: ${signalKeys.join(', ')}`);
+          }
           
           const now = new Date();
           const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
@@ -3089,20 +3201,20 @@ app.listen(PORT, () => {
           
           const directionLabel = shortOpportunity ? 'SHORT' : (longOpportunity ? 'LONG' : 'N/A');
           
-          // Fetch VWAP and log Stock info for ALL filings (immediately after quote data is ready)
-          let vwapValue = 'N/A';
+          // Fetch Weighted Average and log Stock info for ALL filings (immediately after quote data is ready)
+          let waValue = 'N/A';
           try {
-            vwapValue = await fetchVWAP(ticker, price, volume, averageVolume);
-          } catch (vwapErr) {
-            vwapValue = 'N/A';
+            waValue = await fetchWA(ticker, price, volume, averageVolume);
+          } catch (waErr) {
+            waValue = 'N/A';
           }
           
-          const vwapLog = vwapValue !== 'N/A' ? `$${parseFloat(vwapValue).toFixed(2)}` : 'N/A';
+          const waLog = waValue !== 'N/A' ? `$${parseFloat(waValue).toFixed(2)}` : 'N/A';
           
           if (shortOpportunity || longOpportunity) {
-            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, VWAP: ${vwapLog}, FTD: ${ftdDisplay}, ${directionLabel}`);
+            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, WA: ${waLog}, FTD: ${ftdDisplay}, ${directionLabel}`);
           } else {
-            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, VWAP: ${vwapLog}, FTD: ${ftdDisplay}`);
+            log('INFO', `Stock: $${ticker}, Score: ${signalScoreDisplay}, Price: ${priceDisplay}, Vol/Avg: ${volDisplay}/${avgDisplay}, MC: ${mcDisplay}, Float: ${floatDisplay}, S/O: ${soRatio}, WA: ${waLog}, FTD: ${ftdDisplay}`);
           }
           
           // Check for FDA Approvals and Chinese/Cayman reverse splits
@@ -3418,7 +3530,7 @@ app.listen(PORT, () => {
             companyName: companyName !== 'Unknown' ? companyName : null,
             filerName: filerName || null,
             price: price,
-            vwap: vwapValue,
+            wa: waValue,
             signalScore: signalScoreData.score,
             hasTuesdayBonus: hasTuesdayBonus,
             custodianControl: custodianControl,

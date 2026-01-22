@@ -18,14 +18,14 @@ if (fs.existsSync('.env')) {
 
 const CONFIG = {
   // Alert filtering criteria
-  FILE_TIME: 1000,                   // Minutes retro to fetch filings
-  MIN_ALERT_VOLUME: 20000,        // Lower base, conditional on signal strength
-  STRONG_SIGNAL_MIN_VOLUME: 1000, // Very low for penny stocks with extreme S/O
-  EXTREME_SO_RATIO: 80,           // 80%+ S/O = tight float (primary volatility driver)
-  MAX_FLOAT_6K: 100000000,        // Max float size for 6-K
-  MAX_FLOAT_8K: 250000000,        // Max float size for 8-K (higher threshold - less reliable)
-  MAX_SO_RATIO: 150.0,            // Max short interest ratio
-  ALLOWED_COUNTRIES: ['israel', 'dubai', 'japan', 'china', 'hong kong', 'brazil', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'new york', 'nevada', 'ireland', 'california', 'delaware', 'massachusetts', 'texas', 'australia'], // Allowed incorporation/located countries
+  FILE_TIME: 1,                     // Minutes retro to fetch filings
+  MIN_ALERT_VOLUME: 20000,          // Lower base, conditional on signal strength
+  STRONG_SIGNAL_MIN_VOLUME: 1000,   // Very low for penny stocks with extreme S/O
+  EXTREME_SO_RATIO: 80,             // 80%+ S/O = tight float (primary volatility driver)
+  MAX_FLOAT_6K: 50000000,           // Max float size for 6-K (higher threshold - less reliable)
+  MAX_FLOAT_8K: 200000000,          // Max float size for 8-K 
+  MAX_SO_RATIO: 250.0,              // Max short interest ratio
+  ALLOWED_COUNTRIES: ['israel', 'dubai', 'japan', 'china', 'hong kong', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'new york', 'nevada', 'delaware', 'massachusetts', 'texas', 'australia'], // Allowed incorporation/located countries
   // Enable optimizations for Raspberry Pi devices
   PI_MODE: true,              // Enable Pi optimizations          
   REFRESH_PEAK: 1,            // 10s during trading hours (7am-10am ET)

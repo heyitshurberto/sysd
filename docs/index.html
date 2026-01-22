@@ -3991,7 +3991,7 @@ ${(alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals ===
                                     alert.milestoneEvents.push(milestoneEvent);
                                     
                                     // Send notification
-                                    const notificationMsg = `<b>$${alert.ticker}</b> ${direction} <b>${milestonePercent}%</b> from alert price`;
+                                    const notificationMsg = `<b>$${alert.ticker}</b> is now ${direction} <b>${milestonePercent}%</b> from alert price`;
                                     this.showNotification(notificationMsg, 'success', alert.filingLink);
                                     
                                     // Send to Raspberry Pi

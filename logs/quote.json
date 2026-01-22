@@ -93,19 +93,6 @@
     "marketCap": 146275536,
     "performance": -0.27
   },
-  "THAR": {
-    "alert": 3.03,
-    "highest": 3.03,
-    "lowest": 2.72,
-    "current": 2.92,
-    "currentPrice": 2.79,
-    "volume": 561974,
-    "averageVolume": 1416890,
-    "marketCap": 109167448,
-    "performance": -7.92,
-    "short": false,
-    "reverseSplitRatio": null
-  },
   "SRTS": {
     "short": false,
     "alert": 5.2224,

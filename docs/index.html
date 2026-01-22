@@ -796,7 +796,7 @@ table {
 
         @media (max-width: 768px) {
             .time-display {
-                font-size: 14px;
+                font-size: 16px;
             }
         }
 
@@ -2404,6 +2404,9 @@ table {
             gap: 4px;
             color: #222;
             border-bottom: 1px solid rgba(0,0,0,0.08);
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.3;
         }
         
         .notification-item:last-child {
@@ -3160,6 +3163,8 @@ table {
                 this.notifiedAlerts = new Map(); // Track notified alerts to prevent duplicates
                 this.recentThreshold = 120000; // 2 minutes in milliseconds
                 this.knownAlerts = new Set(); // Track known alerts by unique key (ticker-time)
+                this.dataLoadStartTime = Date.now(); // Track when we started loading
+                this.loadingTimeoutMs = 5000; // 5 seconds before showing 0.00% instead of Loading...
 
                 // Track next +/- 10% milestone steps from original 12% alert
                 // Map key: ticker, value: { upStep: number, downStep: number }
@@ -3433,8 +3438,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                                 <pre style="margin-top: 4px; padding: 6px; border-radius: 4px; font-size: 11px; line-height: 1.4; font-family: monospace; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);"><span style="opacity: 0.7;">Market Cap:</span> ${alert.marketCap ? '$' + (alert.marketCap / 1000000).toFixed(2) + 'M' : 'N/A'}
 <span style="opacity: 0.7;">Shares:</span> ${alert.sharesOutstanding ? alert.sharesOutstanding.toLocaleString() : 'N/A'}
 <span style="opacity: 0.7;">Float:</span> ${alert.float ? alert.float.toLocaleString() : 'N/A'}
-<span style="opacity: 0.7;">S/O Ratio:</span> ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (' + alert.soBonus.toFixed(2) + 'x)' : ''}
-<span style="opacity: 0.7;">VWAP:</span> ${alert.vwap ? '$' + parseFloat(alert.vwap).toFixed(2) + (alert.currentPrice && alert.vwap ? ` (Spread: ${((alert.currentPrice - alert.vwap) / alert.vwap * 100).toFixed(2)}%)` : '') : 'N/A'}
+<span style="opacity: 0.7;">S/O Ratio:</span> ${alert.soRatio || 'N/A'}${alert.soBonus && alert.soBonus > 1.0 ? ' (' + alert.soBonus.toFixed(2) + 'x)' : ''}${alert.vwap && alert.vwap !== 'N/A' && !isNaN(parseFloat(alert.vwap)) ? `\n<span style="opacity: 0.7;">VWAP:</span> $${parseFloat(alert.vwap).toFixed(2)}${alert.currentPrice ? ` (Spread: ${((alert.currentPrice - parseFloat(alert.vwap)) / parseFloat(alert.vwap) * 100).toFixed(2)}%)` : ''}` : ''}
 <span style="opacity: 0.7;">FTD:</span> ${alert.ftd !== false && alert.ftd !== null && alert.ftd !== undefined && alert.ftd !== 'False' ? (typeof alert.ftd === 'number' ? alert.ftd.toLocaleString() : alert.ftd) + (alert.ftdPercent ? ' (' + alert.ftdPercent + '%)' : '') : 'False'}${alert.custodianName ? '\n<span style="opacity: 0.7;">Custodian:</span> ' + alert.custodianName : ''}${alert.filerName ? '\n<span style="opacity: 0.7;">Filer:</span> ' + alert.filerName : ''}
 <span style="opacity: 0.7;">Bonus:</span> ${alert.hasTuesdayBonus ? 'Tuesday Window' : 'None'}${alert.bonusSignals && typeof alert.bonusSignals === 'object' ? Object.entries(alert.bonusSignals).map(([bonus, value]) => {
         if (bonus === 'DTC Chill Lift' && value) return '\nDTC Chill Lift';
@@ -3444,7 +3448,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
         if (bonus === 'NT 10K' && value === 'Actual 10K Filed') return '\nActual 10-K';
         if (bonus === 'Third Party' && Array.isArray(value) && value.length > 0) return '\nServices: ' + value.join(', ');
         return '';
-    }).filter(x => x).join('') : ''}${alert.reverseSplitRatio ? '\n<span style="opacity: 0.7;">Stock Split:</span> 1-for-' + alert.reverseSplitRatio : ''}</pre>
+    }).filter(x => x).join('') : ''}${alert.reverseSplitRatio ? '\n<span style="opacity: 0.7;">Stock Split:</span> 1 for ' + alert.reverseSplitRatio : ''}</pre>
                             </div>
                         </div>
                         <div class="popup-footer">
@@ -3533,7 +3537,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         const type = alertData.isShort ? 'error' : 'success';
                         const ticker = `<b><i>$${alertData.ticker}</i></b>`;
                         // For new stock alerts, link to SEC filing
-                        this.showNotification(`${ticker} new ${position} alert saved (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
+                        this.showNotification(`${ticker} ${position} alert received (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
                         this.notifiedAlerts.set(alertKey, now);
                     }
                 }
@@ -3792,15 +3796,20 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 const plStats = this.calculateProfitLoss();
                 const plCount = document.getElementById('pl-count');
                 if (plCount) {
-                    const totalSign = parseFloat(plStats.total) > 0 ? '+' : '';
-                    const longSign = parseFloat(plStats.longStr) > 0 ? '+' : '';
-                    const shortSign = parseFloat(plStats.shortStr) > 0 ? '+' : '';
-                    plCount.innerHTML = `${totalSign}${plStats.total}% <span style="font-size: 11.5px;">(L:${plStats.longCount}/${longSign}${plStats.longStr}% | S:${plStats.shortCount}/${shortSign}${plStats.shortStr}%)</span>`;
-                    plCount.style.color = parseFloat(plStats.total) > 0 ? 
-                        (document.body.classList.contains('dark-mode') ? '#1fff1f' : '#00aa00') : 
-                        parseFloat(plStats.total) < 0 ? 
-                        (document.body.classList.contains('dark-mode') ? '#ff3333' : '#aa0000') : 
-                        '#666';
+                    if (plStats.total === 'Loading...') {
+                        plCount.innerHTML = `${plStats.total}`;
+                        plCount.style.color = '#666';
+                    } else {
+                        const totalSign = parseFloat(plStats.total) > 0 ? '+' : '';
+                        const longSign = parseFloat(plStats.longStr) > 0 ? '+' : '';
+                        const shortSign = parseFloat(plStats.shortStr) > 0 ? '+' : '';
+                        plCount.innerHTML = `${totalSign}${plStats.total}% <span style="font-size: 11.5px;">(L:${plStats.longCount}/${longSign}${plStats.longStr}% | S:${plStats.shortCount}/${shortSign}${plStats.shortStr}%)</span>`;
+                        plCount.style.color = parseFloat(plStats.total) > 0 ? 
+                            (document.body.classList.contains('dark-mode') ? '#1fff1f' : '#00aa00') : 
+                            parseFloat(plStats.total) < 0 ? 
+                            (document.body.classList.contains('dark-mode') ? '#ff3333' : '#aa0000') : 
+                            '#666';
+                    }
                 }
             }
 
@@ -4092,6 +4101,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
             calculateProfitLoss() {
                 let longCount = 0, longPL = 0;
                 let shortCount = 0, shortPL = 0;
+                let dataLoadedCount = 0;  // Track if prices have actually loaded
 
                 this.alerts.forEach(alerts => {
                     // Ensure we're working with an array
@@ -4099,6 +4109,10 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                     
                     alertArray.forEach(alert => {
                         if (!alert || !alert.currentPrice || !alert.alertPrice) return;
+                        
+                        // Check if currentPrice is actually different from alertPrice (prices have loaded)
+                        // If currentPrice === alertPrice, data hasn't loaded yet - skip for now
+                        const pricesAreUpdated = alert.currentPrice !== alert.alertPrice;
                         
                         // Detect if short: check isShort OR short field (can be boolean, array, or undefined)
                         const isShort = (Array.isArray(alert.isShort) ? alert.isShort.length > 0 : (alert.isShort === true || alert.short === true)) || alert.position === 'short';
@@ -4137,15 +4151,46 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                         
                         if (isNaN(returnPercent)) return;
                         
-                        if (isShort) {
-                            shortCount++;
-                            shortPL += returnPercent;
-                        } else {
-                            longCount++;
-                            longPL += returnPercent;
+                        // Only count this if prices have actually loaded (not initial state where current === alert price)
+                        if (pricesAreUpdated) {
+                            dataLoadedCount++;
+                            if (isShort) {
+                                shortCount++;
+                                shortPL += returnPercent;
+                            } else {
+                                longCount++;
+                                longPL += returnPercent;
+                            }
                         }
                     });
                 });
+
+                // Check if we've exceeded the loading timeout
+                const elapsedTime = Date.now() - this.dataLoadStartTime;
+                const hasTimedOut = elapsedTime > this.loadingTimeoutMs;
+
+                // If no prices have loaded yet, check if we should show Loading or 0.00%
+                if (dataLoadedCount === 0) {
+                    if (hasTimedOut) {
+                        // Timeout exceeded - show 0.00% instead of Loading
+                        return {
+                            total: '0.00',
+                            longStr: '0.00',
+                            shortStr: '0.00',
+                            longCount: 0,
+                            shortCount: 0
+                        };
+                    } else {
+                        // Still within loading timeout
+                        return {
+                            total: 'Loading...',
+                            longStr: 'Loading...',
+                            shortStr: 'Loading...',
+                            longCount: 0,
+                            shortCount: 0
+                        };
+                    }
+                }
 
                 // Calculate averages by position type
                 const longAvg = longCount > 0 ? longPL / longCount : 0;
@@ -4176,16 +4221,22 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                 
                 // Calculate P/L stats
                 const plStats = this.calculateProfitLoss();
-                const totalSign = parseFloat(plStats.total) > 0 ? '+' : '';
-                const longSign = parseFloat(plStats.longStr) > 0 ? '+' : '';
-                const shortSign = parseFloat(plStats.shortStr) > 0 ? '+' : '';
                 
-                plCount.innerHTML = `${totalSign}${plStats.total}% <span style="font-size: 11.5px;">(L:${plStats.longCount}/${longSign}${plStats.longStr}% | S:${plStats.shortCount}/${shortSign}${plStats.shortStr}%)</span>`;
-                plCount.style.color = parseFloat(plStats.total) > 0 ? 
-                    (document.body.classList.contains('dark-mode') ? '#1fff1f' : '#00aa00') : 
-                    parseFloat(plStats.total) < 0 ? 
-                    (document.body.classList.contains('dark-mode') ? '#ff3333' : '#aa0000') : 
-                    '#666';
+                if (plStats.total === 'Loading...') {
+                    plCount.innerHTML = `${plStats.total}`;
+                    plCount.style.color = '#666';
+                } else {
+                    const totalSign = parseFloat(plStats.total) > 0 ? '+' : '';
+                    const longSign = parseFloat(plStats.longStr) > 0 ? '+' : '';
+                    const shortSign = parseFloat(plStats.shortStr) > 0 ? '+' : '';
+                    
+                    plCount.innerHTML = `${totalSign}${plStats.total}% <span style="font-size: 11.5px;">(L:${plStats.longCount}/${longSign}${plStats.longStr}% | S:${plStats.shortCount}/${shortSign}${plStats.shortStr}%)</span>`;
+                    plCount.style.color = parseFloat(plStats.total) > 0 ? 
+                        (document.body.classList.contains('dark-mode') ? '#1fff1f' : '#00aa00') : 
+                        parseFloat(plStats.total) < 0 ? 
+                        (document.body.classList.contains('dark-mode') ? '#ff3333' : '#aa0000') : 
+                        '#666';
+                }
                 
                 // Store currently open dropdowns before update
                 const openDropdownStates = new Map();
@@ -4465,7 +4516,7 @@ ${alert.signals && typeof alert.signals === 'object' && Object.keys(alert.signal
                     <button type="button" class="score-details-toggle" style="background: transparent; border: none; cursor: pointer; padding: 2px 4px; margin-right: 4px; font-size: 12px; color: #666; border-radius: 3px; transition: background-color 0.2s, padding 0.2s;">⋮</button>
                     <div class="ticker" style="transition: all 0.15s ease;">
                         <i>$${alert.ticker}</i> 
-                        <span style="color: ${alert.isShort ? '#cc0000' : '#00cc00'}; transition: color 0.15s ease;">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>
+                        <span style="color: ${alert.isShort ? '#cc0000' : '#00cc00'}; transition: color 0.15s ease; display: inline-block; min-width: 50px; text-align: center;">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>
                     </div>                    </div><span style="font-size: 0.95em; font-style: italic;">(${(alert.signalScore || 0).toFixed(2)})</span></div>
                     <div>Alert: $${alert.alertPrice.toFixed(4)}</div>
                     <div>Current: $${alert.currentPrice.toFixed(4)} (H/L: $${Math.max(alert.peakPrice, alert.lowPrice).toFixed(4)}/$${Math.min(alert.peakPrice, alert.lowPrice).toFixed(4)})</div>

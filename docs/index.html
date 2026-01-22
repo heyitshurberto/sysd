@@ -2404,7 +2404,7 @@ table {
             gap: 4px;
             color: #222;
             border-bottom: 1px solid rgba(0,0,0,0.08);
-            font-family: monospace;
+            font-family: "Söhne", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             font-size: 13px;
             line-height: 1.3;
         }
@@ -3547,7 +3547,7 @@ ${(alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals ===
                         const type = alertData.isShort ? 'error' : 'success';
                         const ticker = `<b><i>$${alertData.ticker}</i></b>`;
                         // For new stock alerts, link to SEC filing
-                        this.showNotification(`${ticker} ${position} alert receiveq (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
+                        this.showNotification(`${ticker} ${position} alert received (Score: ${alertData.signalScore.toFixed(1)})`, type, alertData.filingLink);
                         this.notifiedAlerts.set(alertKey, now);
                     }
                 }

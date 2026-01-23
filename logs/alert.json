@@ -1,148 +1,50 @@
 [
   {
-    "ticker": "AGEN",
-    "title": "8-K - AGENUS INC (0001098972) (Filer)",
-    "price": 3.68,
-    "signalScore": 0.83,
+    "ticker": "ADAG",
+    "title": "6-K - Adagene Inc. (0001818838) (Filer)",
+    "companyName": "Adagene Inc.",
+    "filerName": null,
+    "price": 2.03,
+    "wa": "1.85",
+    "signalScore": 0.67,
     "hasTuesdayBonus": false,
     "custodianControl": true,
     "custodianVerified": false,
-    "custodianName": "Structure Only",
+    "custodianName": null,
     "filingTimeMultiplier": 1.1,
     "filingTimeBonus": 1.1,
-    "soBonus": 1.15,
-    "volume": 3159862,
-    "averageVolume": 629672,
-    "float": 33417624,
-    "sharesOutstanding": 34008349,
-    "soRatio": "98.26%",
-    "marketCap": 125150720,
-    "isShort": true,
-    "ftd": 2506,
-    "ftdPercent": "0.01",
-    "intent": "Major Contract, Going Concern, Licensing Deal, Compliance Issue",
-    "incorporated": "Wilmington, Delaware",
-    "located": "Massachusetts",
-    "filingDate": "2026-01-16",
-    "signals": {
-      "Major Contract": [
-        "Exclusive License"
-      ],
-      "Going Concern": [
-        "Operating Loss",
-        "Net Loss",
-        "Accumulated Deficit"
-      ],
-      "Licensing Deal": [
-        "Exclusive License",
-        "License Agreement"
-      ],
-      "Compliance Issue": [
-        "Subject to risks"
-      ]
-    },
-    "formType": [
-      "8-K",
-      "EX-99.1",
-      "EX-99.2",
-      "Item 2.01",
-      "Item 3.02",
-      "Item 7.01",
-      "Item 9.01"
-    ],
-    "filingType": "8-K, EX-99.1, EX-99.2, Item 2.01, Item 3.02, Item 7.01, Item 9.01",
-    "cik": "1098972",
-    "skipReason": "",
-    "recordedAt": "2026-01-16T13:26:14.214Z",
-    "recordId": "AGEN-1768569974214",
-    "expiresAt": "2026-01-21T13:26:14.214Z"
-  },
-  {
-    "ticker": "NVAX",
-    "title": "8-K - NOVAVAX INC (0001000694) (Filer)",
-    "price": 8.003,
-    "vwap": 8.003,
-    "signalScore": 0.49,
-    "hasTuesdayBonus": true,
-    "custodianControl": true,
-    "custodianVerified": false,
-    "custodianName": "Structure Only",
-    "filingTimeMultiplier": 1.05,
-    "filingTimeBonus": 1.05,
-    "soBonus": 1.15,
-    "volume": 5448521,
-    "averageVolume": 3886703,
-    "float": 133709048,
-    "sharesOutstanding": 162498995,
-    "soRatio": "82.28%",
-    "marketCap": 1300479488,
+    "soBonus": 1,
+    "volume": 599500,
+    "averageVolume": 129609,
+    "float": 28343010,
+    "sharesOutstanding": 47131270,
+    "soRatio": "60.14%",
+    "marketCap": 95676480,
     "isShort": false,
-    "ftd": 911638,
-    "ftdPercent": "0.68",
-    "intent": "Major Contract, Licensing Deal",
-    "incorporated": "Wilmington, Delaware",
-    "located": "Maryland",
-    "filingDate": "2026-01-20",
+    "ftd": 8569,
+    "ftdPercent": "0.03",
+    "intent": "FDA Breakthrough, Clinical Success, Clinical Milestone",
+    "incorporated": "Cayman Islands",
+    "located": "Shadong, China",
+    "filingDate": "2026-01-23",
     "signals": {
-      "Major Contract": [
-        "Exclusive License"
+      "FDA Breakthrough": [
+        "Fast Track Designation"
       ],
-      "Licensing Deal": [
-        "Exclusive License",
-        "License Agreement"
-      ]
-    },
-    "bonusSignals": {},
-    "reverseSplitRatio": null,
-    "reverseSplitReason": null,
-    "formType": [
-      "6-K",
-      "6-K/A",
-      "8-K",
-      "S-3",
-      "20-F",
-      "20-F/A",
-      "Item 1.01"
-    ],
-    "filingType": "6-K, 6-K/A, 8-K, S-3, 20-F, 20-F/A, Item 1.01",
-    "cik": "1000694",
-    "skipReason": "",
-    "recordedAt": "2026-01-20T12:00:34.671Z",
-    "recordId": "NVAX-1768910434671",
-    "expiresAt": "2026-01-25T12:00:34.671Z"
-  },
-  {
-    "ticker": "SUUN",
-    "title": "6-K - POWERBANK Corp (0002011053) (Filer)",
-    "price": 1.62,
-    "vwap": 1.62,
-    "signalScore": 0.78,
-    "hasTuesdayBonus": true,
-    "custodianControl": true,
-    "custodianVerified": false,
-    "custodianName": "Structure Only",
-    "filingTimeMultiplier": 1.05,
-    "filingTimeBonus": 1.05,
-    "soBonus": 1.15,
-    "volume": 1676354,
-    "averageVolume": 1041422,
-    "float": 27742511,
-    "sharesOutstanding": 36640486,
-    "soRatio": "75.72%",
-    "marketCap": 59357592,
-    "isShort": false,
-    "ftd": 2150242,
-    "ftdPercent": "7.75",
-    "intent": "M&A Rebrand, China Risk",
-    "incorporated": "Ottawa, Canada",
-    "located": "Ontario, Canada",
-    "filingDate": "2026-01-20",
-    "signals": {
-      "M&A Rebrand": [
-        "Name Change"
+      "Clinical Success": [
+        "Phase 1",
+        "Phase 2",
+        "Phase 3",
+        "Trial Results",
+        "Efficacy",
+        "Safety Profile",
+        "Biomarker",
+        "Patient Population",
+        "Favorable Safety"
       ],
-      "China Risk": [
-        "Subject to risks"
+      "Clinical Milestone": [
+        "First Patient",
+        "Patient Dosed"
       ]
     },
     "bonusSignals": {},
@@ -154,56 +56,47 @@
       "EX-99.1"
     ],
     "filingType": "6-K, 20-F, EX-99.1",
-    "cik": "2011053",
+    "cik": "1818838",
     "skipReason": "",
-    "recordedAt": "2026-01-20T12:11:35.663Z",
-    "recordId": "SUUN-1768911095663",
-    "expiresAt": "2026-01-25T12:11:35.663Z"
+    "alertType": null,
+    "recordedAt": "2026-01-23T13:00:52.933Z",
+    "recordId": "ADAG-1769173252933",
+    "expiresAt": "2026-01-28T13:00:52.933Z"
   },
   {
-    "ticker": "BKKT",
-    "title": "8-K - Bakkt Holdings, Inc. (0001820302) (Filer)",
-    "price": 17.425,
-    "vwap": 17.425,
-    "signalScore": 1,
-    "hasTuesdayBonus": true,
+    "ticker": "ACHC",
+    "title": "8-K - Acadia Healthcare Company, Inc. (0001520697) (Filer)",
+    "companyName": "Acadia Healthcare Company, Inc.",
+    "filerName": null,
+    "price": 15.15,
+    "wa": "12.71",
+    "signalScore": 0.51,
+    "hasTuesdayBonus": false,
     "custodianControl": true,
     "custodianVerified": false,
-    "custodianName": "Structure Only",
-    "filingTimeMultiplier": 1.2,
-    "filingTimeBonus": 1.2,
-    "soBonus": 1.15,
-    "volume": 1361007,
-    "averageVolume": 1543219,
-    "float": 15590934,
-    "sharesOutstanding": 25514376,
-    "soRatio": "61.11%",
-    "marketCap": 444587968,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1,
+    "volume": 6744110,
+    "averageVolume": 3203195,
+    "float": 83333111,
+    "sharesOutstanding": 90444261,
+    "soRatio": "92.14%",
+    "marketCap": 1370230528,
     "isShort": true,
-    "ftd": 56672,
-    "ftdPercent": "0.36",
-    "intent": "M&A Rebrand, Share Dilution, Convertible Dilution, Accounting Restatement, Convertible Debt, Partnership",
+    "ftd": 30958,
+    "ftdPercent": "0.04",
+    "intent": "Compensation Dilution, Executive Departure Non-Planned",
     "incorporated": "Wilmington, Delaware",
-    "located": "New York",
-    "filingDate": "2026-01-20",
+    "located": "Tennessee",
+    "filingDate": "2026-01-23",
     "signals": {
-      "M&A Rebrand": [
-        "Name Change"
+      "Compensation Dilution": [
+        "Equity Compensation"
       ],
-      "Share Dilution": [
-        "Issuance of shares"
-      ],
-      "Convertible Dilution": [
-        "Convertible Notes"
-      ],
-      "Accounting Restatement": [
-        "Material Weakness"
-      ],
-      "Convertible Debt": [
-        "Convertible Notes"
-      ],
-      "Partnership": [
-        "Joint Venture"
+      "Executive Departure Non-Planned": [
+        "Departure Of Directors"
       ]
     },
     "bonusSignals": {},
@@ -211,251 +104,137 @@
     "reverseSplitReason": null,
     "formType": [
       "8-K",
-      "S-3",
       "EX-10.1",
-      "Item 1.01",
+      "Item 5.02",
       "Item 9.01"
     ],
-    "filingType": "8-K, S-3, EX-10.1, Item 1.01, Item 9.01",
-    "cik": "1820302",
+    "filingType": "8-K, EX-10.1, Item 5.02, Item 9.01",
+    "cik": "1520697",
     "skipReason": "",
-    "recordedAt": "2026-01-20T15:54:52.322Z",
-    "recordId": "BKKT-1768924492322",
-    "expiresAt": "2026-01-25T15:54:52.322Z"
+    "alertType": null,
+    "recordedAt": "2026-01-23T13:01:18.327Z",
+    "recordId": "ACHC-1769173278327",
+    "expiresAt": "2026-01-28T13:01:18.327Z"
   },
   {
-    "ticker": "RDZN",
-    "title": "8-K - Roadzen Inc. (0001868640) (Filer)",
-    "price": 1.855,
-    "vwap": 1.855,
-    "signalScore": 0.69,
-    "hasTuesdayBonus": true,
+    "ticker": "ETHZ",
+    "title": "8-K - ETHZilla Corp (0001690080) (Filer)",
+    "companyName": "ETHZilla Corp",
+    "filerName": null,
+    "price": 5.27,
+    "wa": "3.30",
+    "signalScore": 0.5,
+    "hasTuesdayBonus": false,
     "custodianControl": true,
     "custodianVerified": false,
-    "custodianName": "Structure Only",
-    "filingTimeMultiplier": 1.2,
-    "filingTimeBonus": 1.2,
-    "soBonus": 1.1,
-    "volume": 84797,
-    "averageVolume": 322378,
-    "float": 26226965,
-    "sharesOutstanding": 79497576,
-    "soRatio": "32.99%",
-    "marketCap": 147468000,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1.05,
+    "volume": 359318,
+    "averageVolume": 1056327,
+    "float": 8962939,
+    "sharesOutstanding": 19012231,
+    "soRatio": "47.14%",
+    "marketCap": 100194464,
     "isShort": true,
-    "ftd": 33317,
-    "ftdPercent": "0.13",
-    "intent": "M&A Rebrand, Share Dilution, Convertible Dilution, Credit Default, Convertible Debt, Partnership, Stock Split, VIE Structure",
-    "incorporated": "Hong Kong",
-    "located": "Toronto, Canada",
-    "filingDate": "2026-01-20",
+    "ftd": 102491,
+    "ftdPercent": "1.14",
+    "intent": "Credit Default, Asset Disposition, Partnership",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Florida",
+    "filingDate": "2026-01-23",
     "signals": {
-      "M&A Rebrand": [
-        "Name Change"
-      ],
-      "Share Dilution": [
-        "Issuance of shares"
-      ],
-      "Convertible Dilution": [
-        "Convertible Notes",
-        "Convertible Securities"
-      ],
       "Credit Default": [
         "Event Of Default"
       ],
-      "Convertible Debt": [
-        "Convertible Notes"
+      "Asset Disposition": [
+        "Disposition"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "Item 2.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, Item 2.01, Item 9.01",
+    "cik": "1690080",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-23T13:01:47.097Z",
+    "recordId": "ETHZ-1769173307097",
+    "expiresAt": "2026-01-28T13:01:47.097Z"
+  },
+  {
+    "ticker": "NEOV",
+    "title": "8-K - NeoVolta Inc. (0001748137) (Filer)",
+    "companyName": "NeoVolta Inc.",
+    "filerName": null,
+    "price": 5.8,
+    "wa": "5.29",
+    "signalScore": 1,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1.15,
+    "volume": 2334023,
+    "averageVolume": 498852,
+    "float": 2100841,
+    "sharesOutstanding": 34737923,
+    "soRatio": "6.05%",
+    "marketCap": 201479968,
+    "isShort": true,
+    "ftd": 40403,
+    "ftdPercent": "1.92",
+    "intent": "Convertible Dilution, Accounting Restatement, Auditor Change, Partnership, Late Filing Notice",
+    "incorporated": "Nevada",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-23",
+    "signals": {
+      "Convertible Dilution": [
+        "Convertible Securities"
+      ],
+      "Accounting Restatement": [
+        "Material Weakness"
+      ],
+      "Auditor Change": [
+        "Material Weakness"
       ],
       "Partnership": [
         "Joint Venture"
       ],
-      "Stock Split": [
-        "Stock Dividend"
-      ],
-      "VIE Structure": [
-        "variable interest"
+      "Late Filing Notice": [
+        "Unreasonable Effort"
       ]
     },
-    "bonusSignals": {
-      "NT 10K": "NT 10K Filed"
-    },
+    "bonusSignals": {},
     "reverseSplitRatio": null,
     "reverseSplitReason": null,
     "formType": [
       "8-K",
       "S-3",
-      "13D",
+      "S-8",
       "EX-10.1",
       "Item 1.01",
-      "Item 2.03",
+      "Item 2.02",
+      "Item 7.01",
       "Item 9.01"
     ],
-    "filingType": "8-K, S-3, 13D, EX-10.1, Item 1.01, Item 2.03, Item 9.01",
-    "cik": "1868640",
+    "filingType": "8-K, S-3, S-8, EX-10.1, Item 1.01, Item 2.02, Item 7.01, Item 9.01",
+    "cik": "1748137",
     "skipReason": "",
-    "recordedAt": "2026-01-20T15:56:27.720Z",
-    "recordId": "RDZN-1768924587720",
-    "expiresAt": "2026-01-25T15:56:27.720Z"
-  },
-  {
-    "ticker": "THAR",
-    "title": "8-K - Tharimmune, Inc. (0001861657) (Filer)",
-    "price": 3.03,
-    "vwap": 3.03,
-    "signalScore": 0.5,
-    "hasTuesdayBonus": true,
-    "custodianControl": true,
-    "custodianVerified": false,
-    "custodianName": "Structure Only",
-    "filingTimeMultiplier": 1.15,
-    "filingTimeBonus": 1.15,
-    "soBonus": 1.15,
-    "volume": 343616,
-    "averageVolume": 1416890,
-    "float": 32910233,
-    "sharesOutstanding": 37386114,
-    "soRatio": "88.03%",
-    "marketCap": 113279920,
-    "isShort": false,
-    "ftd": 909090,
-    "ftdPercent": "2.76",
-    "intent": "M&A Rebrand, Blockchain Initiative",
-    "incorporated": "Wilmington, Delaware",
-    "located": "New Jersey",
-    "filingDate": "2026-01-20",
-    "signals": {
-      "M&A Rebrand": [
-        "Name Change"
-      ],
-      "Blockchain Initiative": [
-        "Blockchain Adoption"
-      ]
-    },
-    "bonusSignals": {},
-    "reverseSplitRatio": null,
-    "reverseSplitReason": null,
-    "formType": [
-      "6-K",
-      "6-K/A",
-      "8-K",
-      "20-F",
-      "20-F/A",
-      "EX-99.1",
-      "Item 8.01",
-      "Item 9.01"
-    ],
-    "filingType": "6-K, 6-K/A, 8-K, 20-F, 20-F/A, EX-99.1, Item 8.01, Item 9.01",
-    "cik": "1861657",
-    "skipReason": "",
-    "recordedAt": "2026-01-20T15:58:05.281Z",
-    "recordId": "THAR-1768924685281",
-    "expiresAt": "2026-01-25T15:58:05.281Z"
-  },
-  {
-    "ticker": "SRTS",
-    "title": "8-K - Sensus Healthcare, Inc. (0001494891) (Filer)",
-    "price": 5.2224,
-    "vwap": 5.2224,
-    "signalScore": 0.48,
-    "hasTuesdayBonus": true,
-    "custodianControl": true,
-    "custodianVerified": false,
-    "custodianName": "Structure Only",
-    "filingTimeMultiplier": 1.1,
-    "filingTimeBonus": 1.1,
-    "soBonus": 1.15,
-    "volume": 72199,
-    "averageVolume": 111313,
-    "float": 13672028,
-    "sharesOutstanding": 16425036,
-    "soRatio": "83.24%",
-    "marketCap": 85856456,
-    "isShort": true,
-    "ftd": false,
-    "ftdPercent": null,
-    "intent": "M&A Rebrand, Accounting Restatement",
-    "incorporated": "Wilmington, Delaware",
-    "located": "Florida",
-    "filingDate": "2026-01-20",
-    "signals": {
-      "M&A Rebrand": [
-        "Name Change"
-      ],
-      "Accounting Restatement": [
-        "Material Weakness"
-      ]
-    },
-    "bonusSignals": {},
-    "reverseSplitRatio": null,
-    "reverseSplitReason": null,
-    "formType": [
-      "6-K",
-      "6-K/A",
-      "8-K",
-      "20-F",
-      "20-F/A",
-      "Item 4.01",
-      "Item 9.01"
-    ],
-    "filingType": "6-K, 6-K/A, 8-K, 20-F, 20-F/A, Item 4.01, Item 9.01",
-    "cik": "1494891",
-    "skipReason": "",
-    "recordedAt": "2026-01-20T16:12:16.695Z",
-    "recordId": "SRTS-1768925536695",
-    "expiresAt": "2026-01-25T16:12:16.695Z"
-  },
-  {
-    "ticker": "THAR",
-    "title": "8-K - Tharimmune, Inc. (0001861657) (Filer)",
-    "price": 3.02,
-    "vwap": 3.02,
-    "signalScore": 0.5,
-    "hasTuesdayBonus": true,
-    "custodianControl": true,
-    "custodianVerified": false,
-    "custodianName": "Structure Only",
-    "filingTimeMultiplier": 1.15,
-    "filingTimeBonus": 1.15,
-    "soBonus": 1.15,
-    "volume": 400105,
-    "averageVolume": 1416890,
-    "float": 32910233,
-    "sharesOutstanding": 37386114,
-    "soRatio": "88.03%",
-    "marketCap": 112906056,
-    "isShort": false,
-    "ftd": 909090,
-    "ftdPercent": "2.76",
-    "intent": "M&A Rebrand, Blockchain Initiative",
-    "incorporated": "Wilmington, Delaware",
-    "located": "New Jersey",
-    "filingDate": "2026-01-20",
-    "signals": {
-      "M&A Rebrand": [
-        "Name Change"
-      ],
-      "Blockchain Initiative": [
-        "Blockchain Adoption"
-      ]
-    },
-    "bonusSignals": {},
-    "reverseSplitRatio": null,
-    "reverseSplitReason": null,
-    "formType": [
-      "6-K",
-      "6-K/A",
-      "8-K",
-      "20-F",
-      "20-F/A",
-      "EX-99.1",
-      "Item 8.01",
-      "Item 9.01"
-    ],
-    "filingType": "6-K, 6-K/A, 8-K, 20-F, 20-F/A, EX-99.1, Item 8.01, Item 9.01",
-    "cik": "1861657",
-    "skipReason": "",
-    "recordedAt": "2026-01-20T16:12:31.919Z",
-    "recordId": "THAR-1768925551919",
-    "expiresAt": "2026-01-25T16:12:31.919Z"
+    "alertType": null,
+    "recordedAt": "2026-01-23T13:03:06.177Z",
+    "recordId": "NEOV-1769173386177",
+    "expiresAt": "2026-01-28T13:03:06.177Z"
   }
 ]

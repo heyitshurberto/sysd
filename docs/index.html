@@ -22,8 +22,8 @@ table {
     table { font-size: 12px; }
 }
 </style>
-<div style="position: absolute; top: 7px; left: 4.5px;" class="eugene-tag-desktop">
-  <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 10px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 2px 4px; border-radius: 3px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
+<div style="position: absolute; top: 6px; left: 6px;" class="eugene-tag-desktop">
+  <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; color: inherit; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; font-size: 11.5px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 3px 3px; border-radius: 4px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@cartelwrld</a></div>
 <style>
     .eugene-tag-mobile {
         display: none !important;
@@ -37,12 +37,14 @@ table {
         }
     }
 </style>
-    <title style="font-family: 'Monaco', monospace;">Eugene's Non-Profit</title>
+    <title>Cartel Ventures</title>
     <!-- PWA meta tags and manifest -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Eugene's Non-Profit">
+    <meta name="apple-mobile-web-app-title" content="Cartel Ventures">
     <meta name="theme-color" content="#1a1a1a">
+    <!-- Google Font for modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <!-- Favicon for all devices and browsers -->
     <link rel="icon" type="image/jpeg" href="logo.jpeg" sizes="any">
     <link rel="icon" type="image/jpeg" href="logo.jpeg">
@@ -855,7 +857,7 @@ table {
             margin: 0;
             color: #666666;
             transition: color 0.15s ease;
-            letter-spacing: -0.3px;
+            letter-spacing: -0.75px;
         }
 
         .header-top {
@@ -864,7 +866,7 @@ table {
             gap: 20px;
             width: 100%;
             margin-top: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 0px;
         }
 
         .logo {
@@ -895,7 +897,8 @@ table {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 5px;
+            margin-top: -10px;
             border-bottom: 1px solid rgba(120,120,120,0.15);
             padding-bottom: 20px;
         }
@@ -2303,12 +2306,12 @@ table {
 
         .notification-panel {
             position: fixed;
-            top: 70px;
+            top: 55px;
             right: 20px;
             width: 315px;
             max-height: 80vh;
             background: rgba(255,255,255,0.40);
-            border-radius: 8px;
+            border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             z-index: 9999;
             display: none;
@@ -2520,9 +2523,9 @@ table {
 <body>
         <div class="container">
             <div class="header">
-                <div class="header-top">
-                    <img src="logo.jpeg?t=${new Date().getTime()}" alt="Logo" class="logo" style="height: 100px; width: auto; transition: opacity 0.4s ease;" onload="this.style.opacity=1">
-                    <h1 style="color: #2c2c2c; font-size: 19.5x; font-family: 'Monaco', monospace !important; margin-left: 7px; margin-top: 18px;" class="dashboard-title">Eugene's Non-Profit</h1>
+                <div class="header-top" style="margin-top: 15px;">
+                    <img src="logo.jpeg?t=${new Date().getTime()}" alt="Logo" class="logo" style="height: 80px; width: auto; transition: opacity 0.4s ease; margin-right: 0px; margin-top: 14x;" onload="this.style.opacity=1">
+                    <h1 style="color: #000000; font-size: 22px; font-family: 'Poppins', sans-serif; font-weight: 500; margin-left: -8px; margin-top: -5px;" class="dashboard-title">Cartel Ventures</h1>
                 </div>
                 <div class="theme-toggle" onmousedown="event.stopPropagation(); toggleTheme();">
                     <svg class="theme-icon-light" viewBox="0 0 24 24">
@@ -2570,10 +2573,10 @@ table {
             <div class="stats">
                 <div class="stat-box">
                     <div>Active Positions:</div>
-                    <div id="active-count">0 <span style="font-size: 11.5px;">(L:0 | S:0):</span></div>
+                    <div id="active-count">0 <span style="font-size: 11.5px;">(Long: 0 | Short: 0):</span></div>
                 </div>
                 <div class="stat-box">
-                    <div>Weighted ROI:</div>
+                    <div>Average Return:</div>
                     <div id="pl-count">0%</div>
                 </div>
                 <div class="stat-box">
@@ -2976,7 +2979,7 @@ table {
                         return;
                     }
                     
-                    stocks.slice(-2).reverse().forEach(stock => {
+                    stocks.reverse().forEach(stock => {
                         const item = document.createElement('div');
                         item.className = 'notification-item';
                         item.style.cursor = 'pointer';
@@ -3017,14 +3020,16 @@ table {
             const list = document.getElementById('notification-inbox-list');
             list.innerHTML = '';
             
-            const messages = JSON.parse(localStorage.getItem('inbox-messages')) || [];
+            let messages = JSON.parse(localStorage.getItem('inbox-messages')) || [];
             
             if (messages.length === 0) {
-                const emptyState = document.createElement('div');
-                emptyState.style.cssText = 'padding: 20px; text-align: center; opacity: 0.6; font-size: 12px;';
-                emptyState.textContent = 'No messages';
-                list.appendChild(emptyState);
-                return;
+                const welcomeMsg = {
+                    title: 'Welcome to Your Dashboard',
+                    message: 'This is your inbox where you can receive important notifications and updates about company reports, alerts, and system messages. Create new messages or delete ones you no longer need.',
+                    timestamp: new Date().toISOString()
+                };
+                messages.push(welcomeMsg);
+                localStorage.setItem('inbox-messages', JSON.stringify(messages));
             }
             
             messages.slice().reverse().forEach((msg, idx) => {
@@ -3033,12 +3038,12 @@ table {
                 item.style.cssText = 'position: relative; padding: 10px; border: 1px solid rgba(0,0,0,0.1); margin-bottom: 8px;';
                 
                 const msgDate = new Date(msg.timestamp);
-                const timeStr = msgDate.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-                const dateStr = msgDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const timeStr = msgDate.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' });
+                const dateStr = msgDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 
                 item.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div style="flex: 1; cursor: pointer;">
+                        <div style="flex: 1;">
                             <div style="font-weight: 600; margin-bottom: 4px;">${msg.title}</div>
                             <div style="font-size: 12px; opacity: 0.8; margin-bottom: 6px;">${msg.message}</div>
                             <div style="font-size: 10px; opacity: 0.6;">${dateStr} at ${timeStr}</div>
@@ -3047,77 +3052,170 @@ table {
                     </div>
                 `;
                 
-                item.addEventListener('click', (e) => {
-                    if (e.target.textContent !== '×' && !e.target.closest('button')) {
-                        editInboxMessage(messages.length - 1 - idx);
-                    }
-                });
-                
                 list.appendChild(item);
             });
             
             const addBtn = document.createElement('div');
-            addBtn.style.cssText = 'padding: 10px; text-align: center; border-top: 1px solid rgba(0,0,0,0.1); margin-top: 10px;';
+            addBtn.style.cssText = 'padding: 10px 10px 0 10px; text-align: center; border-top: 1px solid rgba(0,0,0,0.1); margin-top: 20px;';
             addBtn.innerHTML = `<button onclick="createNewMessage()" style="background: #0066cc; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px;">+ New Message</button>`;
             list.appendChild(addBtn);
         }
 
         function createNewMessage() {
-            const title = prompt('Message title:');
-            if (!title) return;
+            const modal = document.createElement('div');
+            modal.className = 'custom-confirm-modal';
+            modal.style.zIndex = '999999999';
+            modal.innerHTML = `
+                <div class="custom-confirm-box">
+                    <div style="margin-bottom: 12px; font-weight: 600;">Create New Message</div>
+                    <div id="msg-error" style="color: #d32f2f; font-size: 12px; margin-bottom: 10px; display: none; padding: 8px; background: #ffebee; border-radius: 4px;"></div>
+                    <input type="text" id="new-msg-title" placeholder="Message title" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; font-size: 13px; box-sizing: border-box;">
+                    <textarea id="new-msg-content" placeholder="Message content" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 12px; font-size: 13px; box-sizing: border-box; min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
+                    <div class="custom-confirm-buttons">
+                        <button type="button" class="custom-confirm-btn" id="create-msg-yes" style="flex: 1;">Send</button>
+                        <button type="button" class="custom-confirm-btn" id="create-msg-no" style="flex: 1;">Cancel</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
             
-            const message = prompt('Message content:');
-            if (!message) return;
+            const titleInput = document.getElementById('new-msg-title');
+            const contentInput = document.getElementById('new-msg-content');
+            const errorDiv = document.getElementById('msg-error');
+            const yesBtn = document.getElementById('create-msg-yes');
+            const noBtn = document.getElementById('create-msg-no');
             
-            const messages = JSON.parse(localStorage.getItem('inbox-messages')) || [];
-            messages.push({
-                title: title,
-                message: message,
-                timestamp: new Date().toISOString()
-            });
-            localStorage.setItem('inbox-messages', JSON.stringify(messages));
-            loadInboxMessages();
+            const cleanup = () => {
+                modal.remove();
+            };
+            
+            yesBtn.onclick = async () => {
+                const title = titleInput.value.trim();
+                const content = contentInput.value.trim();
+                
+                if (!title || !content) {
+                    errorDiv.textContent = 'Please fill in both title and message';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+                
+                errorDiv.style.display = 'none';
+                yesBtn.disabled = true;
+                yesBtn.textContent = 'Sending...';
+                
+                const messages = JSON.parse(localStorage.getItem('inbox-messages')) || [];
+                messages.push({
+                    title: title,
+                    message: content,
+                    timestamp: new Date().toISOString()
+                });
+                localStorage.setItem('inbox-messages', JSON.stringify(messages));
+                
+                // Send to configured email
+                try {
+                    const response = await fetch('/api/send-message', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, message: content })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.error || 'Failed to send message');
+                    }
+                    
+                    // Add notification alert
+                    addToNotificationHistory(`✓ Message sent: "${title}"`, 'success');
+                    showMessageNotification(`✓ Message sent: ${title}`, 'success');
+                    
+                    cleanup();
+                    loadInboxMessages();
+                } catch (err) {
+                    errorDiv.textContent = `Failed to send message: ${err.message}`;
+                    errorDiv.style.display = 'block';
+                    yesBtn.disabled = false;
+                    yesBtn.textContent = 'Send';
+                }
+            };
+            
+            noBtn.onclick = cleanup;
+            
+            titleInput.focus();
         }
 
-        function editInboxMessage(idx) {
+
+        function deleteInboxMessage(idx) {
             const messages = JSON.parse(localStorage.getItem('inbox-messages')) || [];
             if (idx < 0 || idx >= messages.length) return;
             
-            const msg = messages[idx];
-            const newTitle = prompt('Edit title:', msg.title);
-            if (newTitle === null) return;
+            const msgTitle = messages[idx]?.title || 'Message';
             
-            const newMessage = prompt('Edit message:', msg.message);
-            if (newMessage === null) return;
+            // Remove any existing modals first
+            const existingModals = document.querySelectorAll('.custom-confirm-modal');
+            existingModals.forEach(modal => modal.remove());
             
-            messages[idx].title = newTitle;
-            messages[idx].message = newMessage;
-            localStorage.setItem('inbox-messages', JSON.stringify(messages));
-            loadInboxMessages();
+            const modal = document.createElement('div');
+            modal.className = 'custom-confirm-modal';
+            modal.style.zIndex = '999999999';
+            
+            const uniqueYesId = 'delete-msg-yes-' + Date.now();
+            const uniqueNoId = 'delete-msg-no-' + Date.now();
+            
+            modal.innerHTML = `
+                <div class="custom-confirm-box">
+                    <div>Delete this message?</div>
+                    <div class="custom-confirm-buttons">
+                        <button type="button" class="custom-confirm-btn yes" id="${uniqueYesId}">Yes</button>
+                        <button type="button" class="custom-confirm-btn no" id="${uniqueNoId}">No</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            const yesBtn = document.getElementById(uniqueYesId);
+            const noBtn = document.getElementById(uniqueNoId);
+            
+            const cleanup = () => {
+                modal.remove();
+            };
+            
+            yesBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const messages = JSON.parse(localStorage.getItem('inbox-messages')) || [];
+                messages.splice(idx, 1);
+                localStorage.setItem('inbox-messages', JSON.stringify(messages));
+                addToNotificationHistory(`✓ Message deleted: "${msgTitle}"`, 'deleted');
+                showMessageNotification(`✓ Message deleted: ${msgTitle}`, 'deleted');
+                cleanup();
+                loadInboxMessages();
+            };
+            
+            noBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                cleanup();
+            };
         }
-
-        function deleteInboxMessage(idx) {
-            if (!confirm('Delete this message?')) return;
-            
-            const messages = JSON.parse(localStorage.getItem('inbox-messages')) || [];
-            messages.splice(idx, 1);
-            localStorage.setItem('inbox-messages', JSON.stringify(messages));
-            loadInboxMessages();
-        }
-
         function addToNotificationHistory(message, type, link) {
             const notificationList = document.getElementById('notification-list');
             const notificationCount = document.getElementById('notification-count');
             
+            if (!notificationList) {
+                console.log('Notification list not found');
+                return;
+            }
+            
             const item = document.createElement('div');
             item.className = 'notification-item';
             const now = new Date();
-            const dateStr = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
-            const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' });
             item.innerHTML = `
                 <div class="notification-content">
                     <div class="title">${message}</div>
-                    <div class="time" style="margin-top: 2px; font-size: 10px; opacity: 0.5;">${dateStr} ${timeStr}</div>
+                    <div class="time" style="margin-top: 2px; font-size: 10px; opacity: 0.5;">${dateStr} at ${timeStr}</div>
                 </div>
             `;
             
@@ -3129,7 +3227,59 @@ table {
                 items[items.length - 1].remove();
             }
             
-            notificationCount.textContent = Math.min(parseInt(notificationCount.textContent) + 1, items.length);
+            // Update notification count
+            if (notificationCount) {
+                notificationCount.textContent = Math.min(items.length, 100);
+            }
+            
+            // Switch to Recent tab to show the notification
+            switchNotificationTab('recent');
+        }
+
+        function showMessageNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 16px;
+                border-radius: 6px;
+                border-left: 4px solid ${type === 'success' ? '#00aa00' : '#cc0000'};
+                background: ${type === 'success' ? 'rgba(200, 255, 200, 0.95)' : 'rgba(255, 200, 200, 0.95)'};
+                color: ${type === 'success' ? '#003300' : '#330000'};
+                font-size: 13px;
+                font-weight: 500;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                z-index: 999999;
+                max-width: 300px;
+                word-wrap: break-word;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Add CSS animations if not exists
+        if (!document.getElementById('message-notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'message-notification-styles';
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(400px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(400px); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
         }
 
         // Play sound based on alert level
@@ -4397,7 +4547,7 @@ ${(alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals ===
                     }
                 });
 
-                activeCount.innerHTML = `${sortedAlerts.length} <span style="font-size: 11.5px;">(L:${longCount} | S:${shortCount})</span>`;
+                activeCount.innerHTML = `${sortedAlerts.length} <span style="font-size: 11.5px;">(Long: ${longCount} | Short: ${shortCount})</span>`;
             
 
                 // Restore scroll position after update if needed
@@ -5473,6 +5623,6 @@ ${(alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals ===
 
     </script>
 <div style="position: static; width: 100%; text-align: center; padding: 2px 0; margin-bottom: 30px;" class="eugene-tag-mobile">
-  <a href="#" onclick="customConfirm('Visit @eugene0112358 on X?', 'https://x.com/eugene0112358'); return false;" style="text-decoration: none; color: inherit; font-family: monospace; font-size: 3.5; white-space: nowrap; display: inline-block; padding: 1px 1x; border-radius: 1px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@eugene0112358</a></div>
+  <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; color: inherit; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; font-size: 6.5px; white-space: nowrap; display: inline-block; padding: 1px 1x; border-radius: 1px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@cartelwrld</a></div>
 </body>
 </html>

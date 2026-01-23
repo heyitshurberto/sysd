@@ -10,6 +10,7 @@
     "fs": "^0.0.1-security",
     "ipfs-core": "^0.18.1",
     "node-fetch": "^2.7.0",
+    "nodemailer": "^6.10.1",
     "p-limit": "^7.2.0",
     "sqlite3": "^5.1.7",
     "undici": "^5.29.0",

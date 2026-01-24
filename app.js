@@ -2351,8 +2351,12 @@ const sendPersonalWebhook = (alertData) => {
       fetch(CONFIG.PERSONAL_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(personalMsg),
-        timeout: 5000
+        body: JSON.stringify(personalMsg)
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error(`Webhook returned ${res.status}`);
+        }
+        return res;
       }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Webhook timeout')), 6000))
     ]).catch(err => {
@@ -2462,8 +2466,12 @@ const sendTelegramAlert = (alertData) => {
       fetch(telegramUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(telegramPayload),
-        timeout: 5000
+        body: JSON.stringify(telegramPayload)
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error(`Telegram returned ${res.status}`);
+        }
+        return res;
       }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Telegram timeout')), 6000))
     ]).catch(err => {
@@ -2562,7 +2570,7 @@ const renderLoginPage = () => `
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cartel Ventures Portal</title>
+  <title>Carlucci Capital Portal</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2699,7 +2707,7 @@ const renderLoginPage = () => `
 <body>
   <div class="container">
     <img src="/docs/logo.jpeg" alt="Logo" class="logo">
-    <h1>Cartel Ventures</h1>
+    <h1>Carlucci Capital</h1>
     <p class="subtitle" style="margin-top: -2px; opacity: 0.55; font-size: 11px;">Secure Access Portal</p>
     
     <div class="error" id="error"></div>
@@ -2890,7 +2898,7 @@ const sendMailtrapEmail = async (to, subject, html) => {
       body: JSON.stringify({
         from: {
           email: 'noreply@eugenesnonprofit.com',
-          name: 'Cartel Ventures'
+          name: 'Carlucci Capital'
         },
         to: [
           {
@@ -2919,8 +2927,8 @@ const sendOTPEmail = async (email, otp) => {
 <html>
 <body style="font-family: Arial, sans-serif; color: #333;">
   <div style="max-width: 600px; margin: 0 auto;">
-    <h2 style="color: #667eea;">Cartel Ventures</h2>
-    <p>You requested access to the Cartel Ventures portal.</p>
+    <h2 style="color: #667eea;">Carlucci Capital</h2>
+    <p>You requested access to the Carlucci Capital portal.</p>
     <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
       <p style="font-size: 12px; color: #999;">Your access code:</p>
       <p style="font-size: 32px; font-weight: bold; color: #667eea; letter-spacing: 4px;">${otp}</p>
@@ -2933,7 +2941,7 @@ const sendOTPEmail = async (email, otp) => {
 </html>
   `;
 
-  const success = await sendMailtrapEmail(email, 'Your Cartel Ventures Access Code', html);
+  const success = await sendMailtrapEmail(email, 'Your Carlucci Capital Access Code', html);
   log('AUTH', `OTP for ${email.toLowerCase()}: ${otp}`);
   return success;
 };
@@ -4820,7 +4828,7 @@ app.post('/api/send-message', async (req, res) => {
       <h3 style="color: #667eea; margin-top: 0;">${title}</h3>
       <p style="line-height: 1.6; white-space: pre-wrap;">${message}</p>
     </div>
-    <p style="font-size: 11px; color: #999;">Sent from Cartel Ventures Dashboard</p>
+    <p style="font-size: 11px; color: #999;">Sent from Carlucci Capital Dashboard</p>
   </div>
 </body>
 </html>

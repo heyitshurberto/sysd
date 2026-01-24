@@ -4924,7 +4924,7 @@ setInterval(updateAllPerformanceData, 30000);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  log('INFO', `App: Dashboard online at https://eugenesnonprofit.com/ & http://localhost:${PORT}`);
+  log('INFO', `App: Dashboard online at https://carluccicapitalgroup.com/ & http://localhost:${PORT}`);
 });
 
 // Initialize readline for terminal commands if interactive

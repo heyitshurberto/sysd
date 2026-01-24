@@ -175,6 +175,26 @@ table {
     .custom-confirm-btn:focus-visible {
         outline: none;
     }
+    /* Dark mode styling for input and textarea in modals */
+    body.dark-mode #new-msg-title,
+    body.dark-mode #new-msg-content {
+        background: #2a2a2a;
+        color: #3d3d3d;
+        border: 1px solid #1a1a1a;
+        outline: 1px solid #333;
+    }
+    body.dark-mode #new-msg-title:focus,
+    body.dark-mode #new-msg-content:focus {
+        background: #333;
+        color: #313131;
+        border: 1px solid #1a1a1a;
+        outline: 1px solid #444;
+        outline-offset: -1px;
+    }
+    body.dark-mode #msg-error {
+        background: #5a2020 !important;
+        color: #ff8080 !important;
+    }
     </style>
     <script>
 
@@ -3016,11 +3036,23 @@ table {
                 });
         }
 
+        // Helper function to get per-account inbox storage key
+        function getInboxStorageKey() {
+            // Get the current user's email from the session
+            const sessionId = localStorage.getItem('sessionId');
+            // Use a combination of session and fallback to ensure uniqueness per user
+            // In production, this would be retrieved from an authenticated endpoint
+            const userKey = sessionId || 'default-user';
+            return `inbox-messages-${userKey}`;
+        }
+
         function loadInboxMessages() {
             const list = document.getElementById('notification-inbox-list');
             list.innerHTML = '';
             
-            let messages = JSON.parse(localStorage.getItem('inbox-messages')) || [];
+            // Get storage key for current user
+            const storageKey = getInboxStorageKey();
+            let messages = JSON.parse(localStorage.getItem(storageKey)) || [];
             
             if (messages.length === 0) {
                 const welcomeMsg = {
@@ -3029,7 +3061,7 @@ table {
                     timestamp: new Date().toISOString()
                 };
                 messages.push(welcomeMsg);
-                localStorage.setItem('inbox-messages', JSON.stringify(messages));
+                localStorage.setItem(storageKey, JSON.stringify(messages));
             }
             
             messages.slice().reverse().forEach((msg, idx) => {
@@ -3103,13 +3135,14 @@ table {
                 yesBtn.disabled = true;
                 yesBtn.textContent = 'Sending...';
                 
-                const messages = JSON.parse(localStorage.getItem('inbox-messages')) || [];
+                const storageKey = getInboxStorageKey();
+                const messages = JSON.parse(localStorage.getItem(storageKey)) || [];
                 messages.push({
                     title: title,
                     message: content,
                     timestamp: new Date().toISOString()
                 });
-                localStorage.setItem('inbox-messages', JSON.stringify(messages));
+                localStorage.setItem(storageKey, JSON.stringify(messages));
                 
                 // Send to configured email
                 try {
@@ -3126,8 +3159,8 @@ table {
                     }
                     
                     // Add notification alert
-                    addToNotificationHistory(`✓ Message sent: "${title}"`, 'success');
-                    showMessageNotification(`✓ Message sent: ${title}`, 'success');
+                    addToNotificationHistory(`Message sent: "${title}"`, 'success');
+                    showMessageNotification(`Message sent: ${title}`, 'success');
                     
                     cleanup();
                     loadInboxMessages();
@@ -3146,7 +3179,8 @@ table {
 
 
         function deleteInboxMessage(idx) {
-            const messages = JSON.parse(localStorage.getItem('inbox-messages')) || [];
+            const storageKey = getInboxStorageKey();
+            const messages = JSON.parse(localStorage.getItem(storageKey)) || [];
             if (idx < 0 || idx >= messages.length) return;
             
             const msgTitle = messages[idx]?.title || 'Message';
@@ -3183,11 +3217,12 @@ table {
             yesBtn.onclick = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                const messages = JSON.parse(localStorage.getItem('inbox-messages')) || [];
+                const storageKey = getInboxStorageKey();
+                const messages = JSON.parse(localStorage.getItem(storageKey)) || [];
                 messages.splice(idx, 1);
-                localStorage.setItem('inbox-messages', JSON.stringify(messages));
-                addToNotificationHistory(`✓ Message deleted: "${msgTitle}"`, 'deleted');
-                showMessageNotification(`✓ Message deleted: ${msgTitle}`, 'deleted');
+                localStorage.setItem(storageKey, JSON.stringify(messages));
+                addToNotificationHistory(`Message deleted: "${msgTitle}"`, 'deleted');
+                showMessageNotification(`Message deleted: ${msgTitle}`, 'deleted');
                 cleanup();
                 loadInboxMessages();
             };

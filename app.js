@@ -49,6 +49,11 @@ const CONFIG = {
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com', // GitHub Pages domain
   GITHUB_PUSH_ENABLED: process.env.GITHUB_PUSH_ENABLED !== 'false' && process.env.GITHUB_PUSH_ENABLED !== '0', // Enable/disable GitHub push (default: true)
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '', // Personal Discord webhook URL
+  DISCORD_ENABLED: process.env.DISCORD_ENABLED !== 'false' && process.env.DISCORD_ENABLED !== '0', // Enable/disable Discord alerts (default: true)
+  // Telegram settings
+  TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '', // Telegram bot token
+  TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID || '', // Telegram chat ID for alerts
+  TELEGRAM_ENABLED: process.env.TELEGRAM_ENABLED !== 'false' && process.env.TELEGRAM_ENABLED !== '0', // Enable/disable Telegram alerts (default: true)
   // 2FA settings
   TWO_FACTOR_ENABLED: true, // Set to false to disable 2FA approval gate (keep basic auth always on)
   // Email authentication settings
@@ -1354,6 +1359,7 @@ const saveAlert = (alertData) => {
     }
     
     sendPersonalWebhook(alertData);
+    sendTelegramAlert(alertData);
     
     // Update performance tracking data for HTML dashboard (non-blocking)
     setImmediate(() => updatePerformanceData(alertData));
@@ -2254,8 +2260,8 @@ async function getOwnershipMetrics(ticker, cik) {
 
 const sendPersonalWebhook = (alertData) => {
   try {
-    // Skip if no webhook URL configured
-    if (!CONFIG.PERSONAL_WEBHOOK_URL) {
+    // Skip if Discord is disabled or no webhook URL configured
+    if (!CONFIG.DISCORD_ENABLED || !CONFIG.PERSONAL_WEBHOOK_URL) {
       return;
     }
     
@@ -2351,6 +2357,117 @@ const sendPersonalWebhook = (alertData) => {
       new Promise((_, reject) => setTimeout(() => reject(new Error('Webhook timeout')), 6000))
     ]).catch(err => {
       // Silently fail - don't block on webhook
+    });
+  } catch (err) {
+    // Silently fail - don't block processing
+  }
+};
+
+const sendTelegramAlert = (alertData) => {
+  try {
+    // Skip if Telegram is disabled or no credentials configured
+    if (!CONFIG.TELEGRAM_ENABLED || !CONFIG.TELEGRAM_BOT_TOKEN || !CONFIG.TELEGRAM_CHAT_ID) {
+      return;
+    }
+    
+    const { ticker, price, intent, incorporated, located } = alertData;
+    
+    const combinedLocation = (incorporated || '').toLowerCase() + ' ' + (located || '').toLowerCase();
+    
+    const allowed = CONFIG.ALLOWED_COUNTRIES.some(country => combinedLocation.includes(country));
+    if (!allowed) {
+      return;
+    }
+    
+    const countryCodeMap = {
+      'israel': 'IL', 'china': 'CN', 'hong kong': 'HK', 'cayman': 'KY', 'japan': 'JP', 'california': 'US',
+      'virgin islands': 'VG', 'singapore': 'SG', 'canada': 'CA', 'ireland': 'IE', 'delaware': 'US',
+      'alabama': 'US', 'alaska': 'US', 'arizona': 'US', 'arkansas': 'US', 'colorado': 'US',
+      'connecticut': 'US', 'delaware': 'US', 'florida': 'US', 'georgia': 'US', 'hawaii': 'US',
+      'idaho': 'US', 'illinois': 'US', 'indiana': 'US', 'iowa': 'US', 'kansas': 'US',
+      'kentucky': 'US', 'louisiana': 'US', 'maine': 'US', 'maryland': 'US', 'massachusetts': 'US',
+      'michigan': 'US', 'minnesota': 'US', 'mississippi': 'US', 'missouri': 'US', 'montana': 'US',
+      'nebraska': 'US', 'nevada': 'US', 'new hampshire': 'US', 'new jersey': 'US', 'new mexico': 'US',
+      'new york': 'US', 'north carolina': 'US', 'north dakota': 'US', 'ohio': 'US', 'oklahoma': 'US',
+      'oregon': 'US', 'pennsylvania': 'US', 'rhode island': 'US', 'south carolina': 'US', 'south dakota': 'US',
+      'tennessee': 'US', 'texas': 'US', 'utah': 'US', 'vermont': 'US', 'virginia': 'US',
+      'washington': 'US', 'west virginia': 'US', 'wisconsin': 'US', 'wyoming': 'US', 'district of columbia': 'US'
+    };
+    
+    const countryLower = (located || incorporated || 'Unknown').toLowerCase();
+    let countryCode = 'XX';
+    for (const [country, code] of Object.entries(countryCodeMap)) {
+      if (countryLower.includes(country)) {
+        countryCode = code;
+        break;
+      }
+    }
+    
+    const incLower = (incorporated || '').toLowerCase();
+    const locLower = (located || '').toLowerCase();
+    let incorporatedCode = 'XX';
+    let locatedCode = 'XX';
+    
+    for (const [country, code] of Object.entries(countryCodeMap)) {
+      if (incLower.includes(country) && incorporatedCode === 'XX') {
+        incorporatedCode = code;
+      }
+      if (locLower.includes(country) && locatedCode === 'XX') {
+        locatedCode = code;
+      }
+    }
+    
+    const countryDisplay = incorporatedCode === locatedCode ? incorporatedCode : `${incorporatedCode}/${locatedCode}`;
+    
+    // Determine direction based on bearish signal categories
+    const bearishCategories = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Deficit', 'Negative Earnings', 'Cash Burn', 'Going Concern Risk', 'Public Offering', 'Share Issuance', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Nasdaq Delisting', 'Bid Price Delisting', 'Executive Liquidation', 'Accounting Restatement', 'Credit Default', 'Senior Debt', 'Convertible Debt', 'Junk Debt', 'Material Lawsuit', 'Supply Chain Crisis', 'Regulatory Breach', 'VIE Arrangement', 'China Risk', 'Product Sunset', 'Loss of Major Customer'];
+    const intentArray = (intent && Array.isArray(intent)) ? intent : (intent ? String(intent).split(', ') : []);
+    const hasBearish = intentArray.some(cat => bearishCategories.includes(cat));
+    const direction = hasBearish ? 'SHORT' : 'LONG';
+    const reason = (intent && Array.isArray(intent)) ? intent.join(', ').substring(0, 50).toLowerCase() : (intent || 'Filing').toString().substring(0, 50).toLowerCase();
+    const priceDisplay = price && price !== 'N/A' ? `$${parseFloat(price).toFixed(2)}` : 'N/A';
+    const volDisplay = alertData.volume && alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'N/A';
+    const avgDisplay = alertData.averageVolume && alertData.averageVolume !== 'N/A' ? (alertData.averageVolume / 1000000).toFixed(2) + 'm' : 'n/a';
+    
+    // Calculate volume multiplier
+    let volumeMultiplier = '';
+    if (alertData.volume && alertData.averageVolume && alertData.volume !== 'N/A' && alertData.averageVolume !== 'N/A') {
+      const ratio = alertData.volume / alertData.averageVolume;
+      if (ratio >= 2) {
+        volumeMultiplier = ` (${ratio.toFixed(1)}x)`;
+      }
+    }
+    
+    const floatDisplay = alertData.float && alertData.float !== 'N/A' ? (alertData.float / 1000000).toFixed(2) + 'm' : 'N/A';
+    const signalScoreDisplay = alertData.signalScore ? alertData.signalScore : 'N/A';
+    const wa = alertData.wa || 'N/A';
+    const waDisplay = wa !== 'N/A' ? `$${parseFloat(wa).toFixed(2)}` : 'N/A';
+    
+    const telegramAlertContent = `↳ [${direction}] $${ticker} @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreDisplay}, ${reason}, vol/avg: ${volDisplay}/${avgDisplay}${volumeMultiplier}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, wa: ${waDisplay}\nhttps://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+    
+    const telegramMsg = { text: telegramAlertContent };
+    
+    const waLog = wa !== 'N/A' ? `$${wa.toFixed(2)}` : 'N/A';
+    log('INFO', `Telegram Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}`);
+    
+    // Non-blocking fetch with timeout
+    const telegramUrl = `https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage`;
+    const telegramPayload = {
+      chat_id: CONFIG.TELEGRAM_CHAT_ID,
+      text: telegramAlertContent,
+      parse_mode: 'HTML'
+    };
+    
+    Promise.race([
+      fetch(telegramUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(telegramPayload),
+        timeout: 5000
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Telegram timeout')), 6000))
+    ]).catch(err => {
+      // Silently fail - don't block on Telegram
     });
   } catch (err) {
     // Silently fail - don't block processing
@@ -4688,6 +4805,12 @@ app.post('/api/send-message', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Title and message required' });
     }
 
+    // Get the user's email from the session
+    const cookies = parseCookies(req.headers.cookie || '');
+    const sessionId = cookies.sid;
+    const sessionData = pendingLogins.get(sessionId);
+    const userEmail = sessionData?.email || 'cartelventures@outlook.com';
+
     const html = `
 <html>
 <body style="font-family: Arial, sans-serif; color: #333;">
@@ -4703,7 +4826,7 @@ app.post('/api/send-message', async (req, res) => {
 </html>
     `;
 
-    const success = await sendMailtrapEmail('cartelventures@outlook.com', `Inbox Message: ${title}`, html);
+    const success = await sendMailtrapEmail(userEmail, `Inbox Message: ${title}`, html);
     
     if (!success) {
       return res.status(500).json({ success: false, error: 'Failed to send email' });

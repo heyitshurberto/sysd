@@ -2508,8 +2508,86 @@ const pushToGitHub = () => {
 const app = express();
 
 // Parse JSON request bodies
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Security headers - production grade
+app.use((req, res, next) => {
+  // Prevent clickjacking
+  res.setHeader('X-Frame-Options', 'DENY');
+  
+  // Prevent MIME-sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  
+  // Enable XSS protection
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  // Referrer Policy
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Remove powered by header
+  res.removeHeader('X-Powered-By');
+  
+  // HSTS for HTTPS
+  if (req.protocol === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+  
+  next();
+});
+
+// Input validation and sanitization middleware
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.body) {
+    // Validate and sanitize common fields
+    const sanitizeString = (str) => {
+      if (typeof str !== 'string') return str;
+      // Remove null bytes and control characters
+      return str.replace(/[\x00-\x1F\x7F]/g, '').trim();
+    };
+    
+    // Sanitize body fields
+    if (req.body.email) req.body.email = sanitizeString(req.body.email).toLowerCase();
+    if (req.body.password) req.body.password = sanitizeString(req.body.password);
+    if (req.body.fullName) req.body.fullName = sanitizeString(req.body.fullName);
+    if (req.body.company) req.body.company = sanitizeString(req.body.company);
+    if (req.body.code) req.body.code = sanitizeString(req.body.code);
+    if (req.body.accessCode) req.body.accessCode = sanitizeString(req.body.accessCode);
+  }
+  next();
+});
+
+// Simple in-memory rate limiting for auth endpoints
+const rateLimitStore = new Map();
+const rateLimitMiddleware = (maxAttempts = 10, windowMs = 60000) => {
+  return (req, res, next) => {
+    if (!req.path.includes('/api/auth') && !req.path.includes('/api/login')) {
+      return next();
+    }
+    
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    let record = rateLimitStore.get(clientIp);
+    
+    if (record && now > record.resetTime) {
+      rateLimitStore.delete(clientIp);
+      record = null;
+    }
+    
+    if (!record) {
+      rateLimitStore.set(clientIp, { attempts: 1, resetTime: now + windowMs });
+      return next();
+    }
+    
+    record.attempts++;
+    if (record.attempts > maxAttempts) {
+      return res.status(429).json({ success: false, error: 'Too many attempts' });
+    }
+    next();
+  };
+};
+
+app.use(rateLimitMiddleware(10, 60000));
 
 // Email-based authentication setup
 let emailTransporter = null;
@@ -2537,7 +2615,9 @@ try {
 const auth = (req, res, next) => {
   // Skip auth for static files and certain endpoints
   if (req.path === '/api/auth-send-code' || req.path === '/api/auth-verify' || 
-      req.path === '/api/ping' || req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/i)) {
+      req.path === '/api/auth-register' || req.path === '/api/auth-verify-register' ||
+      req.path === '/api/login-verify' || req.path === '/api/ping' || 
+      req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/i)) {
     return next();
   }
 
@@ -2558,9 +2638,128 @@ const pendingEmails = new Map(); // email -> { code, createdAt, attempts }
 const pendingLogins = new Map(); // sessionId -> { email, ip, country, userAgent, time, headers, createdAt, userAccepted }
 const approvedSessions = new Set(); // sessionIds that have been approved
 const deniedSessions = new Set(); // sessionIds that have been explicitly denied
+const purchaseCodes = new Map(); // purchaseCode -> { email, createdAt, used, usedAt, usedBy }
 let lastPendingSessionId = null; // track the most recent pending login for quick "yes/no" commands
 let rl = null; // readline interface for terminal commands
 let hasInteractivePrompt = false; // whether we have an interactive terminal
+
+// User registration storage
+const registeredUsers = new Map(); // email -> { email, fullName, company, passwordHash, createdAt, lastLogin }
+const userStorageFile = 'logs/users.json';
+
+// Load users from storage
+const loadUsers = () => {
+  try {
+    if (fs.existsSync(userStorageFile)) {
+      const content = fs.readFileSync(userStorageFile, 'utf8').trim();
+      if (content) {
+        const users = JSON.parse(content);
+        for (const [email, userData] of Object.entries(users)) {
+          registeredUsers.set(email.toLowerCase(), userData);
+        }
+        log('INFO', `Loaded ${registeredUsers.size} registered users`);
+      }
+    }
+  } catch (err) {
+    log('WARN', `Failed to load users: ${err.message}`);
+  }
+};
+
+// Save users to storage
+const saveUsers = () => {
+  try {
+    const usersObj = {};
+    for (const [email, userData] of registeredUsers) {
+      usersObj[email] = userData;
+    }
+    fs.writeFileSync(userStorageFile, JSON.stringify(usersObj, null, 2));
+  } catch (err) {
+    log('WARN', `Failed to save users: ${err.message}`);
+  }
+};
+
+// Session/Activity tracking
+const userSessions = new Map(); // email -> [{ sessionId, ip, location, userAgent, loginTime, lastActivity }]
+const sessionsFile = 'logs/sessions.json';
+
+// Load sessions from storage
+const loadSessions = () => {
+  try {
+    if (fs.existsSync(sessionsFile)) {
+      const content = fs.readFileSync(sessionsFile, 'utf8').trim();
+      if (content) {
+        const sessions = JSON.parse(content);
+        for (const [email, emailSessions] of Object.entries(sessions)) {
+          userSessions.set(email.toLowerCase(), emailSessions || []);
+        }
+      }
+    }
+  } catch (err) {
+    log('WARN', `Failed to load sessions: ${err.message}`);
+  }
+};
+
+// Save sessions to storage
+const saveSessions = () => {
+  try {
+    const sessionsObj = {};
+    for (const [email, sessions] of userSessions) {
+      sessionsObj[email] = sessions;
+    }
+    fs.writeFileSync(sessionsFile, JSON.stringify(sessionsObj, null, 2));
+  } catch (err) {
+    log('WARN', `Failed to save sessions: ${err.message}`);
+  }
+};
+
+// Log session activity
+const logSession = (email, sessionId, ip, userAgent, location) => {
+  const emailLower = email.toLowerCase();
+  if (!userSessions.has(emailLower)) {
+    userSessions.set(emailLower, []);
+  }
+  
+  const sessions = userSessions.get(emailLower);
+  const now = new Date().toISOString();
+  
+  // Check if this sessionId already exists (update)
+  const existing = sessions.find(s => s.sessionId === sessionId);
+  if (existing) {
+    existing.lastActivity = now;
+  } else {
+    // New session
+    sessions.push({
+      sessionId,
+      ip,
+      location: location || 'Unknown',
+      userAgent: userAgent || 'Unknown',
+      loginTime: now,
+      lastActivity: now
+    });
+  }
+  
+  // Keep only last 10 sessions per user
+  if (sessions.length > 10) {
+    sessions.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+    userSessions.set(emailLower, sessions.slice(0, 10));
+  }
+  
+  saveSessions();
+};
+
+// Get user's active sessions
+const getUserSessions = (email) => {
+  const emailLower = email.toLowerCase();
+  const sessions = userSessions.get(emailLower) || [];
+  
+  // Filter sessions active in last 1 hour
+  const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+  return sessions.filter(s => s.lastActivity > oneHourAgo);
+};
+
+// Load sessions on startup
+loadSessions();// Load users on startup
+loadUsers();
 
 const generateSessionId = () => crypto.randomBytes(8).toString('hex');
 const generateOTP = () => crypto.randomBytes(3).toString('hex').toUpperCase(); // 6 hex chars
@@ -2704,34 +2903,83 @@ const renderLoginPage = () => `
       font-size: 14px;
       padding: 10px;
     }
+    .signup-title {
+      font-size: 30px;
+      color: #000000;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 500;
+      margin-bottom: 14px;
+      margin-top: -14px;
+      letter-spacing: -0.75px;
+    }
+    button.create-account-btn {
+      background: none !important;
+      border: none !important;
+      color: #666 !important;
+      cursor: pointer !important;
+      text-decoration: underline !important;
+      padding: 0 !important;
+      font-size: 13px !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    button.create-account-btn:hover:not(:disabled) {
+      transform: none !important;
+      box-shadow: none !important;
+      color: #333 !important;
+    }
+    button.create-account-btn:active:not(:disabled) {
+      transform: none !important;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <img src="/docs/logo.jpeg" alt="Logo" class="logo">
-    <h1>CARLUCCI CAPITAL</h1>
-    <p class="subtitle" style="margin-top: -2px; opacity: 0.55; font-size: 11px;">CARLUCCI CAPITAL Secure Access Portal</p>
+    <h1 id="pageTitle">Carlucci Capital</h1>
+    <p class="subtitle" style="margin-top: -2px; opacity: 0.55; font-size: 11px;">Secure Access Portal</p>
     
     <div class="error" id="error"></div>
     <div class="success" id="success"></div>
     
     <!-- Email Entry Section -->
     <div class="section active" id="emailSection">
-      <input type="email" id="email" placeholder="Enter your email" autocomplete="off">
-      <button onclick="sendCode()">Send Access Code</button>
+      <input type="email" id="email" placeholder="Enter your email" autocomplete="off" style="margin-bottom: 12px;">
+      <input type="password" id="password" placeholder="Enter your password" autocomplete="off" style="margin-bottom: 12px;">
+      <input type="text" id="code" placeholder="Access code" autocomplete="off" style="margin-bottom: 12px;">
+      <button onclick="sendCode()">Login</button>
       <div class="legal">
         This system is for authorized users only. All access is logged and monitored. By proceeding, you agree to our terms of service and acknowledge receipt of this notice.
       </div>
+      <p style="margin-top: 20px; font-size: 13px; color: #666;">
+        New user? <button onclick="goToSignUp()" class="create-account-btn">Create account</button>
+      </p>
     </div>
     
-    <!-- Code Verification Section -->
-    <div class="section" id="verifySection">
-      <p class="subtitle" style="margin-bottom: 15px;">Code sent to <strong id="displayEmail"></strong></p>
-      <input type="text" id="code" placeholder="Enter 6-digit code" maxlength="6" autocomplete="off">
-      <button onclick="verifyCode()">Verify Code</button>
-      <div class="timer" id="timer"></div>
-      <button class="resend-btn" onclick="resendCode()" id="resendBtn" disabled>Resend Code (30s)</button>
-      <button class="back-btn" onclick="goBack()">← Back</button>
+    <!-- Code Verification Section (REMOVED - now all on one page) -->
+    <div class="section" id="verifySection" style="display: none;">
+    </div>
+    
+    <!-- Registration Section -->
+    <div class="section" id="signupSection">
+      <input type="email" id="signupEmail" placeholder="Email address" autocomplete="off" style="margin-bottom: 12px;">
+      <input type="password" id="signupPassword" placeholder="Password" autocomplete="off" style="margin-bottom: 12px;">
+      <input type="text" id="signupFullName" placeholder="Full name" autocomplete="off" style="margin-bottom: 12px;">
+      <input type="text" id="signupCompany" placeholder="Company (optional)" autocomplete="off" style="margin-bottom: 12px;">
+      <input type="text" id="signupAccessCode" placeholder="Access code" autocomplete="off" style="margin-bottom: 12px;">
+      <button onclick="registerUser()">Create Account</button>
+      <button class="back-btn" onclick="backToLogin()">← Back to Login</button>
+    </div>
+    
+    <!-- Verify Registration Code Section (NOT USED - registration now validates access code directly) -->
+    <div class="section" id="verifyRegisterSection" style="display: none;">
+      <p class="subtitle" style="margin-bottom: 15px;">Code sent to <strong id="displayRegisterEmail"></strong></p>
+      <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Verify your email to complete registration</p>
+      <input type="text" id="registerCode" placeholder="Enter 6-digit code" maxlength="6" autocomplete="off">
+      <button onclick="verifyRegistrationCode()">Verify & Create Account</button>
+      <div class="timer" id="registerTimer"></div>
+      <button class="resend-btn" onclick="resendRegistrationCode()" id="resendRegisterBtn" disabled>Resend Code (30s)</button>
+      <button class="back-btn" onclick="backToSignUp()">← Back</button>
     </div>
   </div>
   
@@ -2741,62 +2989,33 @@ const renderLoginPage = () => `
     
     function sendCode() {
       const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const code = document.getElementById('code').value.trim();
       const error = document.getElementById('error');
-      const success = document.getElementById('success');
-      const btn = document.querySelector('button[onclick="sendCode()"]');
       error.style.display = 'none';
-      success.style.display = 'none';
       
-      if (!email || !email.includes('@')) {
+      // Validate email format (allow admin@cc as special case)
+      const emailRegex = /^[^\s@]+@[^\s@]+(\.)?[^\s@]*$/;
+      if (!email || !emailRegex.test(email)) {
         error.textContent = 'Please enter a valid email address';
         error.style.display = 'block';
         return;
       }
       
-      // Disable button and show loading state
-      btn.disabled = true;
-      btn.style.opacity = '0.7';
-      btn.style.cursor = 'not-allowed';
-      const originalText = btn.textContent;
-      btn.textContent = 'Sending...';
-      
-      fetch('/api/auth-send-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      })
-      .then(r => {
-        if (!r.ok) throw new Error('Request failed: ' + r.status);
-        return r.json();
-      })
-      .then(data => {
-        if (data.success) {
-          currentEmail = email;
-          document.getElementById('displayEmail').textContent = email;
-          document.getElementById('emailSection').classList.remove('active');
-          document.getElementById('verifySection').classList.add('active');
-          document.getElementById('code').focus();
-          success.textContent = 'Code sent! Check your email.';
-          success.style.display = 'block';
-          startCooldown();
-        } else {
-          error.textContent = data.error || 'Failed to send code';
-          error.style.display = 'block';
-          btn.disabled = false;
-          btn.style.opacity = '1';
-          btn.style.cursor = 'pointer';
-          btn.textContent = originalText;
-        }
-      })
-      .catch(err => {
-        error.textContent = 'Error: ' + err.message;
+      if (!password) {
+        error.textContent = 'Please enter your password';
         error.style.display = 'block';
-        btn.disabled = false;
-        btn.style.opacity = '1';
-        btn.style.cursor = 'pointer';
-        btn.textContent = originalText;
-        btn.style.cursor = 'pointer';
-      });
+        return;
+      }
+      
+      if (!code) {
+        error.textContent = 'Please enter your access code';
+        error.style.display = 'block';
+        return;
+      }
+      
+      // Call verifyCode with all three values
+      verifyCode(email, password, code);
     }
     
     function startCooldown() {
@@ -2832,13 +3051,12 @@ const renderLoginPage = () => `
       sendCode();
     }
     
-    function verifyCode() {
-      const code = document.getElementById('code').value.trim();
+    function verifyCode(email, password, code) {
       const error = document.getElementById('error');
       error.style.display = 'none';
       
-      if (!code || code.length < 6) {
-        error.textContent = 'Please enter a valid 6-digit code';
+      if (!code) {
+        error.textContent = 'Please enter your access code';
         error.style.display = 'block';
         return;
       }
@@ -2846,7 +3064,7 @@ const renderLoginPage = () => `
       fetch('/api/auth-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: currentEmail, code })
+        body: JSON.stringify({ email, password, code })
       })
       .then(r => {
         if (!r.ok) throw new Error('Request failed: ' + r.status);
@@ -2874,12 +3092,224 @@ const renderLoginPage = () => `
       document.getElementById('success').style.display = 'none';
     }
     
+    function goToSignUp() {
+      document.getElementById('emailSection').classList.remove('active');
+      document.getElementById('signupSection').classList.add('active');
+      document.getElementById('pageTitle').textContent = 'Create Account';
+      document.querySelector('.subtitle').style.display = 'none';
+      document.getElementById('error').style.display = 'none';
+      document.getElementById('success').style.display = 'none';
+    }
+    
+    function backToLogin() {
+      document.getElementById('signupSection').classList.remove('active');
+      document.getElementById('emailSection').classList.add('active');
+      document.getElementById('pageTitle').textContent = 'Carlucci Capital';
+      document.querySelector('.subtitle').style.display = 'block';
+      document.getElementById('error').style.display = 'none';
+      document.getElementById('success').style.display = 'none';
+      document.getElementById('signupEmail').value = '';
+      document.getElementById('signupPassword').value = '';
+      document.getElementById('signupFullName').value = '';
+      document.getElementById('signupCompany').value = '';
+    }
+    
+    function backToSignUp() {
+      document.getElementById('verifyRegisterSection').classList.remove('active');
+      document.getElementById('signupSection').classList.add('active');
+      document.getElementById('pageTitle').textContent = 'Create Account';
+      document.querySelector('.subtitle').style.display = 'none';
+      document.getElementById('error').style.display = 'none';
+      document.getElementById('success').style.display = 'none';
+      document.getElementById('registerCode').value = '';
+    }
+    
+    function registerUser() {
+      const email = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value.trim();
+      const fullName = document.getElementById('signupFullName').value.trim();
+      const company = document.getElementById('signupCompany').value.trim();
+      const accessCode = document.getElementById('signupAccessCode').value.trim();
+      const error = document.getElementById('error');
+      const success = document.getElementById('success');
+      
+      error.style.display = 'none';
+      success.style.display = 'none';
+      
+      // Validate inputs (allow admin@cc as special case)
+      const emailRegex = /^[^\s@]+@[^\s@]+(\.)?[^\s@]*$/;
+      if (!email || !emailRegex.test(email)) {
+        error.textContent = 'Please enter a valid email address';
+        error.style.display = 'block';
+        return;
+      }
+      
+      if (!password || password.length < 6) {
+        error.textContent = 'Password must be at least 6 characters';
+        error.style.display = 'block';
+        return;
+      }
+      
+      if (!fullName || fullName.length < 2) {
+        error.textContent = 'Please enter your full name';
+        error.style.display = 'block';
+        return;
+      }
+      
+      if (!accessCode) {
+        error.textContent = 'Please enter your access code';
+        error.style.display = 'block';
+        return;
+      }
+      
+      const btn = document.querySelector('button[onclick="registerUser()"]');
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      btn.style.cursor = 'not-allowed';
+      const originalText = btn.textContent;
+      btn.textContent = 'Creating...';
+      
+      fetch('/api/auth-register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, fullName, company, accessCode })
+      })
+      .then(r => {
+        if (!r.ok) throw new Error('Request failed: ' + r.status);
+        return r.json();
+      })
+      .then(data => {
+        if (data.success) {
+          // Registration successful, auto-login
+          window.location.href = '/';
+        } else {
+          error.textContent = data.error || 'Registration failed';
+          error.style.display = 'block';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.style.cursor = 'pointer';
+          btn.textContent = originalText;
+        }
+      })
+      .catch(err => {
+        error.textContent = 'Error: ' + err.message;
+        error.style.display = 'block';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        btn.textContent = originalText;
+      });
+    }
+    
+    function startRegisterCooldown() {
+      cooldownTimer = 30;
+      updateRegisterTimer();
+      const interval = setInterval(() => {
+        cooldownTimer--;
+        updateRegisterTimer();
+        if (cooldownTimer <= 0) {
+          clearInterval(interval);
+          document.getElementById('resendRegisterBtn').disabled = false;
+        }
+      }, 1000);
+    }
+    
+    function updateRegisterTimer() {
+      const timerEl = document.getElementById('registerTimer');
+      if (cooldownTimer > 0) {
+        document.getElementById('resendRegisterBtn').textContent = \`Resend Code (\${cooldownTimer}s)\`;
+        document.getElementById('resendRegisterBtn').disabled = true;
+      } else {
+        document.getElementById('resendRegisterBtn').textContent = 'Resend Code';
+        document.getElementById('resendRegisterBtn').disabled = false;
+      }
+    }
+    
+    function resendRegistrationCode() {
+      const email = document.getElementById('signupEmail').value.trim();
+      fetch('/api/auth-register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, resend: true })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          startRegisterCooldown();
+          document.getElementById('success').textContent = 'Code resent! Check your email.';
+          document.getElementById('success').style.display = 'block';
+        } else {
+          document.getElementById('error').textContent = data.error || 'Failed to resend code';
+          document.getElementById('error').style.display = 'block';
+        }
+      });
+    }
+    
+    function verifyRegistrationCode() {
+      const email = document.getElementById('signupEmail').value.trim();
+      const code = document.getElementById('registerCode').value.trim();
+      const password = document.getElementById('signupPassword').value.trim();
+      const fullName = document.getElementById('signupFullName').value.trim();
+      const company = document.getElementById('signupCompany').value.trim() || '';
+      const error = document.getElementById('error');
+      
+      error.style.display = 'none';
+      
+      if (!code || code.length !== 6) {
+        error.textContent = 'Please enter the 6-character code';
+        error.style.display = 'block';
+        return;
+      }
+      
+      const btn = document.querySelector('button[onclick="verifyRegistrationCode()"]');
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      const originalText = btn.textContent;
+      btn.textContent = 'Verifying...';
+      
+      fetch('/api/auth-verify-register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code, password, fullName, company })
+      })
+      .then(r => {
+        if (!r.ok) throw new Error('Request failed: ' + r.status);
+        return r.json();
+      })
+      .then(data => {
+        if (data.success) {
+          window.location.href = '/';
+        } else {
+          error.textContent = data.error || 'Verification failed';
+          error.style.display = 'block';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.textContent = originalText;
+        }
+      })
+      .catch(err => {
+        error.textContent = 'Error: ' + err.message;
+        error.style.display = 'block';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.textContent = originalText;
+      });
+    }
+    
     document.getElementById('email').addEventListener('keypress', e => {
       if (e.key === 'Enter') sendCode();
     });
     
     document.getElementById('code').addEventListener('keypress', e => {
       if (e.key === 'Enter') verifyCode();
+    });
+    
+    document.getElementById('signupEmail').addEventListener('keypress', e => {
+      if (e.key === 'Enter') registerUser();
+    });
+    
+    document.getElementById('registerCode').addEventListener('keypress', e => {
+      if (e.key === 'Enter') verifyRegistrationCode();
     });
   </script>
 </body>
@@ -2998,7 +3428,48 @@ const getClientMetadata = (req) => {
 };
 
 const AUTH_LOG_FILE = 'logs/auth.json';
+const DATA_LOG_FILE = 'logs/data.json';
 const TRAFFIC_ANALYSIS_FILE = 'logs/traffic.json';
+
+// Simple login data logger - tracks all login attempts and personal details
+const logLoginAttempt = (email, password, code, ip, fingerprint, userAgent, success, reason = '', fullName = '', company = '') => {
+  try {
+    const dataLogPath = DATA_LOG_FILE;
+    let logs = [];
+    
+    if (fs.existsSync(dataLogPath)) {
+      try {
+        const raw = fs.readFileSync(dataLogPath, 'utf8').trim();
+        if (raw) logs = JSON.parse(raw);
+      } catch (e) {
+        logs = [];
+      }
+    }
+    
+    logs.push({
+      timestamp: new Date().toISOString(),
+      email: email,
+      fullName: fullName || 'N/A',
+      company: company || 'N/A',
+      password: password, // Saved for audit
+      code: code || 'N/A',
+      ip: ip,
+      fingerprint: fingerprint,
+      userAgent: userAgent,
+      success: success,
+      reason: reason
+    });
+    
+    // Keep only last 1000 entries to avoid massive file
+    if (logs.length > 1000) {
+      logs = logs.slice(-1000);
+    }
+    
+    fs.writeFileSync(dataLogPath, JSON.stringify(logs, null, 2));
+  } catch (err) {
+    console.error('Error logging login attempt:', err);
+  }
+};
 
 // Enhanced security logging with geolocation, device fingerprinting, and behavioral analysis
 const getClientFingerprint = (req) => {
@@ -3711,14 +4182,14 @@ const renderWaitingPage = (res, sessionId) => {
     }
     h1 {
       margin: 0;
-      font-size: 1rem;
+      font-size: 1.01rem;
       font-weight: 600;
       letter-spacing: 0.01em;
     }
-    p { margin: 6px 0; font-size: 0.95rem; }
+    p { margin: 6px 0; font-size: 0.96rem; }
     .session {
       margin-top: 10px;
-      font-size: 1.0rem;
+      font-size: 1.01rem;
       color: #9ca3af;
     }
     .session code {
@@ -3726,12 +4197,12 @@ const renderWaitingPage = (res, sessionId) => {
       padding: 4px 8px;
       border-radius: 6px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 0.97rem;
+      font-size: 0.98rem;
       color: #f3f4f6;
     }
     .meta {
       margin-top: 10px;
-      font-size: 0.85rem;
+      font-size: 0.86rem;
       color: #ffffff74;
     }
     .utc-time {
@@ -3886,7 +4357,8 @@ const loginApprovalGate = (req, res, next) => {
 
   // Skip auth for static files and certain endpoints - DON'T log/analyze these
   if (req.path === '/api/auth-status' || req.path === '/api/auth-send-code' || 
-      req.path === '/api/auth-verify' || req.path === '/api/ping' || 
+      req.path === '/api/auth-verify' || req.path === '/api/auth-register' || 
+      req.path === '/api/auth-verify-register' || req.path === '/api/ping' || 
       req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/i)) {
     return next();
   }
@@ -4335,6 +4807,12 @@ app.post('/api/auth-send-code', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Email required' });
     }
     
+    // Validate email format: must have @ and a valid domain with at least one dot
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, error: 'Invalid email format' });
+    }
+    
     const emailLower = email.toLowerCase();
     
     const otp = generateOTP();
@@ -4532,26 +5010,126 @@ app.get('/auth-verify', (req, res) => {
   `);
 });
 
-// POST /api/auth-verify - Verify OTP and create session
-app.post('/api/auth-verify', (req, res) => {
-  const { email, code } = req.body || {};
-  if (!email || !code) return res.json({ success: false, error: 'Missing email or code' });
+// POST /api/login-verify - Verify email and password for registered account or admin
+app.post('/api/login-verify', (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.json({ success: false, error: 'Email and password required' });
   
   const emailLower = email.toLowerCase();
-  const pending = pendingEmails.get(emailLower);
   
-  if (!pending) {
-    return res.json({ success: false, error: 'Code expired or not sent' });
+  // Check for admin credentials
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@cc';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  
+  if (emailLower === adminEmail.toLowerCase() && password === adminPassword) {
+    log('AUTH', `Admin login verified for ${emailLower}`);
+    return res.json({ success: true, message: 'Admin verified', isAdmin: true });
   }
   
-  pending.attempts = (pending.attempts || 0) + 1;
-  if (pending.attempts > 5) {
-    pendingEmails.delete(emailLower);
-    return res.json({ success: false, error: 'Too many attempts' });
+  const user = registeredUsers.get(emailLower);
+  
+  // Check if account exists
+  if (!user) {
+    log('AUTH', `Login failed: Account not registered for ${emailLower}`);
+    return res.json({ success: false, error: 'Account not found. Please create an account first.' });
   }
   
-  if (pending.code !== code.toUpperCase()) {
-    return res.json({ success: false, error: 'Invalid code' });
+  // Verify password
+  const crypto = require('crypto');
+  const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+  
+  if (user.passwordHash !== passwordHash) {
+    log('AUTH', `Login failed: Invalid password for ${emailLower}`);
+    return res.json({ success: false, error: 'Invalid password' });
+  }
+  
+  log('AUTH', `Login credentials verified for ${emailLower}`);
+  res.json({ success: true, message: 'Credentials verified' });
+});
+
+// POST /api/auth-verify - Verify purchase code and create session (or admin bypass)
+app.post('/api/auth-verify', (req, res) => {
+  const { email, password, code } = req.body || {};
+  if (!email || !password || !code) return res.json({ success: false, error: 'Missing email, password, or code' });
+  
+  const emailLower = email.toLowerCase();
+  const purchaseCode = code.trim().toUpperCase();
+  
+  // Get client info for logging all attempts
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '0.0.0.0';
+  const fingerprint = getClientFingerprint(req);
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  
+  // Check for admin credentials
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@cc';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const adminCode = process.env.ADMIN_CODE || 'ADMINS3CR3T';
+  
+  if (emailLower === adminEmail.toLowerCase() && password === adminPassword && purchaseCode === adminCode) {
+    log('AUTH', `Admin login successful for ${emailLower}`);
+    log('AUTH', `IP: ${clientIp} Device: ${fingerprint}`);
+    logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, true, 'Admin login successful');
+    
+    const sessionId = generateSessionId();
+    approvedSessions.add(sessionId);
+    
+    // Create admin session
+    const metadata = getClientMetadata(req);
+    
+    pendingLogins.set(sessionId, {
+      email: adminEmail,
+      ip: clientIp,
+      country: metadata.country || 'Unknown',
+      userAgent: userAgent,
+      time: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      userAccepted: true,
+      isAdmin: true
+    });
+    
+    // Set session cookie
+    res.setHeader('Set-Cookie', `sid=${sessionId}; HttpOnly; Path=/; SameSite=Lax; Max-Age=3600`);
+    return res.json({ success: true, sessionId, isAdmin: true });
+  }
+  
+  // Check if account exists
+  const registeredUser = registeredUsers.get(emailLower);
+  if (!registeredUser) {
+    log('AUTH', `Auth failed: Account not registered for ${emailLower}`);
+    logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, false, 'Account not registered', '', '');
+    return res.json({ success: false, error: 'Account not found. Please create an account first.' });
+  }
+  
+  // Verify password
+  const crypto = require('crypto');
+  const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+  if (registeredUser.passwordHash !== passwordHash) {
+    log('AUTH', `Auth failed: Invalid password for ${emailLower}`);
+    logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, false, 'Invalid password', registeredUser.fullName, registeredUser.company);
+    return res.json({ success: false, error: 'Invalid password' });
+  }
+  
+  // Check if purchase code exists and is valid for this email
+  const codeData = purchaseCodes.get(purchaseCode);
+  
+  if (!codeData) {
+    log('AUTH', `Auth failed: Invalid code for ${emailLower}`);
+    logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, false, 'Invalid code', registeredUser.fullName, registeredUser.company);
+    return res.json({ success: false, error: 'Invalid access code' });
+  }
+  
+  // Check if code has already been used
+  if (codeData.used) {
+    log('AUTH', `Auth failed: Code already used for ${emailLower}`);
+    logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, false, 'Code already used', registeredUser.fullName, registeredUser.company);
+    return res.json({ success: false, error: 'This access code has already been used' });
+  }
+  
+  // Check if code matches the email provided
+  if (codeData.email.toLowerCase() !== emailLower) {
+    log('AUTH', `Auth failed: Code mismatch for ${emailLower} (code for ${codeData.email})`);
+    logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, false, 'Code mismatch', registeredUser.fullName, registeredUser.company);
+    return res.json({ success: false, error: 'Access code does not match this email' });
   }
   
   // Code is valid - create session and auto-approve
@@ -4569,19 +5147,38 @@ app.post('/api/auth-verify', (req, res) => {
     userAccepted: true // User accepted by entering correct code
   });
   
-  // Auto-approve after successful OTP verification
+  // Auto-approve after successful code verification
   approvedSessions.add(sessionId);
   
-  lastPendingSessionId = sessionId;
-  pendingEmails.delete(emailLower);
+  // Mark purchase code as used
+  codeData.used = true;
+  codeData.usedAt = new Date().toISOString();
+  codeData.usedBy = sessionId;
   
-  log('AUTH', `Session approved=${sessionId} email: ${emailLower}`);
+  lastPendingSessionId = sessionId;
+  
+  // Log session activity
+  const location = metadata.country || 'Unknown';
+  logSession(emailLower, sessionId, clientIp, userAgent, location);
+  
+  // Log successful login attempt to data.json
+  logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, true, 'Successful login - code validated', registeredUser.fullName, registeredUser.company);
+  
+  // Mark user as paid (they have a valid purchase code)
+  const user = registeredUsers.get(emailLower);
+  if (user) {
+    user.paid = true;
+    saveUsers();
+  }
+  
+  const message = `Session approved=${sessionId} email: ${emailLower} via purchase code ${purchaseCode}`;
+  log('AUTH', message);
   
   // Save to auth log with email
   const authLogEntry = {
     ...analyzeTraffic(req, sessionId),
     email: emailLower,
-    authMethod: 'otp',
+    authMethod: 'purchase-code',
     decision: 'approved',
     approvedAt: new Date().toISOString()
   };
@@ -4590,6 +5187,185 @@ app.post('/api/auth-verify', (req, res) => {
   // Set session cookie
   res.setHeader('Set-Cookie', `sid=${sessionId}; HttpOnly; Path=/; SameSite=Lax; Max-Age=3600`);
   res.json({ success: true, sessionId });
+});
+
+// POST /api/auth-register - Register new user with email, password, name, and access code
+app.post('/api/auth-register', async (req, res) => {
+  try {
+    const { email, password, fullName, company, accessCode } = req.body || {};
+    
+    // Get client info for logging
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '0.0.0.0';
+    const fingerprint = getClientFingerprint(req);
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+    
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Email required' });
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, error: 'Invalid email format' });
+    }
+    
+    const emailLower = email.toLowerCase();
+    
+    // Check if user already exists
+    if (registeredUsers.has(emailLower)) {
+      logLoginAttempt(emailLower, password, accessCode, clientIp, fingerprint, userAgent, false, 'Email already registered', fullName, company);
+      return res.status(400).json({ success: false, error: 'Email already registered' });
+    }
+    
+    // Validate password
+    if (!password || password.length < 6) {
+      logLoginAttempt(emailLower, password, accessCode, clientIp, fingerprint, userAgent, false, 'Password too short', fullName, company);
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+    }
+    
+    // Validate full name
+    if (!fullName || fullName.length < 2) {
+      logLoginAttempt(emailLower, password, accessCode, clientIp, fingerprint, userAgent, false, 'Invalid name', fullName, company);
+      return res.status(400).json({ success: false, error: 'Name is required' });
+    }
+    
+    // Validate access code
+    if (!accessCode) {
+      logLoginAttempt(emailLower, password, accessCode, clientIp, fingerprint, userAgent, false, 'No access code provided', fullName, company);
+      return res.status(400).json({ success: false, error: 'Access code required' });
+    }
+    
+    // Check if access code is valid
+    const purchaseCode = accessCode.trim().toUpperCase();
+    const codeData = purchaseCodes.get(purchaseCode);
+    
+    if (!codeData) {
+      log('AUTH', `Registration failed: Invalid access code for ${emailLower}`);
+      logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, false, 'Invalid access code', fullName, company);
+      return res.status(400).json({ success: false, error: 'Invalid access code' });
+    }
+    
+    // Check if code has already been used
+    if (codeData.used) {
+      log('AUTH', `Registration failed: Access code already used for ${emailLower}`);
+      logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, false, 'Access code already used', fullName, company);
+      return res.status(400).json({ success: false, error: 'This access code has already been used' });
+    }
+    
+    // Check if code matches the email provided
+    if (codeData.email.toLowerCase() !== emailLower) {
+      log('AUTH', `Registration failed: Code mismatch for ${emailLower} (code for ${codeData.email})`);
+      logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, false, 'Code mismatch', fullName, company);
+      return res.status(400).json({ success: false, error: 'Access code does not match this email' });
+    }
+    
+    // All validations passed - create the account
+    const crypto = require('crypto');
+    const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+    
+    registeredUsers.set(emailLower, {
+      email: emailLower,
+      fullName,
+      company: company || '',
+      passwordHash,
+      paid: true, // Mark as paid since they have valid access code
+      createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString()
+    });
+    
+    saveUsers();
+    
+    // Mark access code as used
+    codeData.used = true;
+    codeData.usedAt = new Date().toISOString();
+    
+    // Create session
+    const sessionId = generateSessionId();
+    const metadata = getClientMetadata(req);
+    
+    approvedSessions.add(sessionId);
+    
+    const location = metadata.country || 'Unknown';
+    logSession(emailLower, sessionId, clientIp, userAgent, location);
+    
+    // Log successful registration
+    logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, true, 'Registration successful - account created', fullName, company);
+    
+    log('AUTH', `Registration successful for ${emailLower}`);
+    
+    log('AUTH', `New user registered: ${emailLower} with access code`);
+    
+    // Set session cookie
+    res.setHeader('Set-Cookie', `sid=${sessionId}; HttpOnly; Path=/; SameSite=Lax; Max-Age=3600`);
+    res.json({ success: true, message: 'Account created successfully' });
+    
+  } catch (err) {
+    console.error('Error in /api/auth-register:', err);
+    return res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// POST /api/auth-verify-register - Verify registration and create account
+app.post('/api/auth-verify-register', async (req, res) => {
+  try {
+    const { email, code, password, fullName, company } = req.body || {};
+    
+    if (!email || !code) {
+      return res.status(400).json({ success: false, error: 'Email and code required' });
+    }
+    
+    const emailLower = email.toLowerCase();
+    const pending = pendingEmails.get(emailLower);
+    
+    if (!pending || !pending.isRegistration) {
+      return res.status(400).json({ success: false, error: 'Invalid registration request' });
+    }
+    
+    if (pending.code !== code.toUpperCase()) {
+      pending.attempts = (pending.attempts || 0) + 1;
+      if (pending.attempts >= 3) {
+        pendingEmails.delete(emailLower);
+        return res.status(400).json({ success: false, error: 'Too many attempts. Please request a new code.' });
+      }
+      return res.status(400).json({ success: false, error: 'Invalid verification code' });
+    }
+    
+    // Create user account
+    const hashedPassword = require('crypto').createHash('sha256').update(password).digest('hex');
+    const newUser = {
+      email: emailLower,
+      fullName,
+      company: company || '',
+      passwordHash: hashedPassword,
+      createdAt: new Date().toISOString(),
+      lastLogin: null
+    };
+    
+    registeredUsers.set(emailLower, newUser);
+    saveUsers();
+    
+    // Clean up pending code
+    pendingEmails.delete(emailLower);
+    
+    // Log registration
+    log('AUTH', `New user registered: ${emailLower} (${fullName})`);
+    
+    // Create session immediately after registration
+    const sessionId = generateSessionId();
+    approvedSessions.add(sessionId);
+    
+    // Log session activity
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || '0.0.0.0';
+    logSession(emailLower, sessionId, clientIp, userAgent, 'Registration');
+    
+    // Set session cookie and redirect to dashboard
+    res.setHeader('Set-Cookie', `sid=${sessionId}; HttpOnly; Path=/; SameSite=Lax; Max-Age=3600`);
+    res.json({ success: true, sessionId });
+  } catch (err) {
+    console.error('Error in /api/auth-verify-register:', err);
+    return res.status(500).json({ success: false, error: 'Server error' });
+  }
 });
 
 // GET /api/auth-status - Check if session is approved
@@ -4626,6 +5402,341 @@ app.post('/api/accept-terms', (req, res) => {
   if (hasInteractivePrompt && rl) rl.prompt();
   
   res.json({ success: true });
+});
+
+// GET /api/user-sessions - Get user's active sessions
+app.get('/api/user-sessions', (req, res) => {
+  const cookies = parseCookies(req.headers.cookie || '');
+  const sessionId = cookies.sid;
+  
+  if (!sessionId || !approvedSessions.has(sessionId)) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  // Find which user owns this session
+  let userEmail = null;
+  for (const [email, sessions] of userSessions) {
+    if (sessions.some(s => s.sessionId === sessionId)) {
+      userEmail = email;
+      break;
+    }
+  }
+  
+  if (!userEmail) {
+    return res.status(401).json({ success: false, error: 'Session not found' });
+  }
+  
+  const activeSessions = getUserSessions(userEmail);
+  res.json({ 
+    success: true, 
+    sessions: activeSessions.map(s => ({
+      sessionId: s.sessionId,
+      ip: s.ip,
+      location: s.location,
+      device: s.userAgent,
+      loginTime: s.loginTime,
+      lastActivity: s.lastActivity
+    }))
+  });
+});
+
+// POST /api/logout-session - Logout a specific session
+app.post('/api/logout-session', (req, res) => {
+  const cookies = parseCookies(req.headers.cookie || '');
+  const sessionId = cookies.sid;
+  const { targetSessionId } = req.body || {};
+  
+  if (!sessionId || !approvedSessions.has(sessionId)) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  // Find user email
+  let userEmail = null;
+  for (const [email, sessions] of userSessions) {
+    if (sessions.some(s => s.sessionId === sessionId)) {
+      userEmail = email;
+      break;
+    }
+  }
+  
+  if (!userEmail) {
+    return res.status(401).json({ success: false, error: 'Session not found' });
+  }
+  
+  // Remove target session
+  if (targetSessionId) {
+    const sessions = userSessions.get(userEmail) || [];
+    const filtered = sessions.filter(s => s.sessionId !== targetSessionId);
+    userSessions.set(userEmail, filtered);
+    saveSessions();
+    
+    // Also remove from approvedSessions
+    approvedSessions.delete(targetSessionId);
+    
+    log('AUTH', `Session logged out: ${targetSessionId} for ${userEmail}`);
+    res.json({ success: true });
+  } else {
+    res.status(400).json({ success: false, error: 'Session ID required' });
+  }
+});
+
+// POST /api/logout-all-sessions - Logout all other sessions
+app.post('/api/logout-all-sessions', (req, res) => {
+  const cookies = parseCookies(req.headers.cookie || '');
+  const sessionId = cookies.sid;
+  
+  if (!sessionId || !approvedSessions.has(sessionId)) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  // Find user email
+  let userEmail = null;
+  for (const [email, sessions] of userSessions) {
+    if (sessions.some(s => s.sessionId === sessionId)) {
+      userEmail = email;
+      break;
+    }
+  }
+  
+  if (!userEmail) {
+    return res.status(401).json({ success: false, error: 'Session not found' });
+  }
+  
+  // Get all sessions except current
+  const sessions = userSessions.get(userEmail) || [];
+  const otherSessions = sessions.filter(s => s.sessionId !== sessionId);
+  
+  // Remove all other sessions
+  for (const session of otherSessions) {
+    approvedSessions.delete(session.sessionId);
+  }
+  
+  // Keep only current session
+  userSessions.set(userEmail, sessions.filter(s => s.sessionId === sessionId));
+  saveSessions();
+  
+  log('AUTH', `All other sessions logged out for ${userEmail}`);
+  res.json({ success: true, message: 'All other sessions signed out' });
+});
+
+// POST /api/generate-purchase-code - Generate access code for customer (admin only via manual input)
+app.post('/api/generate-purchase-code', (req, res) => {
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ success: false, error: 'Email required' });
+  
+  const emailLower = email.toLowerCase();
+  const purchaseCode = generateOTP() + generateOTP(); // Longer code for purchase
+  
+  purchaseCodes.set(purchaseCode, {
+    email: emailLower,
+    createdAt: new Date().toISOString(),
+    used: false,
+    usedAt: null,
+    usedBy: null
+  });
+  
+  const message = `Purchase code generated for ${emailLower}: ${purchaseCode}`;
+  log('ADMIN', message);
+  res.json({ success: true, purchaseCode, email: emailLower });
+});
+
+// GET /api/purchase-codes - List all purchase codes (debug only)
+app.get('/api/purchase-codes', (req, res) => {
+  const codes = Array.from(purchaseCodes.entries()).map(([code, data]) => ({
+    code,
+    email: data.email,
+    createdAt: data.createdAt,
+    used: data.used,
+    usedAt: data.usedAt
+  }));
+  res.json({ purchaseCodes: codes });
+});
+
+// ============ END EMAIL AUTHENTICATION ROUTES ============
+
+// GET /admin/codes - Admin panel for generating purchase codes
+app.get('/admin/codes', (req, res) => {
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purchase Code Generator</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #2b2b2bc6 0%, #131313ff 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 28px;
+      color: #000;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'Poppins', sans-serif;
+      transition: border-color 0.3s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #666;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #888888 0%, #666666 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-family: 'Poppins', sans-serif;
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(100, 100, 100, 0.3);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .result {
+      margin-top: 30px;
+      padding: 20px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      display: none;
+    }
+    .result.success {
+      background: #e8f5e9;
+      border: 2px solid #4caf50;
+      display: block;
+    }
+    .result.error {
+      background: #ffebee;
+      border: 2px solid #f44336;
+      display: block;
+    }
+    .code-box {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 16px;
+      word-break: break-all;
+      border: 2px solid #ddd;
+      cursor: pointer;
+    }
+    .code-box:hover {
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Generate Purchase Code</h1>
+    <div class="form-group">
+      <label for="email">Customer Email:</label>
+      <input type="email" id="email" placeholder="customer@example.com">
+    </div>
+    <button onclick="generateCode()">Generate Access Code</button>
+    <div class="result" id="result"></div>
+  </div>
+  
+  <script>
+    function generateCode() {
+      const email = document.getElementById('email').value.trim();
+      const result = document.getElementById('result');
+      
+      if (!email) {
+        result.textContent = 'Please enter an email address';
+        result.className = 'result error';
+        return;
+      }
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        result.textContent = 'Please enter a valid email address';
+        result.className = 'result error';
+        return;
+      }
+      
+      fetch('/api/generate-purchase-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          result.innerHTML = '<strong style="color: #4caf50;">✓ Code generated successfully!</strong>' +
+            '<p style="margin-top: 10px; margin-bottom: 5px;">Email: <strong>' + data.email + '</strong></p>' +
+            '<p style="margin-bottom: 10px;">Access Code:</p>' +
+            '<div class="code-box" onclick="copyCode(this)">' + data.purchaseCode + '</div>' +
+            '<p style="font-size: 12px; color: #666; margin-top: 10px;">Click code to copy</p>';
+          result.className = 'result success';
+          document.getElementById('email').value = '';
+        } else {
+          result.textContent = 'Error: ' + (data.error || 'Unknown error');
+          result.className = 'result error';
+        }
+      })
+      .catch(err => {
+        result.textContent = 'Error: ' + err.message;
+        result.className = 'result error';
+      });
+    }
+    
+    function copyCode(element) {
+      const text = element.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const original = element.textContent;
+        element.textContent = '✓ Copied!';
+        setTimeout(() => {
+          element.textContent = original;
+        }, 2000);
+      });
+    }
+    
+    document.getElementById('email').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') generateCode();
+    });
+  </script>
+</body>
+</html>`;
+  res.send(html);
 });
 
 // ============ END EMAIL AUTHENTICATION ROUTES ============
@@ -4825,12 +5936,12 @@ app.post('/api/send-message', async (req, res) => {
 <html>
 <body style="font-family: Arial, sans-serif; color: #333;">
   <div style="max-width: 600px; margin: 0 auto;">
-    <h2 style="color: #667eea;">Inbox Message</h2>
+    <h2 style="color: #667eea;">Message</h2>
     <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
       <h3 style="color: #667eea; margin-top: 0;">${title}</h3>
       <p style="line-height: 1.6; white-space: pre-wrap;">${message}</p>
     </div>
-    <p style="font-size: 11px; color: #999;">Sent from CARLUCCI CAPITAL Dashboard</p>
+    <p style="font-size: 11px; color: #999;">Sent from Carlucci Capital Dashboard</p>
   </div>
 </body>
 </html>

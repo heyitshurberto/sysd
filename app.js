@@ -2816,7 +2816,7 @@ const renderLoginPage = () => `
       font-weight: 500;
       margin-bottom: 6px;
       margin-top: 1px;
-      letter-spacing: -0.75px;
+      letter-spacing: -0.6px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -2828,12 +2828,12 @@ const renderLoginPage = () => `
       }
     }
     #signupSection h1 {
-      font-size: 16px;
+      font-size: 15px;
       margin-top: -4px;
     }
     @media (min-width: 768px) {
       #signupSection h1 {
-        font-size: 26px;
+        font-size: 24px;
         margin-top: -2px;
       }
     }
@@ -2934,7 +2934,7 @@ const renderLoginPage = () => `
       font-weight: 500;
       margin-bottom: 14px;
       margin-top: -14px;
-      letter-spacing: -0.75px;
+      letter-spacing: -0.6px;
     }
     button.create-account-btn {
       background: none !important;

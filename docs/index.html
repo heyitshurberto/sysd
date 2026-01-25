@@ -22,8 +22,16 @@ table {
     table { font-size: 12px; }
 }
 </style>
-<div style="position: absolute; top: 6px; left: 6px;" class="eugene-tag-desktop">
-  <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; color: inherit; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; font-size: 11.5px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; padding: 3px 3px; border-radius: 4px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@cartelwrld</a></div>
+<div style="position: absolute; top: 6px; left: 6px; display: flex; gap: 12px; align-items: center;" class="eugene-tag-desktop">
+  <a href="#" onclick="customConfirm('Visit Carlucci Community on Telegram?', 'https://t.me/+3rtL-9Cwr6Y2ZmM0'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/tele.png" alt="Telegram" style="height: 18px; width: 18px; filter: brightness(0) invert(1);" id="tele-logo"></a>
+  <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/twit.png" alt="X" style="height: 13px; width: 13px; filter: brightness(0) invert(1);" id="x-logo"></a></div>
+<script>
+function updateLogoDarkMode() {
+  // Logos are now always white, no need to toggle
+  return;
+}
+updateLogoDarkMode();
+</script>
 <style>
     .eugene-tag-mobile {
         display: none !important;
@@ -5692,6 +5700,6 @@ ${(alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals ===
 
     </script>
 <div style="position: static; width: 100%; text-align: center; padding: 2px 0; margin-bottom: 30px;" class="eugene-tag-mobile">
-  <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; color: inherit; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; font-size: 12px; white-space: nowrap; display: inline-block; padding: 1px 1x; border-radius: 1px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@cartelwrld</a></div>
+  <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; color: inherit; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; font-size: 15px; white-space: nowrap; display: inline-block; padding: 1px 1x; border-radius: 1px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=document.body.classList.contains('dark-mode')?'rgba(120,120,120,0.25)':'rgba(0,0,0,0.1)'" onmouseout="this.style.backgroundColor='transparent'">@cartelwrld</a></div>
 </body>
 </html>

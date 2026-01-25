@@ -786,6 +786,10 @@ const SEMANTIC_KEYWORDS = {
   'Executive Departure Non-Planned': ['Stepped Down', 'Stepped Down From Role', 'Step Down', 'Departure Of Directors', 'Departure Of Officers', 'General Manager Departed', 'Vice President Departed', 'VP Departed', 'EVP Departed', 'Executive VP Departed', 'Planned Leadership Transition'],
   'Bankruptcy Risk - Negative ROE': ['Negative Return On Equity', 'Negative ROE', 'Negative ROIC', 'Bankruptcy Risk', 'Bankruptcy Warning', 'Going Concern', 'Substantial Doubt', 'Continue As A Going Concern'],
   'Reverse Split Event': ['Reverse Split Completed','Reverse Consolidation', 'Recent Consolidation'],
+  'Critical Minerals Discovery': ['Rare Earth', 'Rare Earth Elements', 'REE', 'Lithium', 'Cobalt', 'Nickel', 'Critical Metals', 'Critical Minerals', 'Strategic Minerals'],
+  'Processing Facility': ['Processing Facility', 'Refining Facility', 'Refinement Plant', 'Processing Plant', 'Extraction Facility', 'Ore Processing'],
+  'Offtake Agreement': ['Offtake Agreement', 'Offtake MOU', 'Off-take', 'Offtake Contract', 'Secured Offtake', 'Offtake Term Sheet'],
+  'Strategic Minerals Partnership': ['Saudi Arabia', 'Joint Venture', 'Strategic Partnership', 'Development Agreement', 'Strategic Alliance', 'Government Backing'],
 };
 
 
@@ -2959,6 +2963,10 @@ const renderLoginPage = () => `
 </head>
 <body>
   <div class="container">
+    <div style="position: absolute; top: 10px; left: 10px; display: flex; gap: 10px; align-items: center;">
+      <a href="#" onclick="customConfirm('Visit Carlucci Community on Telegram?', 'https://t.me/+3rtL-9Cwr6Y2ZmM0'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/tele.png" alt="Telegram" style="height: 25px; width: 25px; filter: brightness(2) invert(1) contrast(1.5);" class="social-logo"></a>
+      <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/twit.png" alt="X" style="height: 18px; width: 18px; filter: brightness(2) invert(1) contrast(1.5);" class="social-logo"></a>
+    </div>
     <img src="/docs/logo.jpeg" alt="Logo" class="logo">
     <h1 id="pageTitle">Carlucci Capital</h1>
     <p class="subtitle" style="margin-top: -2px; opacity: 0.55; font-size: 11px;">Secure Access Portal</p>
@@ -3335,6 +3343,28 @@ const renderLoginPage = () => `
     document.getElementById('registerCode').addEventListener('keypress', e => {
       if (e.key === 'Enter') verifyRegistrationCode();
     });
+  </script>
+  
+  <script>
+    function updateSocialLogoDarkMode() {
+      const logos = document.querySelectorAll('.social-logo');
+      logos.forEach(logo => {
+        if (document.body.classList.contains('dark-mode')) {
+          logo.style.filter = 'brightness(0) invert(1) saturate(100%)';
+        } else {
+          logo.style.filter = 'none';
+        }
+      });
+    }
+    updateSocialLogoDarkMode();
+    const observer = new MutationObserver(() => updateSocialLogoDarkMode());
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    
+    function customConfirm(message, url) {
+      if (confirm(message)) {
+        window.open(url, '_blank');
+      }
+    }
   </script>
 </body>
 </html>
@@ -6059,8 +6089,8 @@ const updateAllPerformanceData = async () => {
 setInterval(updateAllPerformanceData, 30000);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  log('INFO', `App: Dashboard online at https://carluccicapitalgroup.com/ & http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  log('INFO', `App: Dashboard online at https://www.carluccicapital.co.uk & http://localhost:${PORT}`);
 });
 
 // Initialize readline for terminal commands if interactive
@@ -6513,9 +6543,9 @@ if (process.stdin.isTTY) {
           const isShortCombo = hasReverseSplit && (hasDilution || hasStockSplit);
           
           // Bearish signals that force SHORT regardless
-          const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Product Sunset', 'Loss of Major Customer', 'Going Dark', 'Bid Price Delisting', 'Asset Disposition', 'Share Consolidation', 'Board Change', 'Artificial Inflation', 'Share Issuance', 'Convertible Dilution', 'Stock Split', 'Reverse Split', 'Convertible Debt', 'Operating Deficit', 'Negative Earnings', 'Cash Burn', 'Going Concern Risk', 'Warrant Dilution', 'Compensation Dilution', 'Warrant Redemption', 'Regulatory Breach', 'Executive Liquidation', 'China Risk', 'VIE Arrangement', 'Stock Dividend', 'Asset Impairment', 'Junk Debt', 'Executive Departure', 'Executive Detention/Investigation', 'Deal Termination', 'Auditor Change', 'Asian Regulation Risk', 'Nasdaq Delisting'];
+          const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Product Sunset', 'Loss of Major Customer', 'Going Dark', 'Asset Disposition', 'Share Consolidation', 'Board Change', 'Artificial Inflation', 'Share Issuance', 'Convertible Dilution', 'Stock Split', 'Reverse Split', 'Convertible Debt', 'Operating Deficit', 'Negative Earnings', 'Cash Burn', 'Going Concern Risk', 'Warrant Dilution', 'Compensation Dilution', 'Warrant Redemption', 'Regulatory Breach', 'Executive Liquidation', 'China Risk', 'VIE Arrangement', 'Stock Dividend', 'Asset Impairment', 'Junk Debt', 'Executive Departure', 'Executive Departure Non-Planned', 'Executive Detention/Investigation', 'Deal Termination', 'Auditor Change', 'Asian Regulation Risk', 'Nasdaq Delisting'];
           const bearishCount = sigKeys.filter(cat => bearishCats.includes(cat)).length;
-          const bullishCats = ['Major Contract', 'Earnings Outperformance', 'Revenue Growth', 'Licensing Deal', 'Stock Buyback', 'Merger/Acquisition', 'FDA Approved', 'FDA Breakthrough', 'Clinical Success', 'Insider Buying', 'Insider Confidence', 'Insider Block Buy', 'DTC Eligible Restored', 'Dividend Raise', 'Government Contract'];
+          const bullishCats = ['Major Contract', 'Earnings Outperformance', 'Revenue Growth', 'Licensing Deal', 'Stock Buyback', 'Merger/Acquisition', 'FDA Approved', 'FDA Breakthrough', 'Clinical Success', 'Insider Buying', 'Insider Confidence', 'Insider Block Buy', 'DTC Eligible Restored', 'Dividend Raise', 'Government Contract', 'Critical Minerals Discovery', 'Processing Facility', 'Offtake Agreement', 'Strategic Minerals Partnership'];
           const bullishCount = sigKeys.filter(cat => bullishCats.includes(cat)).length;
           const hasPartnership = sigKeys.includes('Partnership');
           

@@ -2964,11 +2964,15 @@ const renderLoginPage = () => `
 <body>
   <div class="container">
     <div style="position: absolute; top: 10px; left: 10px; display: flex; gap: 10px; align-items: center;">
-      <a href="#" onclick="customConfirm('Visit Carlucci Community on Telegram?', 'https://t.me/+3rtL-9Cwr6Y2ZmM0'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/tele.png" alt="Telegram" style="height: 25px; width: 25px; filter: brightness(2) invert(1) contrast(1.5);" class="social-logo"></a>
-      <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/twit.png" alt="X" style="height: 18px; width: 18px; filter: brightness(2) invert(1) contrast(1.5);" class="social-logo"></a>
+      <a href="#" onclick="customConfirm('Visit Carlucci Community on Telegram?', 'https://t.me/+3rtL-9Cwr6Y2ZmM0'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/tele.png" alt="Telegram" style="height: 25px; width: 25px; filter: brightness(0) saturate(100%) invert(100%);" class="social-logo"></a>
+      <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/twit.png" alt="X" style="height: 18px; width: 18px; filter: brightness(0) saturate(100%) invert(100%);" class="social-logo"></a>
     </div>
-    <img src="/docs/logo.jpeg" alt="Logo" class="logo">
-    <h1 id="pageTitle">Carlucci Capital</h1>
+    <div style="position: relative; margin-bottom: 12px;">
+      <video id="brandVideo" autoplay muted loop playsinline style="height: 90px; width: auto; object-fit: contain; display: block;" onerror="document.getElementById('brandVideo').style.display='none'; document.getElementById('brandFallback').style.display='block';">
+        <source src="/docs/Carlucci_Capital.mp4" type="video/mp4">
+      </video>
+      <img id="brandFallback" src="/docs/logo.jpeg" alt="Logo" style="height: 90px; width: auto; object-fit: contain; display: none;">
+    </div>
     <p class="subtitle" style="margin-top: -2px; opacity: 0.55; font-size: 11px;">Secure Access Portal</p>
     
     <div class="error" id="error"></div>
@@ -3349,11 +3353,7 @@ const renderLoginPage = () => `
     function updateSocialLogoDarkMode() {
       const logos = document.querySelectorAll('.social-logo');
       logos.forEach(logo => {
-        if (document.body.classList.contains('dark-mode')) {
-          logo.style.filter = 'brightness(0) invert(1) saturate(100%)';
-        } else {
-          logo.style.filter = 'none';
-        }
+        logo.style.filter = 'brightness(0) saturate(100%) invert(100%)';
       });
     }
     updateSocialLogoDarkMode();
@@ -6553,10 +6553,12 @@ if (process.stdin.isTTY) {
           if (isShortCombo || bearishCount >= 2) {
             shortOpportunity = true;
           } else if (bearishCount > 0 && bullishCount > 0) {
+            // Conflicting signals: default to SHORT to avoid false LONG calls
             shortOpportunity = true;
           } else if (bearishCount > 0) {
             shortOpportunity = true;
-          } else if (bullishCount > 0) {
+          } else if (bullishCount >= 2) {
+            // Need at least 2 bullish signals for LONG (not just 1)
             longOpportunity = true;
           } else if (hasPartnership && bullishCount === 0) {
             // Partnership alone is neutral - don't mark as long or short

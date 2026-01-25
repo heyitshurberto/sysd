@@ -2788,45 +2788,69 @@ const renderLoginPage = () => `
       background: white;
       border-radius: 12px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      padding: 40px;
-      max-width: 400px;
+      padding: 20px 18px;
+      max-width: 390px;
       width: 100%;
       text-align: center;
     }
     .logo {
-      height: 120px;
+      height: 80px;
       width: auto;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
+      margin-top: 8px;
       display: block;
       margin-left: auto;
       margin-right: auto;
     }
+    @media (min-width: 768px) {
+      .logo {
+        height: 123px;
+        margin-top: 12px;
+        margin-bottom: 12px;
+      }
+    }
     h1 {
-      font-size: 30px;
+      font-size: 22px;
       color: #000000;
       font-family: 'Poppins', sans-serif;
       font-weight: 500;
-      margin-bottom: 14px;
-      margin-top: -14px;
+      margin-bottom: 6px;
+      margin-top: 1px;
       letter-spacing: -0.75px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-      margin-bottom: 10px;
-      font-weight: 600;
+    @media (min-width: 768px) {
+      h1 {
+        font-size: 36px;
+        margin-top: 3px;
+      }
+    }
+    #signupSection h1 {
+      font-size: 16px;
+      margin-top: -4px;
+    }
+    @media (min-width: 768px) {
+      #signupSection h1 {
+        font-size: 26px;
+        margin-top: -2px;
+      }
     }
     .subtitle {
       color: #666;
-      font-size: 14px;
-      margin-bottom: 50px;
+      font-size: 11px;
+      margin-bottom: 18px;
     }
     input {
       width: 100%;
-      padding: 12px 15px;
+      padding: 9px 11px;
       border: 2px solid #e0e0e0;
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 13px;
       font-family: 'Poppins', sans-serif;
       transition: border-color 0.3s;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
     input:focus {
       outline: none;
@@ -2857,11 +2881,11 @@ const renderLoginPage = () => `
       cursor: not-allowed;
     }
     .legal {
-      font-size: 12px;
+      font-size: 10px;
       color: #999;
       text-align: center;
-      margin-top: 20px;
-      line-height: 1.5;
+      margin-top: 12px;
+      line-height: 1.4;
     }
     .error {
       color: #d32f2f;

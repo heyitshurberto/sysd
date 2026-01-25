@@ -3451,9 +3451,8 @@ const getClientMetadata = (req) => {
   };
 };
 
-const AUTH_LOG_FILE = 'logs/auth.json';
+const SECURITY_LOG_FILE = 'logs/security_log.json';
 const DATA_LOG_FILE = 'logs/data.json';
-const TRAFFIC_ANALYSIS_FILE = 'logs/traffic.json';
 
 // Simple login data logger - tracks all login attempts and personal details
 const logLoginAttempt = (email, password, code, ip, fingerprint, userAgent, success, reason = '', fullName = '', company = '') => {
@@ -3569,8 +3568,8 @@ const analyzeTraffic = (req, sessionId) => {
   
   let existingLogins = [];
   try {
-    if (fs.existsSync(AUTH_LOG_FILE)) {
-      const raw = fs.readFileSync(AUTH_LOG_FILE, 'utf8').trim();
+    if (fs.existsSync(SECURITY_LOG_FILE)) {
+      const raw = fs.readFileSync(SECURITY_LOG_FILE, 'utf8').trim();
       if (raw) existingLogins = JSON.parse(raw) || [];
     }
   } catch (e) {}
@@ -3633,31 +3632,31 @@ const analyzeTraffic = (req, sessionId) => {
     contractHash: generateContractHash(fingerprint, getContractTemplate())
   };
   
-  // Log to traffic analysis file (log all auth attempts - pending and approved)
+  // Log to security log file (consolidated auth + traffic data)
   try {
-    let trafficLog = [];
-    if (fs.existsSync(TRAFFIC_ANALYSIS_FILE)) {
-      const raw = fs.readFileSync(TRAFFIC_ANALYSIS_FILE, 'utf8').trim();
-      if (raw) trafficLog = JSON.parse(raw) || [];
+    let securityLog = [];
+    if (fs.existsSync(SECURITY_LOG_FILE)) {
+      const raw = fs.readFileSync(SECURITY_LOG_FILE, 'utf8').trim();
+      if (raw) securityLog = JSON.parse(raw) || [];
     }
-    // Always log traffic - it's being passed a sessionId so always valid
+    // Always log security data - it's being passed a sessionId so always valid
     if (sessionId) {
-      trafficLog.push(authData);
-      if (trafficLog.length > 500) trafficLog = trafficLog.slice(-500);
-      fs.writeFileSync(TRAFFIC_ANALYSIS_FILE, JSON.stringify(trafficLog, null, 2));
+      securityLog.push(authData);
+      if (securityLog.length > 500) securityLog = securityLog.slice(-500);
+      fs.writeFileSync(SECURITY_LOG_FILE, JSON.stringify(securityLog, null, 2));
     }
   } catch (err) {
-    // Silent fail on traffic logging
+    // Silent fail on security logging
   }
   
   return authData;
 };
 
-const appendAuthLog = (entry) => {
+const appendSecurityLog = (entry) => {
   try {
     let existing = [];
-    if (fs.existsSync(AUTH_LOG_FILE)) {
-      const raw = fs.readFileSync(AUTH_LOG_FILE, 'utf8').trim();
+    if (fs.existsSync(SECURITY_LOG_FILE)) {
+      const raw = fs.readFileSync(SECURITY_LOG_FILE, 'utf8').trim();
       if (raw) {
         const parsed = JSON.parse(raw);
         existing = Array.isArray(parsed) ? parsed : [];
@@ -3668,9 +3667,9 @@ const appendAuthLog = (entry) => {
     if (existing.length > 500) {
       existing = existing.slice(-500);
     }
-    fs.writeFileSync(AUTH_LOG_FILE, JSON.stringify(existing, null, 2));
+    fs.writeFileSync(SECURITY_LOG_FILE, JSON.stringify(existing, null, 2));
   } catch (err) {
-    log('WARN', `Failed to write auth log: ${err.message}`);
+    log('WARN', `Failed to write security log: ${err.message}`);
   }
 };
 
@@ -3975,12 +3974,12 @@ const validateClickwrapAcceptance = (sessionData) => {
 // Now includes all 10 gap closures for 100% enforceability
 const saveContractSignature = (sessionId, meta, userAgent) => {
   try {
-    let trafficLog = [];
-    if (fs.existsSync(TRAFFIC_ANALYSIS_FILE)) {
-      const raw = fs.readFileSync(TRAFFIC_ANALYSIS_FILE, 'utf8').trim();
+    let securityLog = [];
+    if (fs.existsSync(SECURITY_LOG_FILE)) {
+      const raw = fs.readFileSync(SECURITY_LOG_FILE, 'utf8').trim();
       if (raw) {
         const parsed = JSON.parse(raw);
-        trafficLog = Array.isArray(parsed) ? parsed : [];
+        securityLog = Array.isArray(parsed) ? parsed : [];
       }
     }
 
@@ -3988,7 +3987,7 @@ const saveContractSignature = (sessionId, meta, userAgent) => {
     const deviceInfo = extractDeviceInfo(userAgent);
     
     // Add or update contract signature for this session
-    const existingEntry = trafficLog.find(entry => entry.sessionId === sessionId);
+    const existingEntry = securityLog.find(entry => entry.sessionId === sessionId);
     if (existingEntry) {
       // Add contract signature to existing session entry
       if (!existingEntry.contractAgreements) {
@@ -4154,7 +4153,7 @@ const saveContractSignature = (sessionId, meta, userAgent) => {
       };
     }
 
-    fs.writeFileSync(TRAFFIC_ANALYSIS_FILE, JSON.stringify(trafficLog, null, 2));
+    fs.writeFileSync(SECURITY_LOG_FILE, JSON.stringify(securityLog, null, 2));
     log('AUTH', `Saved comprehensive contract v1.0 with all 10 gaps closed for session ${sessionId}`);
   } catch (err) {
     log('WARN', `Failed to save contract signature: ${err.message}`);

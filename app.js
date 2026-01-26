@@ -3434,13 +3434,16 @@ const renderLoginPage = () => `
   <!-- Request Access Modal - OUTSIDE container for proper fixed positioning -->
   <div id="requestAccessModal">
     <div>
-      <h2 style="font-size: 24px; color: #2c2c2c; margin-bottom: 8px; font-family: 'Poppins', sans-serif; font-weight: 600;">Request Access</h2>
-      <p style="color: #666; font-size: 13px; margin-bottom: 20px; font-family: 'Poppins', sans-serif;">Fill out the form below and we'll review your request. Access codes are issued upon verification and payment.</p>
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <img src="/logo.jpeg" alt="Carlucci Capital" style="height: 48px; width: auto;">
+        <h2 style="font-size: 22px; color: #2c2c2c; margin: 0; font-family: 'Poppins', sans-serif; font-weight: 600;">Membership Access</h2>
+      </div>
+      <p style="color: #666; font-size: 13px; margin-bottom: 20px; font-family: 'Poppins', sans-serif;">Submit your information and we'll review your application within 24 hours.</p>
       <div style="display: flex; flex-direction: column; gap: 12px;">
         <input type="text" id="requestAccessName" placeholder="Full Name" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
         <input type="email" id="requestAccessEmail" placeholder="Email Address" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
         <input type="text" id="requestAccessSource" placeholder="Where did you hear about us? (optional)" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
-        <textarea id="requestAccessMessage" placeholder="Tell us about your interest & how you intend to use the platform" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; min-height: 100px; resize: vertical; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'"></textarea>
+        <textarea id="requestAccessMessage" placeholder="Tell us about your interest (optional)" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; min-height: 100px; resize: vertical; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'"></textarea>
         <div id="requestAccessError" style="color: #d32f2f; font-size: 12px; display: none;"></div>
         <div id="requestAccessSuccess" style="color: #2e7d32; font-size: 12px; display: none;"></div>
         <div style="display: flex; gap: 12px;">
@@ -3563,6 +3566,7 @@ const renderLoginPage = () => `
       if (!name || !email) {
         errorDiv.textContent = 'Please fill in name and email';
         errorDiv.style.display = 'block';
+        setTimeout(() => { errorDiv.style.display = 'none'; }, 8000);
         return;
       }
       
@@ -3570,6 +3574,7 @@ const renderLoginPage = () => `
       if (!emailRegex.test(email)) {
         errorDiv.textContent = 'Please enter a valid email address';
         errorDiv.style.display = 'block';
+        setTimeout(() => { errorDiv.style.display = 'none'; }, 8000);
         return;
       }
       
@@ -3589,10 +3594,12 @@ const renderLoginPage = () => `
         } else {
           errorDiv.textContent = data.error || 'Failed to submit request';
           errorDiv.style.display = 'block';
+          setTimeout(() => { errorDiv.style.display = 'none'; }, 8000);
         }
       } catch (err) {
         errorDiv.textContent = 'Network error. Please try again.';
         errorDiv.style.display = 'block';
+        setTimeout(() => { errorDiv.style.display = 'none'; }, 8000);
       }
     }
     

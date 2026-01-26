@@ -1391,6 +1391,23 @@
     "currentPrice": 1.7,
     "performance": 0,
     "date": "2026-01-26T13:33:05.159Z",
-    "reverseSplitRatio": null
+    "reverseSplitRatio": null,
+    "volume": 965314,
+    "averageVolume": 841874,
+    "marketCap": 14335492
+  },
+  "CZWI": {
+    "short": false,
+    "alert": 18.2,
+    "highest": 18.2,
+    "lowest": 18.2,
+    "current": 18.2,
+    "currentPrice": 18.2,
+    "performance": 0,
+    "date": "2026-01-26T13:34:30.126Z",
+    "reverseSplitRatio": null,
+    "volume": 59553,
+    "averageVolume": 42773,
+    "marketCap": 175807360
   }
 }

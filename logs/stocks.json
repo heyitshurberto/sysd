@@ -1514,5 +1514,65 @@
     "recordedAt": "2026-01-26T13:34:30.091Z",
     "recordId": "CZWI-1769434470091",
     "expiresAt": "2026-01-31T13:34:30.091Z"
+  },
+  {
+    "ticker": "OTH",
+    "title": "8-K - OFF THE HOOK YS INC. (0002067767) (Filer)",
+    "companyName": "OFF THE HOOK YS INC.",
+    "filerName": null,
+    "price": 2.7,
+    "wa": "2.05",
+    "signalScore": 0.63,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.1,
+    "volume": 121661,
+    "averageVolume": 112639,
+    "float": 4625157,
+    "sharesOutstanding": 23750000,
+    "soRatio": "19.47%",
+    "marketCap": 64125000,
+    "isShort": false,
+    "ftd": 33682,
+    "ftdPercent": "0.73",
+    "intent": "Earnings Outperformance, Partnership, Strategic Minerals Partnership",
+    "incorporated": "Nevada",
+    "located": "North Carolina",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Earnings Outperformance": [
+        "Record Revenue"
+      ],
+      "Partnership": [
+        "Strategic Partnership"
+      ],
+      "Strategic Minerals Partnership": [
+        "Strategic Partnership"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "6-K/A",
+      "8-K",
+      "20-F",
+      "20-F/A",
+      "EX-99.1",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 6-K/A, 8-K, 20-F, 20-F/A, EX-99.1, Item 7.01, Item 9.01",
+    "cik": "2067767",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T13:41:26.659Z",
+    "recordId": "OTH-1769434886659",
+    "expiresAt": "2026-01-31T13:41:26.659Z"
   }
 ]

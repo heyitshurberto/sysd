@@ -4,6 +4,7 @@ import { createRequire } from 'module';
 import { execSync } from 'child_process';
 import crypto from 'crypto';
 import express from 'express';
+import bcrypt from 'bcrypt';
 
 // Load environment variables from .env file
 if (fs.existsSync('.env')) {
@@ -3072,10 +3073,27 @@ const renderLoginPage = () => `
       }, timeoutMs);
     }
 
+    /* 
+    ACCESS CODE DISTRIBUTION FLOW:
+    1. Admin creates purchase codes via /admin/create-code endpoint
+    2. User pays via Stripe/payment provider
+    3. Payment webhook triggers code creation via API
+    4. Code is emailed to user (future: via SMTP)
+    5. User enters code at login - uppercased & trimmed automatically
+    6. Backend validates: email + password + code must all match
+    7. Session created with 1-hour expiry
+    
+    For now: Admin manually generates codes and shares via secure channel
+    */
     function sendCode() {
+      const btn = document.querySelector('button[onclick="sendCode()"]');
+      const originalText = btn.textContent;
+      btn.textContent = 'Authenticating...';
+      btn.disabled = true;
+      
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
-      const code = document.getElementById('code').value.trim();
+      const code = document.getElementById('code').value.trim().toUpperCase();
       const error = document.getElementById('error');
       error.classList.add('hidden');
       
@@ -3135,6 +3153,9 @@ const renderLoginPage = () => `
     
     function verifyCode(email, password, code) {
       const error = document.getElementById('error');
+      const btn = document.querySelector('button[onclick="sendCode()"]');
+      const originalText = btn?.textContent || 'Send Code';
+      
       error.classList.add('hidden');
       
       if (!code) {
@@ -3152,6 +3173,11 @@ const renderLoginPage = () => `
         return r.json();
       })
       .then(data => {
+        if (btn) {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+        
         if (data.success) {
           window.location.href = '/';
         } else {
@@ -3159,6 +3185,10 @@ const renderLoginPage = () => `
         }
       })
       .catch(err => {
+        if (btn) {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
         showErrorWithTimer(error, 'Error: ' + err.message);
       });
     }
@@ -3405,16 +3435,16 @@ const renderLoginPage = () => `
   <div id="requestAccessModal">
     <div>
       <h2 style="font-size: 24px; color: #2c2c2c; margin-bottom: 8px; font-family: 'Poppins', sans-serif; font-weight: 600;">Request Access</h2>
-      <p style="color: #666; font-size: 13px; margin-bottom: 20px; font-family: 'Poppins', sans-serif;">Fill out the form below and we'll review your request shortly.</p>
+      <p style="color: #666; font-size: 13px; margin-bottom: 20px; font-family: 'Poppins', sans-serif;">Fill out the form below and we'll review your request. Access codes are issued upon verification and payment.</p>
       <div style="display: flex; flex-direction: column; gap: 12px;">
         <input type="text" id="requestAccessName" placeholder="Full Name" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
         <input type="email" id="requestAccessEmail" placeholder="Email Address" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
         <input type="text" id="requestAccessSource" placeholder="Where did you hear about us? (optional)" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
-        <textarea id="requestAccessMessage" placeholder="Tell us about your interest" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; min-height: 100px; resize: vertical; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'"></textarea>
+        <textarea id="requestAccessMessage" placeholder="Tell us about your interest & how you intend to use the platform" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; min-height: 100px; resize: vertical; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'"></textarea>
         <div id="requestAccessError" style="color: #d32f2f; font-size: 12px; display: none;"></div>
         <div id="requestAccessSuccess" style="color: #2e7d32; font-size: 12px; display: none;"></div>
         <div style="display: flex; gap: 12px;">
-          <button type="button" onclick="submitAccessRequest()" style="flex: 1; padding: 12px; background: linear-gradient(180deg, #888888 0%, #666666 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px rgba(100, 100, 100, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">Submit</button>
+          <button type="button" onclick="submitAccessRequest()" style="flex: 1; padding: 12px; background: linear-gradient(180deg, #888888 0%, #666666 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px rgba(100, 100, 100, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">Submit Request</button>
           <button type="button" onclick="document.getElementById('requestAccessModal').classList.remove('show')" style="flex: 1; padding: 12px; background: #f0f0f0; color: #666; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e0e0e0'" onmouseout="this.style.backgroundColor='#f0f0f0'">Cancel</button>
         </div>
       </div>
@@ -5329,6 +5359,39 @@ app.post('/api/login-verify', (req, res) => {
   res.json({ success: true, message: 'Credentials verified' });
 });
 
+// RATE LIMITING - Prevent brute force attacks
+const loginAttempts = new Map(); // { ip: { count, timestamp } }
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_WINDOW = 15 * 60 * 1000; // 15 minutes
+
+const checkRateLimit = (ip) => {
+  const now = Date.now();
+  const record = loginAttempts.get(ip);
+  
+  if (!record) {
+    loginAttempts.set(ip, { count: 0, timestamp: now });
+    return true;
+  }
+  
+  // Reset if window expired
+  if (now - record.timestamp > LOCKOUT_WINDOW) {
+    loginAttempts.set(ip, { count: 0, timestamp: now });
+    return true;
+  }
+  
+  // Check if locked out
+  if (record.count >= MAX_LOGIN_ATTEMPTS) {
+    return false;
+  }
+  
+  return true;
+};
+
+const incrementLoginAttempt = (ip) => {
+  const record = loginAttempts.get(ip);
+  if (record) record.count++;
+};
+
 // POST /api/auth-verify - Verify purchase code and create session (or admin bypass)
 app.post('/api/auth-verify', (req, res) => {
   const { email, password, code } = req.body || {};
@@ -5342,12 +5405,20 @@ app.post('/api/auth-verify', (req, res) => {
   const fingerprint = getClientFingerprint(req);
   const userAgent = req.headers['user-agent'] || 'Unknown';
   
+  // Check rate limit
+  if (!checkRateLimit(clientIp)) {
+    log('SECURITY', `Rate limit exceeded for IP ${clientIp}. Locked out for ${LOCKOUT_WINDOW / 1000 / 60} minutes`);
+    return res.status(429).json({ success: false, error: 'Too many login attempts. Please try again later.' });
+  }
+  
   // Check for admin credentials
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@cc';
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
   const adminCode = process.env.ADMIN_CODE || 'ADMINS3CR3T';
   
   if (emailLower === adminEmail.toLowerCase() && password === adminPassword && purchaseCode === adminCode) {
+    // Reset rate limit on successful login
+    loginAttempts.delete(clientIp);
     log('AUTH', `Admin login successful for ${emailLower}`);
     log('AUTH', `IP: ${clientIp} Device: ${fingerprint}`);
     logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, true, 'Admin login successful');
@@ -5382,19 +5453,38 @@ app.post('/api/auth-verify', (req, res) => {
     return res.json({ success: false, error: 'Account not found. Please create an account first.' });
   }
   
-  // Verify password
-  const crypto = require('crypto');
-  const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
-  if (registeredUser.passwordHash !== passwordHash) {
+  // Verify password (using bcrypt if available, fallback to SHA256 for legacy)
+  let passwordMatch = false;
+  if (registeredUser.passwordHash && registeredUser.passwordHash.startsWith('$2')) {
+    // bcrypt hash (starts with $2)
+    try {
+      passwordMatch = bcrypt.compareSync(password, registeredUser.passwordHash);
+    } catch (e) {
+      log('WARN', `Bcrypt compare failed for ${emailLower}: ${e.message}`);
+      passwordMatch = false;
+    }
+  } else {
+    // Legacy SHA256 hash
+    const crypto = require('crypto');
+    const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+    passwordMatch = registeredUser.passwordHash === passwordHash;
+  }
+  
+  if (!passwordMatch) {
+    incrementLoginAttempt(clientIp);
     log('AUTH', `Auth failed: Invalid password for ${emailLower}`);
     logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, false, 'Invalid password', registeredUser.fullName, registeredUser.company);
     return res.json({ success: false, error: 'Invalid password' });
   }
   
+  // Reset rate limit on successful password verification
+  loginAttempts.delete(clientIp);
+  
   // Check if purchase code exists and is valid for this email
   const codeData = purchaseCodes.get(purchaseCode);
   
   if (!codeData) {
+    incrementLoginAttempt(clientIp);
     log('AUTH', `Auth failed: Invalid code for ${emailLower}`);
     logLoginAttempt(emailLower, password, purchaseCode, clientIp, fingerprint, userAgent, false, 'Invalid code', registeredUser.fullName, registeredUser.company);
     return res.json({ success: false, error: 'Invalid access code' });
@@ -5552,8 +5642,17 @@ app.post('/api/auth-register', async (req, res) => {
     }
     
     // All validations passed - create the account
-    const crypto = require('crypto');
-    const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+    // Hash password using bcrypt (async)
+    let passwordHash;
+    try {
+      const salt = await bcrypt.genSalt(10);
+      passwordHash = await bcrypt.hash(password, salt);
+    } catch (hashErr) {
+      log('WARN', `Bcrypt hashing failed: ${hashErr.message}. Falling back to SHA256`);
+      // Fallback to SHA256 if bcrypt fails
+      const crypto = require('crypto');
+      passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+    }
     
     registeredUsers.set(emailLower, {
       email: emailLower,
@@ -6251,6 +6350,72 @@ app.post('/api/send-message', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+/*
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                  PAYMENT & ACCESS CODE DISTRIBUTION FLOW                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+CURRENT ARCHITECTURE:
+1. User clicks "Request Access" button in login modal
+2. User fills form (name, email, interest message, optional source)
+3. Form submits to /api/send-access-request endpoint
+4. Email notification sent to business admin
+5. Admin manually reviews request and issues ACCESS CODE
+
+PAYMENT INTEGRATION (FUTURE):
+- Phase 1: Manual payment requests + admin code issuance (current)
+- Phase 2: Stripe payment integration
+  • Add "Get Premium Access" button to Request Access modal
+  • Redirect to Stripe Checkout session
+  • Webhook listens to payment.succeeded event
+  • Create random 12-char access code (uppercase alphanumeric)
+  • Email code to user automatically
+  • Store code in database with user email, payment date, expiry (180 days)
+
+CODE GENERATION ALGORITHM:
+  function generateAccessCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 12; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
+WEBHOOK HANDLER (Stripe):
+  app.post('/api/webhook/stripe-payment', (req, res) => {
+    const event = req.body;
+    if (event.type === 'payment_intent.succeeded') {
+      const email = event.data.object.customer_email;
+      const code = generateAccessCode();
+      saveAccessCode(email, code); // Save to database
+      sendCodeByEmail(email, code); // Send via SMTP
+      res.json({ received: true });
+    }
+  });
+
+CURRENT FLOW DATA:
+- Access requests stored as emails to admin
+- Codes issued manually via admin panel
+- No automatic tracking of who has codes
+- No code expiration management
+- No revenue attribution
+
+NEXT STEPS:
+1. Set up Stripe account and API keys
+2. Create /api/webhook/stripe-payment endpoint
+3. Add database table: access_codes (email, code, created_date, expires_date, payment_id)
+4. Update Request Access modal with pricing/subscribe button
+5. Implement automatic email delivery on payment confirmation
+
+SECURITY NOTES:
+- Codes are UPPERCASE ONLY (case-insensitive comparison on server)
+- 12 characters provides ~62^12 combinations (safe from brute force)
+- Trim whitespace before comparison
+- Require valid email format for code registration
+- Log all code generation and usage for audit
+*/
 
 app.post('/api/send-access-request', async (req, res) => {
   try {
@@ -7215,6 +7380,20 @@ if (process.stdin.isTTY) {
           }
           
           let validSignals = false;
+          
+          // COUNTRY FILTERING - Only allow US, Canada, UK companies
+          const ALLOWED_COUNTRIES = { 'US': true, 'CA': true, 'GB': true }; // US, Canada, UK
+          const ALLOWED_US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY', 'DC'];
+          
+          const countryCode = stateToCountry[normalizedIncorporated] || stateToCountry[normalizedLocated] || null;
+          const isUSState = ALLOWED_US_STATES.includes(normalizedIncorporated) || ALLOWED_US_STATES.includes(normalizedLocated);
+          const isAllowedCountry = ALLOWED_COUNTRIES[countryCode] || isUSState;
+          
+          if (!isAllowedCountry) {
+            skipReason = `Not in allowed countries (${normalizedIncorporated || normalizedLocated})`;
+            log('SKIP', `$${ticker}, ${skipReason}`);
+            continue;
+          }
           
           // Structural movers - mechanical algos execute on these
           const structuralMovers = ['Credit Default', 'Going Dark', 'Warrant Redemption', 'Asset Disposition', 'Share Consolidation', 'Deal Termination', 'Auditor Change', 'Preferred Call', 'DTC Eligible Restored', 'Debt Restructure', 'Corporate Separation'];

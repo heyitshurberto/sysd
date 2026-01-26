@@ -1574,5 +1574,78 @@
     "recordedAt": "2026-01-26T13:41:26.659Z",
     "recordId": "OTH-1769434886659",
     "expiresAt": "2026-01-31T13:41:26.659Z"
+  },
+  {
+    "ticker": "DEVS",
+    "title": "8-K - DevvStream Corp. (0001854480) (Filer)",
+    "companyName": "DevvStream Corp.",
+    "filerName": null,
+    "price": 1.02,
+    "wa": "0.60",
+    "signalScore": 0.46,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1,
+    "volume": 78103,
+    "averageVolume": 375262,
+    "float": 41639170,
+    "sharesOutstanding": 4380012,
+    "soRatio": "950.7%",
+    "marketCap": 4467612,
+    "isShort": true,
+    "ftd": 16565,
+    "ftdPercent": "0.04",
+    "intent": "FDA Approved, Artificial Inflation, Bid Price Delisting, Debt Restructure, ADR Regulation Risk, Financing Events, Offtake Agreement",
+    "incorporated": "Calgary, Canada",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "FDA Approved": [
+        "Approves"
+      ],
+      "Artificial Inflation": [
+        "Reverse Split"
+      ],
+      "Bid Price Delisting": [
+        "Minimum Bid Price"
+      ],
+      "Debt Restructure": [
+        "Forbearance Agreement"
+      ],
+      "ADR Regulation Risk": [
+        "Subject To Risks"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ],
+      "Offtake Agreement": [
+        "Offtake Agreement"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": 409,
+    "reverseSplitReason": "Nasdaq minimum bid price requirement",
+    "formType": [
+      "8-K",
+      "8-K/A",
+      "S-4",
+      "Form D",
+      "EX-99.1",
+      "EX-10.1",
+      "Item 1.01",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, 8-K/A, S-4, Form D, EX-99.1, EX-10.1, Item 1.01, Item 7.01, Item 9.01",
+    "cik": "1854480",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T13:43:40.366Z",
+    "recordId": "DEVS-1769435020366",
+    "expiresAt": "2026-01-31T13:43:40.366Z"
   }
 ]

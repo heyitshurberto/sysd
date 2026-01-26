@@ -175,5 +175,72 @@
     "recordId": "CRDL-1769451197487",
     "expiresAt": "2026-01-31T18:13:17.487Z",
     "direction": "LONG"
+  },
+  {
+    "ticker": "BIYA",
+    "title": "6-K - Baiya International Group Inc. (0001944712) (Filer)",
+    "companyName": "Baiya International Group Inc.",
+    "filerName": null,
+    "price": 3.95,
+    "wa": "2.07",
+    "signalScore": 0.61,
+    "hasTuesdayBonus": true,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1,
+    "volume": 36349,
+    "averageVolume": 687987,
+    "float": 12680000,
+    "sharesOutstanding": 1185784,
+    "soRatio": "1069.3%",
+    "marketCap": 4936651,
+    "isShort": true,
+    "ftd": 137283,
+    "ftdPercent": "1.08",
+    "intent": "Artificial Inflation, Convertible Dilution, Asset Disposition, Share Consolidation, Partnership, Stock Split",
+    "incorporated": "Cayman Islands",
+    "located": "New York",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Artificial Inflation": [
+        "Consolidation Of Shares",
+        "Share Consolidation"
+      ],
+      "Convertible Dilution": [
+        "Convertible Securities"
+      ],
+      "Asset Disposition": [
+        "Disposed",
+        "Disposition"
+      ],
+      "Share Consolidation": [
+        "Consolidation"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Stock Split": [
+        "Share Split"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": 1002,
+    "reverseSplitReason": "Nasdaq minimum bid price requirement",
+    "formType": [
+      "6-K",
+      "20-F",
+      "EX-3.1"
+    ],
+    "filingType": "6-K, 20-F, EX-3.1",
+    "cik": "1944712",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T21:16:29.874Z",
+    "recordId": "BIYA-1769462189874",
+    "expiresAt": "2026-01-31T21:16:29.874Z",
+    "direction": "SHORT"
   }
 ]

@@ -3,11 +3,11 @@
     "alert": 27.94,
     "highest": 27.94,
     "lowest": 24.88,
-    "current": 25.42,
-    "currentPrice": 25.45,
-    "volume": 3293291,
+    "current": 25.13,
+    "currentPrice": 25.13,
+    "volume": 3919635,
     "averageVolume": 2511740,
-    "marketCap": 4057840896,
+    "marketCap": 4011547648,
     "performance": -8.91
   },
   "AXL": {
@@ -15,14 +15,14 @@
     "alert": 8.28,
     "highest": 8.45,
     "lowest": 7.93,
-    "current": 8.06,
-    "currentPrice": 8.06,
+    "current": 7.97,
+    "currentPrice": 7.97,
     "performance": -2.66,
     "date": "2026-01-26T14:19:44.992Z",
     "reverseSplitRatio": null,
-    "volume": 3889994,
+    "volume": 5718720,
     "averageVolume": 3039586,
-    "marketCap": 956693248
+    "marketCap": 946010496
   },
   "BOH": {
     "short": false,
@@ -42,11 +42,22 @@
     "alert": 0.9981,
     "highest": 1.0155,
     "lowest": 0.9959,
-    "current": 1.0029,
-    "currentPrice": 1.0029,
-    "volume": 325397,
+    "current": 1,
+    "currentPrice": 1,
+    "volume": 414715,
     "averageVolume": 466968,
-    "marketCap": 100287640,
+    "marketCap": 99997648,
     "performance": 0.48
+  },
+  "BIYA": {
+    "short": false,
+    "alert": 3.95,
+    "highest": 3.95,
+    "lowest": 3.95,
+    "current": 3.95,
+    "currentPrice": 3.95,
+    "performance": 0,
+    "date": "2026-01-26T21:16:29.912Z",
+    "reverseSplitRatio": null
   }
 }

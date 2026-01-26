@@ -1431,5 +1431,25 @@
     "averageVolume": 375262,
     "marketCap": 4467612,
     "performance": 0
+  },
+  "BMRC": {
+    "alert": 26.42,
+    "highest": 26.42,
+    "lowest": 26.42,
+    "current": 26.42,
+    "currentPrice": 26.42,
+    "volume": 51816,
+    "averageVolume": 88439,
+    "marketCap": 425220320
+  },
+  "SAFX": {
+    "alert": 0.1373,
+    "highest": 0.1373,
+    "lowest": 0.1373,
+    "current": 0.1373,
+    "currentPrice": 0.1373,
+    "volume": 3541646,
+    "averageVolume": 5170327,
+    "marketCap": 28602824
   }
 }

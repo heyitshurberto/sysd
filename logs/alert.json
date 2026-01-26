@@ -1600,5 +1600,59 @@
     "recordedAt": "2026-01-26T13:49:53.940Z",
     "recordId": "SAFX-1769435393940",
     "expiresAt": "2026-01-31T13:49:53.940Z"
+  },
+  {
+    "ticker": "MTEK",
+    "title": "6-K - Maris Tech Ltd. (0001872964) (Filer)",
+    "companyName": "Maris Tech Ltd.",
+    "filerName": null,
+    "price": 1.63,
+    "wa": "1.34",
+    "signalScore": 0.75,
+    "hasTuesdayBonus": false,
+    "custodianControl": false,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1,
+    "volume": 157818,
+    "averageVolume": 86878,
+    "float": 4658328,
+    "sharesOutstanding": 8072591,
+    "soRatio": "57.71%",
+    "marketCap": 13158323,
+    "isShort": false,
+    "ftd": false,
+    "ftdPercent": null,
+    "intent": "Partnership, Strategic Minerals Partnership",
+    "incorporated": "Tel Aviv, Israel",
+    "located": "Tel Aviv, Israel",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Partnership": [
+        "Strategic Alliance"
+      ],
+      "Strategic Minerals Partnership": [
+        "Strategic Alliance"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "S-8",
+      "F-3",
+      "20-F",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, S-8, F-3, 20-F, EX-99.1",
+    "cik": "1872964",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T14:00:57.248Z",
+    "recordId": "MTEK-1769436057249",
+    "expiresAt": "2026-01-31T14:00:57.249Z"
   }
 ]

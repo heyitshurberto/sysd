@@ -1285,5 +1285,19 @@
     "volume": 8461579,
     "averageVolume": 331178,
     "marketCap": 41975352
+  },
+  "ONL": {
+    "short": false,
+    "alert": 2.01,
+    "highest": 2.01,
+    "lowest": 2.01,
+    "current": 2.01,
+    "currentPrice": 2.01,
+    "performance": 0,
+    "date": "2026-01-26T12:05:56.035Z",
+    "reverseSplitRatio": null,
+    "volume": 326197,
+    "averageVolume": 257206,
+    "marketCap": 113192416
   }
 }

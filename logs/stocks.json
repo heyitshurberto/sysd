@@ -925,5 +925,70 @@
     "recordedAt": "2026-01-26T12:05:55.996Z",
     "recordId": "ONL-1769429155996",
     "expiresAt": "2026-01-31T12:05:55.996Z"
+  },
+  {
+    "ticker": "BMRN",
+    "title": "8-K - BIOMARIN PHARMACEUTICAL INC (0001048477) (Filer)",
+    "companyName": "BIOMARIN PHARMACEUTICAL INC",
+    "filerName": null,
+    "price": 56.21,
+    "wa": "38.49",
+    "signalScore": 0.58,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.2,
+    "volume": 1726645,
+    "averageVolume": 2948042,
+    "float": 4484986,
+    "sharesOutstanding": 192114344,
+    "soRatio": "2.33%",
+    "marketCap": 10798746624,
+    "isShort": true,
+    "ftd": 324,
+    "ftdPercent": "0.01",
+    "intent": "Merger/Acquisition, Going Concern Risk, Asset Disposition, Financing Events",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Merger/Acquisition": [
+        "Merger Agreement",
+        "Merger Consideration",
+        "Acquisition Closing"
+      ],
+      "Going Concern Risk": [
+        "Accumulated Deficit"
+      ],
+      "Asset Disposition": [
+        "Disposed"
+      ],
+      "Financing Events": [
+        "Credit Facility",
+        "Loan Facility"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "EX-99.2",
+      "Item 2.02",
+      "Item 7.01",
+      "Item 8.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, EX-99.2, Item 2.02, Item 7.01, Item 8.01, Item 9.01",
+    "cik": "1048477",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T12:55:25.995Z",
+    "recordId": "BMRN-1769432125995",
+    "expiresAt": "2026-01-31T12:55:25.995Z"
   }
 ]

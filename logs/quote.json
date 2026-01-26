@@ -1271,5 +1271,19 @@
     "averageVolume": 159700,
     "marketCap": 1501938816,
     "performance": 0
+  },
+  "SEV": {
+    "short": false,
+    "alert": 1.5,
+    "highest": 1.5,
+    "lowest": 1.5,
+    "current": 1.5,
+    "currentPrice": 1.5,
+    "performance": 0,
+    "date": "2026-01-26T12:04:06.960Z",
+    "reverseSplitRatio": null,
+    "volume": 8461579,
+    "averageVolume": 331178,
+    "marketCap": 41975352
   }
 }

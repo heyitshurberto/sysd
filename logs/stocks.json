@@ -855,5 +855,75 @@
     "recordedAt": "2026-01-26T12:04:06.914Z",
     "recordId": "SEV-1769429046914",
     "expiresAt": "2026-01-31T12:04:06.914Z"
+  },
+  {
+    "ticker": "ONL",
+    "title": "8-K - Orion Properties Inc. (0001873923) (Filer)",
+    "companyName": "Orion Properties Inc.",
+    "filerName": null,
+    "price": 2.01,
+    "wa": "1.57",
+    "signalScore": 0.71,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.15,
+    "volume": 326197,
+    "averageVolume": 257206,
+    "float": 5474027,
+    "sharesOutstanding": 56314634,
+    "soRatio": "9.72%",
+    "marketCap": 113192416,
+    "isShort": true,
+    "ftd": false,
+    "ftdPercent": null,
+    "intent": "FDA Filing, Asset Disposition, Share Consolidation, Stock Buyback, Partnership, Strategic Minerals Partnership",
+    "incorporated": "Maryland",
+    "located": "Arizona",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "FDA Filing": [
+        "Regulatory Filing"
+      ],
+      "Asset Disposition": [
+        "Disposition"
+      ],
+      "Share Consolidation": [
+        "Recapitalization",
+        "Consolidation"
+      ],
+      "Stock Buyback": [
+        "Share Repurchase"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Strategic Minerals Partnership": [
+        "Joint Venture"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "FWG",
+      "13D",
+      "EX-99.1",
+      "EX-10.1",
+      "Item 1.01",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, 13D, EX-99.1, EX-10.1, Item 1.01, Item 7.01, Item 9.01",
+    "cik": "1873923",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T12:05:55.996Z",
+    "recordId": "ONL-1769429155996",
+    "expiresAt": "2026-01-31T12:05:55.996Z"
   }
 ]

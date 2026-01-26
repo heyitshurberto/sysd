@@ -3010,9 +3010,9 @@ const renderLoginPage = () => `
       <button onclick="document.getElementById('requestAccessModal').classList.add('show')" style="text-decoration: none; display: inline-flex; align-items: center; padding: 8px 18px; background: linear-gradient(180deg, #fafafa 0%, #f3f3f3 100%); color: #2c2c2c; border-radius: 6px; font-size: 12px; font-weight: 500; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 0.3px; transition: all 0.2s; cursor: pointer; border: 1px solid #e5e5e5; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);" onmouseover="this.style.background='linear-gradient(180deg, #f3f3f3 0%, #ebebeb 100%)'; this.style.borderColor='#d0d0d0'; this.style.boxShadow='0 2px 6px rgba(0, 0, 0, 0.12)'" onmouseout="this.style.background='linear-gradient(180deg, #fafafa 0%, #f3f3f3 100%)'; this.style.borderColor='#e5e5e5'; this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.08)'">Request Access</button>
     </div>
     <div style="display: flex; justify-content: center; margin-bottom: 12px;">
-      <img src="/docs/logo.jpeg" alt="Carlucci Capital" style="height: 95px; width: auto; object-fit: contain;">
+      <img src="/docs/logo.jpeg" alt="Carlucci Capital" style="height: 90px; width: auto; object-fit: contain;">
     </div>
-    <h1 style="color: #000000; font-size: 33px; font-family: 'Playfair Display', serif; font-weight: 500; letter-spacing: 1px; margin: -15px 0 8px 0;">CARLUCCI CAPITAL</h1>
+    <h1 style="color: #000000; font-size: 30px; font-family: 'Playfair Display', serif; font-weight: 500; letter-spacing: 1px; margin: -15px 0 8px 0;">CARLUCCI CAPITAL</h1>
     <p class="subtitle" style="margin-top: -2px; opacity: 0.55; font-size: 11px;">Secure Access Portal</p>
     
     <div class="error" id="error"></div>
@@ -7066,7 +7066,7 @@ if (process.stdin.isTTY) {
           const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
           
           // Calculate early for use in multiple filters
-          const hasExtremeSOOrStrongSignal = (soRatioValue !== null && soRatioValue > CONFIG.EXTREME_SO_RATIO) || nonNeutralSignals.length >= 2;
+          const hasExtremeSOOrStrongSignal = (soRatioValue !== null && soRatioValue > CONFIG.EXTREME_SO_RATIO) || nonNeutralSignals.length >= 3;
           
           // Check if country is whitelisted - ONLY for 6-K filings (8-K can be Delaware/US states)
           let countryWhitelisted = true;
@@ -7245,8 +7245,8 @@ if (process.stdin.isTTY) {
             validSignals = true; // Strong volume spike (2x+ average) with any signal
           } else if (neutralSignals.length > 0 && signalCategories.length >= 2) {
             validSignals = true; // Has neutral signal + at least 1 other signal
-          } else if (nonNeutralSignals.length >= 2) {
-            validSignals = true; // Has 2+ non-neutral signals from different categories
+          } else if (nonNeutralSignals.length >= 3) {
+            validSignals = true; // Has 3+ non-neutral signals from different categories
           }
           
           if (!validSignals) {

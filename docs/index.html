@@ -23,14 +23,22 @@ table {
 }
 </style>
 <div style="position: absolute; top: 6px; left: 6px; display: flex; gap: 12px; align-items: center;" class="eugene-tag-desktop">
-  <a href="#" onclick="customConfirm('Visit Carlucci Community on Telegram?', 'https://t.me/+3rtL-9Cwr6Y2ZmM0'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/tele.png" alt="Telegram" style="height: 18px; width: 18px; filter: brightness(0) invert(1);" id="tele-logo"></a>
-  <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/twit.png" alt="X" style="height: 13px; width: 13px; filter: brightness(0) invert(1);" id="x-logo"></a></div>
+  <a href="#" onclick="customConfirm('Visit Carlucci Community on Telegram?', 'https://t.me/+3rtL-9Cwr6Y2ZmM0'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/tele.png" alt="Telegram" style="height: 18px; width: 18px; filter: brightness(0) saturate(100%);" id="tele-logo" class="social-icon"></a>
+  <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/twit.png" alt="X" style="height: 13px; width: 13px; filter: brightness(0) saturate(100%);" id="x-logo" class="social-icon"></a></div>
 <script>
 function updateLogoDarkMode() {
-  // Logos are now always white, no need to toggle
-  return;
+  const isDarkMode = document.body.classList.contains('dark-mode');
+  const teleIcon = document.getElementById('tele-logo');
+  const xIcon = document.getElementById('x-logo');
+  if (teleIcon) teleIcon.style.filter = isDarkMode ? 'brightness(0) saturate(100%) invert(100%)' : 'brightness(0) saturate(100%)';
+  if (xIcon) xIcon.style.filter = isDarkMode ? 'brightness(0) saturate(100%) invert(100%)' : 'brightness(0) saturate(100%)';
 }
-updateLogoDarkMode();
+// Call on load and when theme changes
+window.addEventListener('load', updateLogoDarkMode);
+document.addEventListener('themechanged', updateLogoDarkMode);
+// Also observe dark-mode class changes
+const observer = new MutationObserver(() => updateLogoDarkMode());
+observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 </script>
 <style>
     .eugene-tag-mobile {
@@ -45,7 +53,7 @@ updateLogoDarkMode();
         }
     }
 </style>
-    <title>CARLUCCI CAPITAL</title>
+    <title>Carlucci Capital</title>
     <!-- PWA meta tags and manifest -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2551,9 +2559,9 @@ updateLogoDarkMode();
 <body>
         <div class="container">
             <div class="header">
-                <div class="header-top" style="margin-top: 15px;">
-                    <img src="logo.jpeg?t=${new Date().getTime()}" alt="Logo" class="logo" style="height: 80px; width: auto; transition: opacity 0.4s ease; margin-right: 0px; margin-top: 14x;" onload="this.style.opacity=1">
-                    <h1 style="color: #000000; font-size: 22px; font-family: 'Playfair Display', serif; font-weight: 500; letter-spacing: 1px; margin-left: -8px; margin-top: -5px;" class="dashboard-title">CARLUCCI CAPITAL</h1>
+                <div class="header-top" style="margin-top: 32px; margin-left: 11px;">
+                    <img src="logo.jpeg?t=${new Date().getTime()}" alt="Logo" class="logo" style="height: 75px; width: auto; transition: opacity 0.4s ease; margin-right: 5px; margin-top: 14x;" onload="this.style.opacity=1">
+                    <h1 style="color: #000000; font-size: 25px; font-family: 'Playfair Display', serif; font-weight: 500; letter-spacing: 1px; margin-left: -10px; margin-top: 2px;" class="dashboard-title">CARLUCCI CAPITAL</h1>
                 </div>
                 <div class="theme-toggle" onmousedown="event.stopPropagation(); toggleTheme();">
                     <svg class="theme-icon-light" viewBox="0 0 24 24">
@@ -2684,49 +2692,15 @@ updateLogoDarkMode();
             
             if (isNaN(entryPrice) || isNaN(currentPrice) || entryPrice <= 0 || currentPrice <= 0) return 0;
             
-            // Use performance.adjustedPercent (P&L) if available; otherwise calculate with reverse split detection
+            // Use performance.adjustedPercent (P&L) if available; otherwise calculate normally
             let returnPercent = null;
             if (alert.performance && typeof alert.performance.adjustedPercent === 'number') {
                 returnPercent = alert.performance.adjustedPercent;
             } else {
-                // Check if reverse split ratio is stored in alert
-                let reverseSplitRatio = alert.reverseSplitRatio;
-                
-                // If stored ratio is valid and > 1, use it
-                if (reverseSplitRatio && reverseSplitRatio > 1) {
-                    // Use stored ratio from quote.json
-                } else if (!reverseSplitRatio) {
-                    // If no stored ratio but prices suggest a split, auto-detect
-                    const priceRatio = currentPrice / entryPrice;
-                    
-                    // Common reverse split ratios: detect if ratio matches 100:1, 50:1, 20:1, 10:1, 5:1, 2:1
-                    // For SHORT positions, price goes UP after reverse split, so ratio > 1
-                    if (priceRatio > 2.5 && priceRatio < 10) reverseSplitRatio = 100;  // HIGH ratio (3-5x suggests 100:1)
-                    else if (priceRatio >= 10 && priceRatio < 20) reverseSplitRatio = 50;   // ~50:1 split
-                    else if (priceRatio >= 20 && priceRatio < 30) reverseSplitRatio = 20;   // ~20:1 split
-                    else if (priceRatio >= 30 && priceRatio < 50) reverseSplitRatio = 10;   // ~10:1 split
-                    else if (priceRatio >= 50 && priceRatio < 100) reverseSplitRatio = 5;   // ~5:1 split
-                    else if (priceRatio >= 100) reverseSplitRatio = 2;  // >100x ratio suggests 2:1
-                }
-                
-                // If reverse split detected/stored, adjust entry price to post-split basis
-                if (reverseSplitRatio && reverseSplitRatio > 1) {
-                    const adjustedEntryPrice = entryPrice * reverseSplitRatio;
-                    const isShortForCalc = Array.isArray(alert.isShort) ? alert.isShort.length > 0 : (alert.isShort === true);
-                    
-                    if (isShortForCalc) {
-                        // SHORT: profit when price falls
-                        returnPercent = ((adjustedEntryPrice - currentPrice) / adjustedEntryPrice) * 100;
-                    } else {
-                        // LONG: profit when price rises
-                        returnPercent = ((currentPrice - adjustedEntryPrice) / adjustedEntryPrice) * 100;
-                    }
-                } else {
-                    // No reverse split, calculate normally
-                    returnPercent = ((currentPrice - entryPrice) / entryPrice) * 100;
-                    const isShortForCalc = Array.isArray(alert.isShort) ? alert.isShort.length > 0 : (alert.isShort === true);
-                    if (isShortForCalc) returnPercent = -returnPercent;
-                }
+                // Calculate normally without reverse split adjustments
+                returnPercent = ((currentPrice - entryPrice) / entryPrice) * 100;
+                const isShortForCalc = Array.isArray(alert.isShort) ? alert.isShort.length > 0 : (alert.isShort === true);
+                if (isShortForCalc) returnPercent = -returnPercent;
             }
             
             const priceChangeElement = document.querySelector(`[data-ticker="${alert.ticker}"] .price-change`);
@@ -3566,21 +3540,6 @@ updateLogoDarkMode();
                 } else if (alert.performance && typeof alert.performance.adjustedPercent === 'number') {
                     // Fallback to current if peak not available
                     displayPercentMove = alert.performance.adjustedPercent.toFixed(2);
-                } else if (alert.reverseSplitRatio && alert.reverseSplitRatio > 1) {
-                    // Has reverse split - use/calculate adjusted percentage
-                    if (alert.performance && typeof alert.performance.adjustedPeakPercent === 'number') {
-                        displayPercentMove = alert.performance.adjustedPeakPercent.toFixed(2);
-                    } else if (alert.performance && typeof alert.performance.adjustedPercent === 'number') {
-                        displayPercentMove = alert.performance.adjustedPercent.toFixed(2);
-                    } else {
-                        // Recalculate adjusted peak percent if not available
-                        const currentPricePreSplit = alert.currentPrice / alert.reverseSplitRatio;
-                        if (isShort) {
-                            displayPercentMove = (((alert.alertPrice - currentPricePreSplit) / alert.alertPrice) * 100).toFixed(2);
-                        } else {
-                            displayPercentMove = (((currentPricePreSplit - alert.alertPrice) / alert.alertPrice) * 100).toFixed(2);
-                        }
-                    }
                 } else if (alert.performance && typeof alert.performance.peakPercent === 'number') {
                     // Use literal peak percent and invert for shorts if needed
                     displayPercentMove = (isShort ? -alert.performance.peakPercent : alert.performance.peakPercent).toFixed(2);
@@ -4677,32 +4636,12 @@ ${(alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals ===
                     }
                 };
                 
-                // Calculate display percent (considering reverse split if applicable)
+                // Calculate display percent
                 let percentChange = (alert.priceChange * 100).toFixed(2);
                 const isShortSetup = Array.isArray(alert.isShort) ? alert.isShort.length > 0 : (alert.position === 'short' || alert.isShort === true);
                 
-                // Handle reverse split stocks
-                if (alert.reverseSplitRatio && alert.reverseSplitRatio > 1) {
-                    // For reverse splits, use adjustedPercent if available from backend
-                    if (alert.performance && typeof alert.performance.adjustedPercent === 'number') {
-                        percentChange = alert.performance.adjustedPercent.toFixed(2);
-                    } else {
-                        // Recalculate if not available
-                        // Convert both prices to pre-split basis for accurate comparison
-                        const currentPricePreSplit = alert.currentPrice / alert.reverseSplitRatio;
-                        const alertPricePreSplit = alert.alertPrice / alert.reverseSplitRatio;
-                        
-                        if (isShortSetup) {
-                            // SHORT: profit when price GOES DOWN from entry
-                            // Use pre-split basis: (entry - current) / entry × 100
-                            percentChange = (((alertPricePreSplit - currentPricePreSplit) / alertPricePreSplit) * 100).toFixed(2);
-                        } else {
-                            // LONG: profit when price GOES UP from entry
-                            // Use pre-split basis: (current - entry) / entry × 100
-                            percentChange = (((currentPricePreSplit - alertPricePreSplit) / alertPricePreSplit) * 100).toFixed(2);
-                        }
-                    }
-                } else if (isShortSetup) {
+                // For SHORT positions without reverse split: invert the sign
+                if (isShortSetup) {
                     // SHORT without reverse split: invert the sign
                     percentChange = (parseFloat(percentChange) * -1).toFixed(2);
                 }

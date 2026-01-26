@@ -1717,5 +1717,65 @@
     "recordedAt": "2026-01-26T14:12:51.640Z",
     "recordId": "HSAI-1769436771640",
     "expiresAt": "2026-01-31T14:12:51.640Z"
+  },
+  {
+    "ticker": "AXL",
+    "title": "8-K - AMERICAN AXLE &amp; MANUFACTURING HOLDINGS INC (0001062231) (Filer)",
+    "companyName": "AMERICAN AXLE & MANUFACTURING HOLDINGS INC",
+    "filerName": null,
+    "price": 8.28,
+    "wa": "6.35",
+    "signalScore": 0.64,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1,
+    "volume": 3468273,
+    "averageVolume": 3039586,
+    "float": 115149772,
+    "sharesOutstanding": 118696421,
+    "soRatio": "97.01%",
+    "marketCap": 982806336,
+    "isShort": true,
+    "ftd": 99485,
+    "ftdPercent": "0.09",
+    "intent": "Share Consolidation, Regulatory Breach, ADR Regulation Risk",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Michigan",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Share Consolidation": [
+        "Recalled Shares"
+      ],
+      "Regulatory Breach": [
+        "Regulatory Violation"
+      ],
+      "ADR Regulation Risk": [
+        "Subject To Risks"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "EX-99.2",
+      "EX-3.1",
+      "EX-3.2",
+      "Item 5.03",
+      "Item 8.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, EX-99.2, EX-3.1, EX-3.2, Item 5.03, Item 8.01, Item 9.01",
+    "cik": "1062231",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T14:19:44.912Z",
+    "recordId": "AXL-1769437184912",
+    "expiresAt": "2026-01-31T14:19:44.912Z"
   }
 ]

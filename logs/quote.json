@@ -1463,5 +1463,15 @@
     "volume": 157818,
     "averageVolume": 86878,
     "marketCap": 13158323
+  },
+  "HSAI": {
+    "alert": 27.94,
+    "highest": 27.94,
+    "lowest": 27.94,
+    "current": 27.94,
+    "currentPrice": 27.94,
+    "volume": 1236261,
+    "averageVolume": 2511740,
+    "marketCap": 4460113408
   }
 }

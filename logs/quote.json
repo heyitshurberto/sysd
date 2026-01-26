@@ -1309,50 +1309,19 @@
     "currentPrice": 0.5315,
     "performance": 0,
     "date": "2026-01-26T13:01:09.743Z",
-    "reverseSplitRatio": null
+    "reverseSplitRatio": null,
+    "volume": 114645,
+    "averageVolume": 1365719,
+    "marketCap": 13137617
   },
-  "SKYX": {
-    "short": false,
-    "alert": 2.94,
-    "highest": 2.94,
-    "lowest": 2.94,
-    "current": 2.94,
-    "currentPrice": 2.94,
-    "performance": 0,
-    "date": "2026-01-26T13:01:47.838Z",
-    "reverseSplitRatio": null
-  },
-  "PAR": {
-    "short": false,
-    "alert": 31.6,
-    "highest": 31.6,
-    "lowest": 31.6,
-    "current": 31.6,
-    "currentPrice": 31.6,
-    "performance": 0,
-    "date": "2026-01-26T13:02:10.448Z",
-    "reverseSplitRatio": null
-  },
-  "ARMP": {
-    "short": false,
-    "alert": 6,
-    "highest": 6,
-    "lowest": 6,
-    "current": 6,
-    "currentPrice": 6,
-    "performance": 0,
-    "date": "2026-01-26T13:02:18.434Z",
-    "reverseSplitRatio": null
-  },
-  "VWAV": {
-    "short": false,
-    "alert": 10.25,
-    "highest": 10.25,
-    "lowest": 10.25,
-    "current": 10.25,
-    "currentPrice": 10.25,
-    "performance": 0,
-    "date": "2026-01-26T13:02:23.080Z",
-    "reverseSplitRatio": null
+  "BMRN": {
+    "alert": 56.21,
+    "highest": 56.21,
+    "lowest": 56.21,
+    "current": 56.21,
+    "currentPrice": 56.21,
+    "volume": 1726645,
+    "averageVolume": 2948042,
+    "marketCap": 10798746624
   }
 }

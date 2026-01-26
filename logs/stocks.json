@@ -1340,5 +1340,57 @@
     "recordedAt": "2026-01-26T13:02:30.536Z",
     "recordId": "CDLX-1769432550536",
     "expiresAt": "2026-01-31T13:02:30.536Z"
+  },
+  {
+    "ticker": "ENLV",
+    "title": "6-K - Enlivex Therapeutics Ltd. (0001596812) (Filer)",
+    "companyName": "Enlivex Therapeutics Ltd.",
+    "filerName": null,
+    "price": 1.08,
+    "wa": "0.60",
+    "signalScore": 0.41,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1.15,
+    "volume": 534922,
+    "averageVolume": 4043627,
+    "float": 24180357,
+    "sharesOutstanding": 237381498,
+    "soRatio": "10.19%",
+    "marketCap": 256372032,
+    "isShort": true,
+    "ftd": 1327382,
+    "ftdPercent": "5.49",
+    "intent": "Clinical Success, ADR Regulation Risk",
+    "incorporated": "Tel Aviv, Israel",
+    "located": "Israel",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Clinical Success": [
+        "Trial Results"
+      ],
+      "ADR Regulation Risk": [
+        "Subject To Risks"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "20-F",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, 20-F, EX-99.1",
+    "cik": "1596812",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T13:03:05.010Z",
+    "recordId": "ENLV-1769432585010",
+    "expiresAt": "2026-01-31T13:03:05.010Z"
   }
 ]

@@ -48,19 +48,5 @@
     "averageVolume": 466968,
     "marketCap": 100287640,
     "performance": 0.48
-  },
-  "PEBO": {
-    "short": false,
-    "alert": 31.64,
-    "highest": 31.79,
-    "lowest": 31.64,
-    "current": 31.77,
-    "currentPrice": 31.79,
-    "performance": 0.47,
-    "date": "2026-01-26T19:57:50.778Z",
-    "reverseSplitRatio": null,
-    "volume": 165830,
-    "averageVolume": 204016,
-    "marketCap": 1134283136
   }
 }

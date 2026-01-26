@@ -1310,5 +1310,16 @@
     "performance": 0,
     "date": "2026-01-26T13:01:09.743Z",
     "reverseSplitRatio": null
+  },
+  "SKYX": {
+    "short": false,
+    "alert": 2.94,
+    "highest": 2.94,
+    "lowest": 2.94,
+    "current": 2.94,
+    "currentPrice": 2.94,
+    "performance": 0,
+    "date": "2026-01-26T13:01:47.838Z",
+    "reverseSplitRatio": null
   }
 }

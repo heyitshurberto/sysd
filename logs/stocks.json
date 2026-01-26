@@ -1108,5 +1108,59 @@
     "recordedAt": "2026-01-26T13:01:47.779Z",
     "recordId": "SKYX-1769432507779",
     "expiresAt": "2026-01-31T13:01:47.779Z"
+  },
+  {
+    "ticker": "PAR",
+    "title": "8-K - PAR TECHNOLOGY CORP (0000708821) (Filer)",
+    "companyName": "PAR TECHNOLOGY CORP",
+    "filerName": null,
+    "price": 31.6,
+    "wa": "25.56",
+    "signalScore": 0.52,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1,
+    "volume": 1070682,
+    "averageVolume": 662278,
+    "float": 35558556,
+    "sharesOutstanding": 40591032,
+    "soRatio": "87.60%",
+    "marketCap": 1282676608,
+    "isShort": true,
+    "ftd": 5684,
+    "ftdPercent": "0.02",
+    "intent": "Merger/Acquisition, ADR Regulation Risk",
+    "incorporated": "Wilmington, Delaware",
+    "located": "New York",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Merger/Acquisition": [
+        "Agreed To Acquire"
+      ],
+      "ADR Regulation Risk": [
+        "Subject To Risks"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "Item 3.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, Item 3.02, Item 7.01, Item 9.01",
+    "cik": "708821",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T13:02:10.404Z",
+    "recordId": "PAR-1769432530404",
+    "expiresAt": "2026-01-31T13:02:10.404Z"
   }
 ]

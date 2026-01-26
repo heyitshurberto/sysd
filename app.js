@@ -3443,7 +3443,7 @@ const renderLoginPage = () => `
         <input type="text" id="requestAccessName" placeholder="Full Name" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
         <input type="email" id="requestAccessEmail" placeholder="Email Address" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
         <input type="text" id="requestAccessSource" placeholder="Where did you hear about us? (optional)" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
-        <textarea id="requestAccessMessage" placeholder="Tell us about your interest (optional)" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; min-height: 100px; resize: vertical; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'"></textarea>
+        <textarea id="requestAccessMessage" placeholder="Please describe your investment background and intended use case" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; min-height: 100px; resize: vertical; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'"></textarea>
         <div id="requestAccessError" style="color: #d32f2f; font-size: 12px; display: none;"></div>
         <div id="requestAccessSuccess" style="color: #2e7d32; font-size: 12px; display: none;"></div>
         <div style="display: flex; gap: 12px;">
@@ -3563,8 +3563,8 @@ const renderLoginPage = () => `
       errorDiv.style.display = 'none';
       successDiv.style.display = 'none';
       
-      if (!name || !email) {
-        errorDiv.textContent = 'Please fill in name and email';
+      if (!name || !email || !message) {
+        errorDiv.textContent = 'Please fill in all required fields';
         errorDiv.style.display = 'block';
         setTimeout(() => { errorDiv.style.display = 'none'; }, 8000);
         return;

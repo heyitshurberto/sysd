@@ -788,5 +788,72 @@
     "recordedAt": "2026-01-26T12:00:29.132Z",
     "recordId": "LKFN-1769428829132",
     "expiresAt": "2026-01-31T12:00:29.132Z"
+  },
+  {
+    "ticker": "SEV",
+    "title": "8-K - Aptera Motors Corp (0001786471) (Filer)",
+    "companyName": "Aptera Motors Corp",
+    "filerName": null,
+    "price": 1.5,
+    "wa": "1.47",
+    "signalScore": 0.82,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.1,
+    "volume": 8461579,
+    "averageVolume": 331178,
+    "float": 4500000,
+    "sharesOutstanding": 15717462,
+    "soRatio": "28.63%",
+    "marketCap": 41975352,
+    "isShort": true,
+    "ftd": 57296,
+    "ftdPercent": "1.27",
+    "intent": "Artificial Inflation, Share Issuance, Asset Disposition, Share Consolidation, Stock Split",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Artificial Inflation": [
+        "Reverse Stock Split"
+      ],
+      "Share Issuance": [
+        "Issuance of shares"
+      ],
+      "Asset Disposition": [
+        "Disposition"
+      ],
+      "Share Consolidation": [
+        "Recapitalization",
+        "Consolidation"
+      ],
+      "Stock Split": [
+        "Stock Dividend"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "S-1",
+      "EX-4.1",
+      "EX-4.2",
+      "Item 1.01",
+      "Item 3.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, S-1, EX-4.1, EX-4.2, Item 1.01, Item 3.02, Item 7.01, Item 9.01",
+    "cik": "1786471",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T12:04:06.914Z",
+    "recordId": "SEV-1769429046914",
+    "expiresAt": "2026-01-31T12:04:06.914Z"
   }
 ]

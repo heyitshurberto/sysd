@@ -1260,5 +1260,16 @@
     "averageVolume": 3597516,
     "marketCap": 260442752,
     "performance": 0
+  },
+  "LKFN": {
+    "alert": 58.83,
+    "highest": 58.83,
+    "lowest": 58.83,
+    "current": 58.83,
+    "currentPrice": 58.83,
+    "volume": 169686,
+    "averageVolume": 159700,
+    "marketCap": 1501938816,
+    "performance": 0
   }
 }

@@ -236,5 +236,57 @@
     "recordedAt": "2026-01-23T13:03:06.177Z",
     "recordId": "NEOV-1769173386177",
     "expiresAt": "2026-01-28T13:03:06.177Z"
+  },
+  {
+    "ticker": "TII",
+    "title": "6-K - Titan Mining Corp (0001791703) (Filer)",
+    "companyName": "Titan Mining Corp",
+    "filerName": null,
+    "price": 4.65,
+    "wa": "3.90",
+    "signalScore": 0.59,
+    "hasTuesdayBonus": false,
+    "custodianControl": false,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.05,
+    "volume": 1228681,
+    "averageVolume": 585197,
+    "float": 38128362,
+    "sharesOutstanding": 91616438,
+    "soRatio": "41.62%",
+    "marketCap": 426016448,
+    "isShort": false,
+    "ftd": 122859,
+    "ftdPercent": "0.32",
+    "intent": "Financing Events, Critical Minerals Discovery",
+    "incorporated": "Toronto, Canada",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Financing Events": [
+        "Loan Facility"
+      ],
+      "Critical Minerals Discovery": [
+        "Critical Minerals"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "20-F",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, 20-F, EX-99.1",
+    "cik": "1791703",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T11:06:24.273Z",
+    "recordId": "TII-1769425584273",
+    "expiresAt": "2026-01-31T11:06:24.273Z"
   }
 ]

@@ -236,11 +236,11 @@
     "highest": 0.3498,
     "lowest": 0.289,
     "current": 0.2999,
-    "currentPrice": 0.299,
+    "currentPrice": 0.291,
     "volume": 15352,
     "averageVolume": 284585,
     "marketCap": 50459776,
-    "performance": -0.3
+    "performance": -2.97
   },
   "VVOS": {
     "alert": 1.97,
@@ -266,14 +266,14 @@
   },
   "PCLA": {
     "alert": 0.2059,
-    "highest": 0.2059,
+    "highest": 5.16,
     "lowest": 0.1691,
     "current": 0.202,
-    "currentPrice": 0.172,
+    "currentPrice": 5.16,
     "volume": 266045,
     "averageVolume": 21012722,
     "marketCap": 25172070,
-    "performance": -16.46
+    "performance": 2406.07
   },
   "NVNO": {
     "alert": 11.65,
@@ -663,14 +663,14 @@
   },
   "GRI": {
     "alert": 0.223,
-    "highest": 0.223,
+    "highest": 5.6364,
     "lowest": 0.1831,
     "current": 0.223,
-    "currentPrice": 0.2013,
+    "currentPrice": 5.6364,
     "volume": 1278280,
     "averageVolume": 2200970,
     "marketCap": 2256996,
-    "performance": -9.73
+    "performance": 2427.53
   },
   "BYD": {
     "short": false,
@@ -1024,8 +1024,8 @@
     "lowest": 2,
     "current": 2.49,
     "currentPrice": 2.49,
-    "volume": 1989228,
-    "averageVolume": 129609,
+    "volume": 1416867,
+    "averageVolume": 162200,
     "marketCap": 117356864,
     "performance": 22.66
   },
@@ -1035,8 +1035,8 @@
     "lowest": 14.74,
     "current": 15.23,
     "currentPrice": 15.23,
-    "volume": 2656092,
-    "averageVolume": 3203195,
+    "volume": 2734160,
+    "averageVolume": 3226334,
     "marketCap": 1377466112,
     "performance": 0.53
   },
@@ -1046,8 +1046,8 @@
     "lowest": 5.14,
     "current": 5.24,
     "currentPrice": 5.24,
-    "volume": 208661,
-    "averageVolume": 1056327,
+    "volume": 210057,
+    "averageVolume": 1007983,
     "marketCap": 99624088,
     "performance": -0.57
   },
@@ -1057,9 +1057,9 @@
     "lowest": 5.79,
     "current": 5.8,
     "currentPrice": 5.8,
-    "volume": 4801440,
-    "averageVolume": 498852,
-    "marketCap": 201479968,
+    "volume": 4833594,
+    "averageVolume": 574116,
+    "marketCap": 209934976,
     "performance": 0
   },
   "ENLV": {

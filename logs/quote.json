@@ -37,19 +37,5 @@
     "volume": 55791,
     "averageVolume": 382334,
     "marketCap": 2924005376
-  },
-  "IOTR": {
-    "short": false,
-    "alert": 5.33,
-    "highest": 5.33,
-    "lowest": 3.1,
-    "current": 4.25,
-    "currentPrice": 3.65,
-    "performance": -31.52,
-    "date": "2026-01-26T14:25:52.223Z",
-    "reverseSplitRatio": null,
-    "volume": 52284,
-    "averageVolume": 1415688,
-    "marketCap": 10901254
   }
 }

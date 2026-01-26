@@ -1409,5 +1409,16 @@
     "volume": 59553,
     "averageVolume": 42773,
     "marketCap": 175807360
+  },
+  "OTH": {
+    "alert": 2.7,
+    "highest": 2.7,
+    "lowest": 2.7,
+    "current": 2.7,
+    "currentPrice": 2.7,
+    "volume": 121661,
+    "averageVolume": 112639,
+    "marketCap": 64125000,
+    "performance": 0
   }
 }

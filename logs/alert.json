@@ -1468,5 +1468,61 @@
     "recordedAt": "2026-01-26T13:43:40.366Z",
     "recordId": "DEVS-1769435020366",
     "expiresAt": "2026-01-31T13:43:40.366Z"
+  },
+  {
+    "ticker": "BMRC",
+    "title": "8-K - Bank of Marin Bancorp (0001403475) (Filer)",
+    "companyName": "Bank of Marin Bancorp",
+    "filerName": null,
+    "price": 26.42,
+    "wa": "18.09",
+    "signalScore": 0.4,
+    "hasTuesdayBonus": false,
+    "custodianControl": false,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.05,
+    "volume": 51816,
+    "averageVolume": 88439,
+    "float": 5000000,
+    "sharesOutstanding": 16094636,
+    "soRatio": "31.07%",
+    "marketCap": 425220320,
+    "isShort": true,
+    "ftd": 576,
+    "ftdPercent": "0.01",
+    "intent": "Negative Earnings, Stock Buyback",
+    "incorporated": "Toronto, Canada",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Negative Earnings": [
+        "Net Loss"
+      ],
+      "Stock Buyback": [
+        "Share Repurchase",
+        "Repurchase Program"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "EX-99.2",
+      "Item 2.02",
+      "Item 8.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, EX-99.2, Item 2.02, Item 8.01, Item 9.01",
+    "cik": "1403475",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T13:46:58.551Z",
+    "recordId": "BMRC-1769435218551",
+    "expiresAt": "2026-01-31T13:46:58.551Z"
   }
 ]

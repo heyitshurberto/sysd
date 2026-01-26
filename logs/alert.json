@@ -1108,5 +1108,58 @@
     "recordedAt": "2026-01-26T13:02:23.057Z",
     "recordId": "VWAV-1769432543058",
     "expiresAt": "2026-01-31T13:02:23.058Z"
+  },
+  {
+    "ticker": "CDLX",
+    "title": "8-K - Cardlytics, Inc. (0001666071) (Filer)",
+    "companyName": "Cardlytics, Inc.",
+    "filerName": null,
+    "price": 1.21,
+    "wa": "0.73",
+    "signalScore": 0.32,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1,
+    "volume": 234553,
+    "averageVolume": 873877,
+    "float": 47192988,
+    "sharesOutstanding": 54056548,
+    "soRatio": "87.30%",
+    "marketCap": 65408424,
+    "isShort": true,
+    "ftd": 84662,
+    "ftdPercent": "0.18",
+    "intent": "Merger/Acquisition, Asset Disposition",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Georgia",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Merger/Acquisition": [
+        "Agreed To Acquire"
+      ],
+      "Asset Disposition": [
+        "Disposed"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "8-K",
+      "S-9",
+      "Item 1.01"
+    ],
+    "filingType": "6-K, 8-K, Item 1.01",
+    "cik": "1666071",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T13:02:30.536Z",
+    "recordId": "CDLX-1769432550536",
+    "expiresAt": "2026-01-31T13:02:30.536Z"
   }
 ]

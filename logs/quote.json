@@ -1343,5 +1343,16 @@
     "performance": 0,
     "date": "2026-01-26T13:02:18.434Z",
     "reverseSplitRatio": null
+  },
+  "VWAV": {
+    "short": false,
+    "alert": 10.25,
+    "highest": 10.25,
+    "lowest": 10.25,
+    "current": 10.25,
+    "currentPrice": 10.25,
+    "performance": 0,
+    "date": "2026-01-26T13:02:23.080Z",
+    "reverseSplitRatio": null
   }
 }

@@ -7,3 +7,6 @@ logs/*.log
 !logs/alert.json
 !logs/stocks.json
 !logs/quote.json
+logs/data.json
+logs/sessions.json
+logs/users.json

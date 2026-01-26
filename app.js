@@ -48,7 +48,7 @@ const CONFIG = {
   GITHUB_USERNAME: process.env.GITHUB_USERNAME || 'your-github-username', // GitHub username
   GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name', // GitHub repo name
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com', // GitHub Pages domain
-  GITHUB_PUSH_ENABLED: false, // Enable/disable GitHub push (DISABLED for testing - set to true to re-enable)
+  GITHUB_PUSH_ENABLED: process.env.GITHUB_PUSH_ENABLED !== 'false' && process.env.GITHUB_PUSH_ENABLED !== '0', // Enable/disable GitHub push (default: true, set to false in .env to disable)
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '', // Personal Discord webhook URL
   DISCORD_ENABLED: process.env.DISCORD_ENABLED !== 'true' && process.env.DISCORD_ENABLED !== '0', // Enable/disable Discord alerts (default: true)
   // Telegram settings

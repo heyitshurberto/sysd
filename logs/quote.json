@@ -1211,6 +1211,21 @@
     "currentPrice": 4.65,
     "volume": 1228681,
     "averageVolume": 585197,
-    "marketCap": 426016448
+    "marketCap": 426016448,
+    "performance": 0
+  },
+  "SKYT": {
+    "short": false,
+    "alert": 31.32,
+    "highest": 31.32,
+    "lowest": 31.32,
+    "current": 31.32,
+    "currentPrice": 31.32,
+    "performance": 0,
+    "date": "2026-01-26T11:08:08.528Z",
+    "reverseSplitRatio": null,
+    "volume": 2692950,
+    "averageVolume": 2135406,
+    "marketCap": 1519270528
   }
 }

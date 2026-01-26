@@ -521,5 +521,84 @@
     "recordedAt": "2026-01-26T11:08:08.492Z",
     "recordId": "SKYT-1769425688492",
     "expiresAt": "2026-01-31T11:08:08.492Z"
+  },
+  {
+    "ticker": "IONQ",
+    "title": "8-K - IonQ, Inc. (0001824920) (Filer)",
+    "companyName": "IonQ, Inc.",
+    "filerName": null,
+    "price": 47.25,
+    "wa": "33.35",
+    "signalScore": 0.59,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.2,
+    "volume": 14610176,
+    "averageVolume": 20884998,
+    "float": 2136305,
+    "sharesOutstanding": 354279591,
+    "soRatio": "0.60%",
+    "marketCap": 16739709952,
+    "isShort": true,
+    "ftd": 1916885,
+    "ftdPercent": "89.73",
+    "intent": "Merger/Acquisition, Clinical Success, Convertible Dilution, Compensation Dilution, Going Dark, Asset Disposition, Share Consolidation, Stock Split, Asian Regulation Risk",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Maryland",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Merger/Acquisition": [
+        "Merger Agreement",
+        "Merger Consideration"
+      ],
+      "Clinical Success": [
+        "Indication"
+      ],
+      "Convertible Dilution": [
+        "Convertible Securities"
+      ],
+      "Compensation Dilution": [
+        "Equity Compensation",
+        "Restricted Stock Unit"
+      ],
+      "Going Dark": [
+        "Deregistration"
+      ],
+      "Asset Disposition": [
+        "Disposition"
+      ],
+      "Share Consolidation": [
+        "Voting Agreement",
+        "Recapitalization"
+      ],
+      "Stock Split": [
+        "Stock Dividend"
+      ],
+      "Asian Regulation Risk": [
+        "Subject To Risks"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "S-4",
+      "Item 1.01",
+      "Item 2.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, S-4, Item 1.01, Item 2.02, Item 7.01, Item 9.01",
+    "cik": "1824920",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T11:15:16.808Z",
+    "recordId": "IONQ-1769426116808",
+    "expiresAt": "2026-01-31T11:15:16.808Z"
   }
 ]

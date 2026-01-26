@@ -768,7 +768,7 @@ const SEMANTIC_KEYWORDS = {
   'Restructuring': ['Organizational Restructure', 'Cost Reduction Program', 'Efficiency Initiative', 'Division Realignment'],
   'Stock Buyback': ['Share Repurchase', 'Buyback Authorization', 'Accelerated Buyback', 'Repurchase Program'],
   'Licensing Deal': ['Exclusive License', 'License Agreement', 'Technology License', 'IP Licensing'],
-  'Partnership': ['Strategic Partnership', 'Joint Venture', 'Partnership Agreement', 'Strategic Alliance'],
+  'Partnership': ['Strategic Partnership', 'Joint Venture', 'Partnership Agreement', 'Strategic Alliance', 'Development Agreement'],
   'Facility Expansion': ['New Facility Opening', 'Capacity Expansion', 'Manufacturing Expansion', 'Facility Upgrade'],
   'Blockchain Initiative': ['Blockchain Integration', 'Cryptocurrency Payment', 'NFT Launch', 'Web3 Partnership', 'Token Launch', 'Smart Contract Deployment', 'Blockchain Adoption', 'Crypto Exchange Partnership', 'Decentralized Platform'],
   'Government Contract': ['Government Contract Award', 'Defense Contract', 'Federal Contract', 'DOD Contract', 'GSA Schedule', 'Federal Procurement'],
@@ -789,7 +789,6 @@ const SEMANTIC_KEYWORDS = {
   'Critical Minerals Discovery': ['Rare Earth', 'Rare Earth Elements', 'REE', 'Lithium', 'Cobalt', 'Nickel', 'Critical Metals', 'Critical Minerals', 'Strategic Minerals'],
   'Processing Facility': ['Processing Facility', 'Refining Facility', 'Refinement Plant', 'Processing Plant', 'Extraction Facility', 'Ore Processing'],
   'Offtake Agreement': ['Offtake Agreement', 'Offtake MOU', 'Off-take', 'Offtake Contract', 'Secured Offtake', 'Offtake Term Sheet'],
-  'Strategic Minerals Partnership': ['Saudi Arabia', 'Joint Venture', 'Strategic Partnership', 'Development Agreement', 'Strategic Alliance', 'Government Backing'],
 };
 
 

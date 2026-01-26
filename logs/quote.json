@@ -1440,7 +1440,8 @@
     "currentPrice": 26.42,
     "volume": 51816,
     "averageVolume": 88439,
-    "marketCap": 425220320
+    "marketCap": 425220320,
+    "performance": 0
   },
   "SAFX": {
     "alert": 0.1373,
@@ -1450,6 +1451,17 @@
     "currentPrice": 0.1373,
     "volume": 3541646,
     "averageVolume": 5170327,
-    "marketCap": 28602824
+    "marketCap": 28602824,
+    "performance": 0
+  },
+  "MTEK": {
+    "alert": 1.63,
+    "highest": 1.63,
+    "lowest": 1.63,
+    "current": 1.63,
+    "currentPrice": 1.63,
+    "volume": 157818,
+    "averageVolume": 86878,
+    "marketCap": 13158323
   }
 }

@@ -1833,5 +1833,68 @@
     "recordedAt": "2026-01-26T14:00:57.248Z",
     "recordId": "MTEK-1769436057249",
     "expiresAt": "2026-01-31T14:00:57.249Z"
+  },
+  {
+    "ticker": "HSAI",
+    "title": "6-K - Hesai Group (0001861737) (Filer)",
+    "companyName": "Hesai Group",
+    "filerName": null,
+    "price": 27.94,
+    "wa": "18.58",
+    "signalScore": 0.73,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": true,
+    "custodianName": "Deutsche Bank",
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.05,
+    "volume": 1236261,
+    "averageVolume": 2511740,
+    "float": 26998861,
+    "sharesOutstanding": 130143350,
+    "soRatio": "20.75%",
+    "marketCap": 4460113408,
+    "isShort": true,
+    "ftd": 279711,
+    "ftdPercent": "1.04",
+    "intent": "Convertible Dilution, Going Dark, Asset Disposition, Partnership, Strategic Minerals Partnership",
+    "incorporated": "Cayman Islands",
+    "located": "Shadong, China",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Convertible Dilution": [
+        "Convertible Securities"
+      ],
+      "Going Dark": [
+        "Deregister"
+      ],
+      "Asset Disposition": [
+        "Disposition"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Strategic Minerals Partnership": [
+        "Joint Venture"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "20-F",
+      "Form D",
+      "EX-99.1",
+      "EX-99.2"
+    ],
+    "filingType": "6-K, 20-F, Form D, EX-99.1, EX-99.2",
+    "cik": "1861737",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T14:12:51.640Z",
+    "recordId": "HSAI-1769436771640",
+    "expiresAt": "2026-01-31T14:12:51.640Z"
   }
 ]

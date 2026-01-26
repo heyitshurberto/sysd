@@ -1299,5 +1299,16 @@
     "volume": 326197,
     "averageVolume": 257206,
     "marketCap": 113192416
+  },
+  "ITOC": {
+    "short": false,
+    "alert": 0.5315,
+    "highest": 0.5315,
+    "lowest": 0.5315,
+    "current": 0.5315,
+    "currentPrice": 0.5315,
+    "performance": 0,
+    "date": "2026-01-26T13:01:09.743Z",
+    "reverseSplitRatio": null
   }
 }

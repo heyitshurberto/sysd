@@ -7233,19 +7233,21 @@ if (process.stdin.isTTY) {
           // Calculate early for use in multiple filters
           const hasExtremeSOOrStrongSignal = (soRatioValue !== null && soRatioValue > CONFIG.EXTREME_SO_RATIO) || nonNeutralSignals.length >= 3;
           
-          // Check if country is whitelisted - ONLY for 6-K filings (8-K can be Delaware/US states)
+          // Check if country is whitelisted - applies to both 6-K and 8-K filings
           let countryWhitelisted = true;
+          const incorporatedMatch = CONFIG.ALLOWED_COUNTRIES.some(country => normalizedIncorporated.toLowerCase().includes(country));
+          const locatedMatch = CONFIG.ALLOWED_COUNTRIES.some(country => normalizedLocated.toLowerCase().includes(country));
+          const isCaymanOrBVI = normalizedIncorporated.toLowerCase().includes('cayman') || normalizedLocated.toLowerCase().includes('cayman') || 
+                                normalizedIncorporated.toLowerCase().includes('virgin') || normalizedLocated.toLowerCase().includes('virgin');
+          const hasSPSignal = signalCategories.includes('Artificial Inflation') || signalCategories.includes('Delisting Risk') || signalCategories.includes('Bid Price Delisting') || signalCategories.includes('Nasdaq Delisting');
+          
           if (filing.formType === '6-K' || filing.formType === '6-K/A') {
-            const incorporatedMatch = CONFIG.ALLOWED_COUNTRIES.some(country => normalizedIncorporated.toLowerCase().includes(country));
-            const locatedMatch = CONFIG.ALLOWED_COUNTRIES.some(country => normalizedLocated.toLowerCase().includes(country));
-            const isCaymanOrBVI = normalizedIncorporated.toLowerCase().includes('cayman') || normalizedLocated.toLowerCase().includes('cayman') || 
-                                  normalizedIncorporated.toLowerCase().includes('virgin') || normalizedLocated.toLowerCase().includes('virgin');
-            const hasSPSignal = signalCategories.includes('Artificial Inflation') || signalCategories.includes('Delisting Risk') || signalCategories.includes('Bid Price Delisting') || signalCategories.includes('Nasdaq Delisting');
-            
-            // Allow Cayman/BVI if: extreme S/O (>80%) OR death spiral signals
+            // 6-K filings: Allow Cayman/BVI if extreme S/O (>80%) OR death spiral signals
             countryWhitelisted = incorporatedMatch || locatedMatch || (isCaymanOrBVI && (hasExtremeSOOrStrongSignal || hasSPSignal));
+          } else {
+            // 8-K and all other filings: Must match ALLOWED_COUNTRIES (Delaware, Nevada only per CONFIG)
+            countryWhitelisted = incorporatedMatch || locatedMatch;
           }
-          // 8-K filings skip country check entirely (Delaware/US allowed)
           
           if (!countryWhitelisted) {
             skipReason = `Country not whitelisted (${normalizedIncorporated}, ${normalizedLocated})`;
@@ -7380,20 +7382,6 @@ if (process.stdin.isTTY) {
           }
           
           let validSignals = false;
-          
-          // COUNTRY FILTERING - Only allow US, Canada, UK companies
-          const ALLOWED_COUNTRIES = { 'US': true, 'CA': true, 'GB': true }; // US, Canada, UK
-          const ALLOWED_US_STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY', 'DC'];
-          
-          const countryCode = stateToCountry[normalizedIncorporated] || stateToCountry[normalizedLocated] || null;
-          const isUSState = ALLOWED_US_STATES.includes(normalizedIncorporated) || ALLOWED_US_STATES.includes(normalizedLocated);
-          const isAllowedCountry = ALLOWED_COUNTRIES[countryCode] || isUSState;
-          
-          if (!isAllowedCountry) {
-            skipReason = `Not in allowed countries (${normalizedIncorporated || normalizedLocated})`;
-            log('SKIP', `$${ticker}, ${skipReason}`);
-            continue;
-          }
           
           // Structural movers - mechanical algos execute on these
           const structuralMovers = ['Credit Default', 'Going Dark', 'Warrant Redemption', 'Asset Disposition', 'Share Consolidation', 'Deal Termination', 'Auditor Change', 'Preferred Call', 'DTC Eligible Restored', 'Debt Restructure', 'Corporate Separation'];

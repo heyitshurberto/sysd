@@ -1202,5 +1202,15 @@
     "averageVolume": 1169801,
     "marketCap": 1088854,
     "performance": 0
+  },
+  "TII": {
+    "alert": 4.65,
+    "highest": 4.65,
+    "lowest": 4.65,
+    "current": 4.65,
+    "currentPrice": 4.65,
+    "volume": 1228681,
+    "averageVolume": 585197,
+    "marketCap": 426016448
   }
 }

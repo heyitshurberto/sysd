@@ -467,5 +467,59 @@
     "recordedAt": "2026-01-26T11:06:24.273Z",
     "recordId": "TII-1769425584273",
     "expiresAt": "2026-01-31T11:06:24.273Z"
+  },
+  {
+    "ticker": "SKYT",
+    "title": "8-K - SkyWater Technology, Inc (0001819974) (Filer)",
+    "companyName": "SkyWater Technology, Inc",
+    "filerName": null,
+    "price": 31.32,
+    "wa": "24.39",
+    "signalScore": 0.46,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1,
+    "volume": 2692950,
+    "averageVolume": 2135406,
+    "float": 35024700,
+    "sharesOutstanding": 48508000,
+    "soRatio": "72.20%",
+    "marketCap": 1519270528,
+    "isShort": true,
+    "ftd": 97,
+    "ftdPercent": "0.00",
+    "intent": "Merger/Acquisition, Asian Regulation Risk",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Minnesota",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Merger/Acquisition": [
+        "Merger Agreement"
+      ],
+      "Asian Regulation Risk": [
+        "Subject To Risks"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "S-4",
+      "EX-99.1",
+      "Item 8.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, S-4, EX-99.1, Item 8.01, Item 9.01",
+    "cik": "1819974",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T11:08:08.492Z",
+    "recordId": "SKYT-1769425688492",
+    "expiresAt": "2026-01-31T11:08:08.492Z"
   }
 ]

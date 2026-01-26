@@ -4,8 +4,6 @@ logs/*.log
 .env
 .DS_Store
 *.log
-!logs/alert.json
-!logs/stocks.json
 !logs/quote.json
 logs/data.json
 logs/sessions.json

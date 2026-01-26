@@ -118,5 +118,59 @@
     "recordedAt": "2026-01-26T14:19:44.912Z",
     "recordId": "AXL-1769437184912",
     "expiresAt": "2026-01-31T14:19:44.912Z"
+  },
+  {
+    "ticker": "CRDL",
+    "title": "6-K - Cardiol Therapeutics Inc. (0001702123) (Filer)",
+    "companyName": "Cardiol Therapeutics Inc.",
+    "filerName": null,
+    "price": 1,
+    "wa": "0.68",
+    "signalScore": 0.56,
+    "hasTuesdayBonus": false,
+    "custodianControl": false,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1.15,
+    "volume": 252014,
+    "averageVolume": 466968,
+    "float": 10384616,
+    "sharesOutstanding": 99997648,
+    "soRatio": "10.38%",
+    "marketCap": 99997648,
+    "isShort": false,
+    "ftd": 90556,
+    "ftdPercent": "0.87",
+    "intent": "Clinical Success, Underwritten Offering",
+    "incorporated": "Ottawa, Canada",
+    "located": "Ottawa, Canada",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Clinical Success": [
+        "Efficacy",
+        "Patient Population"
+      ],
+      "Underwritten Offering": [
+        "Bought Deal"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "20-F",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, 20-F, EX-99.1",
+    "cik": "1702123",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T18:13:17.487Z",
+    "recordId": "CRDL-1769451197487",
+    "expiresAt": "2026-01-31T18:13:17.487Z",
+    "direction": "LONG"
   }
 ]

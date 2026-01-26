@@ -1213,5 +1213,72 @@
     "recordedAt": "2026-01-26T13:03:05.010Z",
     "recordId": "ENLV-1769432585010",
     "expiresAt": "2026-01-31T13:03:05.010Z"
+  },
+  {
+    "ticker": "SVRE",
+    "title": "6-K - SaverOne 2014 Ltd. (0001894693) (Filer)",
+    "companyName": "SaverOne 2014 Ltd.",
+    "filerName": null,
+    "price": 1.7,
+    "wa": "1.30",
+    "signalScore": 0.85,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": true,
+    "custodianName": "Foreign Depositary",
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.2,
+    "volume": 965314,
+    "averageVolume": 841874,
+    "float": 50000000,
+    "sharesOutstanding": 904621,
+    "soRatio": "5527.2%",
+    "marketCap": 14335492,
+    "isShort": true,
+    "ftd": 97886,
+    "ftdPercent": "0.20",
+    "intent": "Major Contract, Regulatory Approval, Share Issuance, Asset Disposition, Licensing Deal",
+    "incorporated": "Tel Aviv, Israel",
+    "located": "Tel Aviv, Israel",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Major Contract": [
+        "Exclusive License"
+      ],
+      "Regulatory Approval": [
+        "License Granted"
+      ],
+      "Share Issuance": [
+        "Issuance of shares"
+      ],
+      "Asset Disposition": [
+        "Disposed",
+        "Disposition"
+      ],
+      "Licensing Deal": [
+        "Exclusive License",
+        "License Agreement"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "S-1",
+      "S-3",
+      "S-8",
+      "F-3",
+      "20-F",
+      "EX-10.1"
+    ],
+    "filingType": "6-K, S-1, S-3, S-8, F-3, 20-F, EX-10.1",
+    "cik": "1894693",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T13:33:05.117Z",
+    "recordId": "SVRE-1769434385117",
+    "expiresAt": "2026-01-31T13:33:05.117Z"
   }
 ]

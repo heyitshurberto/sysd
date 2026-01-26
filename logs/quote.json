@@ -1066,12 +1066,14 @@
     "alert": 1.05,
     "highest": 1.1,
     "lowest": 1.05,
-    "current": 1.095,
+    "current": 1.08,
     "currentPrice": 1.08,
-    "volume": 416095,
-    "averageVolume": 4036811,
-    "marketCap": 259932752,
-    "performance": 2.86
+    "volume": 534922,
+    "averageVolume": 4043627,
+    "marketCap": 256372032,
+    "performance": 2.86,
+    "short": false,
+    "reverseSplitRatio": null
   },
   "PODC": {
     "alert": 2.78,
@@ -1322,6 +1324,62 @@
     "currentPrice": 56.21,
     "volume": 1726645,
     "averageVolume": 2948042,
-    "marketCap": 10798746624
+    "marketCap": 10798746624,
+    "performance": 0
+  },
+  "SKYX": {
+    "alert": 2.94,
+    "highest": 2.94,
+    "lowest": 2.94,
+    "current": 2.94,
+    "currentPrice": 2.94,
+    "volume": 2406802,
+    "averageVolume": 1118637,
+    "marketCap": 340303168,
+    "performance": 0
+  },
+  "PAR": {
+    "alert": 31.6,
+    "highest": 31.6,
+    "lowest": 31.6,
+    "current": 31.6,
+    "currentPrice": 31.6,
+    "volume": 1070682,
+    "averageVolume": 662278,
+    "marketCap": 1282676608,
+    "performance": 0
+  },
+  "ARMP": {
+    "alert": 6,
+    "highest": 6,
+    "lowest": 6,
+    "current": 6,
+    "currentPrice": 6,
+    "volume": 28294,
+    "averageVolume": 72491,
+    "marketCap": 218441424,
+    "performance": 0
+  },
+  "VWAV": {
+    "alert": 10.25,
+    "highest": 10.25,
+    "lowest": 10.25,
+    "current": 10.25,
+    "currentPrice": 10.25,
+    "volume": 210143,
+    "averageVolume": 316149,
+    "marketCap": 169090176,
+    "performance": 0
+  },
+  "CDLX": {
+    "alert": 1.21,
+    "highest": 1.21,
+    "lowest": 1.21,
+    "current": 1.21,
+    "currentPrice": 1.21,
+    "volume": 234553,
+    "averageVolume": 873877,
+    "marketCap": 65408424,
+    "performance": 0
   }
 }

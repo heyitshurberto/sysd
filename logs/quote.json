@@ -2,27 +2,27 @@
   "HSAI": {
     "alert": 27.94,
     "highest": 27.94,
-    "lowest": 26.07,
-    "current": 26.1,
-    "currentPrice": 26.13,
-    "volume": 1830494,
+    "lowest": 25.165,
+    "current": 25.17,
+    "currentPrice": 25.165,
+    "volume": 2650860,
     "averageVolume": 2511740,
-    "marketCap": 4166390784,
-    "performance": -6.48
+    "marketCap": 4017933056,
+    "performance": -9.93
   },
   "AXL": {
     "short": false,
     "alert": 8.28,
     "highest": 8.45,
-    "lowest": 8,
-    "current": 8.01,
-    "currentPrice": 8.005,
-    "performance": -3.32,
+    "lowest": 7.93,
+    "current": 8.0054,
+    "currentPrice": 8.015,
+    "performance": -3.2,
     "date": "2026-01-26T14:19:44.992Z",
     "reverseSplitRatio": null,
-    "volume": 2777654,
+    "volume": 3462778,
     "averageVolume": 3039586,
-    "marketCap": 950758400
+    "marketCap": 950212288
   },
   "BOH": {
     "short": false,
@@ -37,5 +37,16 @@
     "volume": 55791,
     "averageVolume": 382334,
     "marketCap": 2924005376
+  },
+  "CRDL": {
+    "alert": 0.9981,
+    "highest": 1.0155,
+    "lowest": 0.9959,
+    "current": 1.015,
+    "currentPrice": 1.015,
+    "volume": 304087,
+    "averageVolume": 466968,
+    "marketCap": 101497608,
+    "performance": 1.69
   }
 }

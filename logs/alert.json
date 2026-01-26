@@ -983,5 +983,61 @@
     "recordedAt": "2026-01-26T13:02:10.404Z",
     "recordId": "PAR-1769432530404",
     "expiresAt": "2026-01-31T13:02:10.404Z"
+  },
+  {
+    "ticker": "ARMP",
+    "title": "8-K - Armata Pharmaceuticals, Inc. (0000921114) (Filer)",
+    "companyName": "Armata Pharmaceuticals, Inc.",
+    "filerName": null,
+    "price": 6,
+    "wa": "3.84",
+    "signalScore": 0.47,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1.2,
+    "volume": 28294,
+    "averageVolume": 72491,
+    "float": 1807396,
+    "sharesOutstanding": 36406905,
+    "soRatio": "4.96%",
+    "marketCap": 218441424,
+    "isShort": true,
+    "ftd": false,
+    "ftdPercent": null,
+    "intent": "Credit Default, Share Consolidation",
+    "incorporated": "Washington",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Credit Default": [
+        "Event Of Default"
+      ],
+      "Share Consolidation": [
+        "Voting Agreement"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "EX-10.1",
+      "EX-10.2",
+      "EX-4.1",
+      "EX-10.3",
+      "Item 1.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-10.1, EX-10.2, EX-4.1, EX-10.3, Item 1.01, Item 9.01",
+    "cik": "921114",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T13:02:18.411Z",
+    "recordId": "ARMP-1769432538411",
+    "expiresAt": "2026-01-31T13:02:18.411Z"
   }
 ]

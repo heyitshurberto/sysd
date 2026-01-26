@@ -1321,5 +1321,27 @@
     "performance": 0,
     "date": "2026-01-26T13:01:47.838Z",
     "reverseSplitRatio": null
+  },
+  "PAR": {
+    "short": false,
+    "alert": 31.6,
+    "highest": 31.6,
+    "lowest": 31.6,
+    "current": 31.6,
+    "currentPrice": 31.6,
+    "performance": 0,
+    "date": "2026-01-26T13:02:10.448Z",
+    "reverseSplitRatio": null
+  },
+  "ARMP": {
+    "short": false,
+    "alert": 6,
+    "highest": 6,
+    "lowest": 6,
+    "current": 6,
+    "currentPrice": 6,
+    "performance": 0,
+    "date": "2026-01-26T13:02:18.434Z",
+    "reverseSplitRatio": null
   }
 }

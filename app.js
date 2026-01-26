@@ -49,7 +49,7 @@ const CONFIG = {
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com', // GitHub Pages domain
   GITHUB_PUSH_ENABLED: process.env.GITHUB_PUSH_ENABLED !== 'false' && process.env.GITHUB_PUSH_ENABLED !== '0', // Enable/disable GitHub push (default: true)
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '', // Personal Discord webhook URL
-  DISCORD_ENABLED: process.env.DISCORD_ENABLED !== 'false' && process.env.DISCORD_ENABLED !== '0', // Enable/disable Discord alerts (default: true)
+  DISCORD_ENABLED: process.env.DISCORD_ENABLED !== 'true' && process.env.DISCORD_ENABLED !== '0', // Enable/disable Discord alerts (default: true)
   // Telegram settings
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '', // Telegram bot token
   TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID || '', // Telegram chat ID for alerts
@@ -776,7 +776,7 @@ const SEMANTIC_KEYWORDS = {
   'Dividend Raise': ['Dividend Increase', 'Dividend Hike', 'Special Dividend', 'Increased Dividend', 'Quarterly Dividend Raised', 'Annual Dividend Increase'],
   'Regulatory Breach': ['Regulatory Violation', 'FDA Warning', 'Product Recall', 'Safety Recall', 'Warning Letter'],
   'VIE Arrangement': ['VIE Structure', 'VIE Agreement', 'Variable Interest'],
-  'Asian Regulation Risk': ['PRC Regulations', 'Regulatory Risk', 'Chinese Regulatory', 'Capital Control', 'Foreign Exchange Restriction', 'Dividend Limitation', 'SAFE Circular', 'Subject To Risks', 'Uncertainty Of Interpretation'],
+  'ADR Regulation Risk': ['PRC Regulations', 'Regulatory Risk', 'Chinese Regulatory', 'Capital Control', 'Foreign Exchange Restriction', 'Dividend Limitation', 'SAFE Circular', 'Subject To Risks', 'Uncertainty Of Interpretation'],
   'Mining Operations': ['Mining Operation', 'Cryptocurrency Mining', 'Blockchain Mining', 'Bitcoin Mining', 'Ethereum Mining', 'Mining Facility', 'Mining Expansion', 'Hash Rate Growth'],
   'Financing Events': ['IPO Announced', 'Debt Offering', 'Credit Facility', 'Loan Facility', 'Financing Secured', 'Capital Structure', 'Bond Issuance'],
   'Analyst Coverage': ['Analyst Initiation', 'Analyst Upgrade', 'Analyst Initiation Buy', 'Rating Upgrade', 'Price Target Increase', 'Outperform Rating', 'Buy Rating Initiated'],
@@ -1757,10 +1757,7 @@ async function fetchFilings() {
     }
     await rateLimit.wait();
   } catch (err) {
-    // Silently skip abort errors (expected timeouts), only log other errors
-    if (err.name !== 'AbortError' && !err.message.includes('aborted')) {
-      log('WARN', `SEC 6-K fetch failed: ${err.message}`);
-    }
+    // Silently fail - suppress all SEC fetch warnings
   }
 
   allFilings.sort((a, b) => new Date(b.updated) - new Date(a.updated));
@@ -1885,10 +1882,7 @@ async function fetch8Ks() {
     }
     await rateLimit.wait();
   } catch (err) {
-    // Silently skip abort errors (expected timeouts), only log other errors
-    if (err.name !== 'AbortError' && !err.message.includes('aborted')) {
-      log('WARN', `SEC 8-K fetch failed: ${err.message}`);
-    }
+    // Silently fail - suppress all SEC fetch warnings
   }
   return filings8K;
 }
@@ -2776,6 +2770,8 @@ const renderLoginPage = () => `
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Secure Access Portal</title>
+  <link rel="icon" type="image/jpeg" href="/docs/logo.jpeg">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2792,7 +2788,7 @@ const renderLoginPage = () => `
       background: white;
       border-radius: 12px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      padding: 20px 18px;
+      padding: 12px 14px;
       max-width: 390px;
       width: 100%;
       text-align: center;
@@ -2801,7 +2797,7 @@ const renderLoginPage = () => `
       height: 80px;
       width: auto;
       margin-bottom: 8px;
-      margin-top: 8px;
+      margin-top: -5px;
       display: block;
       margin-left: auto;
       margin-right: auto;
@@ -2809,7 +2805,7 @@ const renderLoginPage = () => `
     @media (min-width: 768px) {
       .logo {
         height: 123px;
-        margin-top: 12px;
+        margin-top: 0px;
         margin-bottom: 12px;
       }
     }
@@ -2820,7 +2816,7 @@ const renderLoginPage = () => `
       font-weight: 500;
       margin-bottom: 6px;
       margin-top: 1px;
-      letter-spacing: -0.6px;
+      letter-spacing: -0.8px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -2895,13 +2891,19 @@ const renderLoginPage = () => `
       color: #d32f2f;
       font-size: 13px;
       margin-bottom: 15px;
-      display: none;
+      display: block;
+    }
+    .error.hidden {
+      display: none !important;
     }
     .success {
       color: #2e7d32;
       font-size: 13px;
       margin-bottom: 15px;
-      display: none;
+      display: block;
+    }
+    .success.hidden {
+      display: none !important;
     }
     .section {
       display: none;
@@ -2959,31 +2961,58 @@ const renderLoginPage = () => `
     button.create-account-btn:active:not(:disabled) {
       transform: none !important;
     }
+    @keyframes slideIn {
+      from {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    #requestAccessModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.3);
+      z-index: 99999;
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    #requestAccessModal.show {
+      display: flex;
+    }
+    #requestAccessModal > div {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e0e0e0;
+      animation: slideIn 0.25s ease-out;
+      position: relative;
+      z-index: 100000;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div style="position: absolute; top: 10px; left: 10px; display: flex; gap: 10px; align-items: center;">
-      <a href="#" onclick="customConfirm('Visit Carlucci Community on Telegram?', 'https://t.me/+3rtL-9Cwr6Y2ZmM0'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/tele.png" alt="Telegram" style="height: 25px; width: 25px; filter: brightness(0) saturate(100%) invert(100%);" class="social-logo"></a>
-      <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/twit.png" alt="X" style="height: 18px; width: 18px; filter: brightness(0) saturate(100%) invert(100%);" class="social-logo"></a>
+      <a href="#" onclick="if(confirm('Visit Carlucci Community on Telegram?')) window.open('https://t.me/+3rtL-9Cwr6Y2ZmM0', '_blank'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s; cursor: pointer;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/tele.png" alt="Telegram" style="height: 25px; width: 25px; filter: brightness(0) saturate(100%) invert(100%);" class="social-logo"></a>
+      <a href="#" onclick="if(confirm('Visit @cartelwrld on X?')) window.open('https://x.com/cartelwrld', '_blank'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s; cursor: pointer;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/twit.png" alt="X" style="height: 19px; width: 19px; filter: brightness(0) saturate(100%) invert(100%);" class="social-logo"></a>
     </div>
-    <div style="position: relative; margin-bottom: 12px;">
-      <video id="brandVideo" muted loop playsinline style="height: 90px; width: auto; object-fit: contain; display: block;" onerror="document.getElementById('brandVideo').style.display='none'; document.getElementById('brandFallback').style.display='block';">
-        <source src="/docs/Carlucci_Capital.mp4" type="video/mp4">
-      </video>
-      <img id="brandFallback" src="/docs/logo.jpeg" alt="Logo" style="height: 90px; width: auto; object-fit: contain; display: none;">
+    <div style="position: absolute; top: 15px; right: 15px;">
+      <button onclick="document.getElementById('requestAccessModal').classList.add('show')" style="text-decoration: none; display: inline-flex; align-items: center; padding: 8px 18px; background: linear-gradient(180deg, #fafafa 0%, #f3f3f3 100%); color: #2c2c2c; border-radius: 6px; font-size: 12px; font-weight: 500; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 0.3px; transition: all 0.2s; cursor: pointer; border: 1px solid #e5e5e5; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);" onmouseover="this.style.background='linear-gradient(180deg, #f3f3f3 0%, #ebebeb 100%)'; this.style.borderColor='#d0d0d0'; this.style.boxShadow='0 2px 6px rgba(0, 0, 0, 0.12)'" onmouseout="this.style.background='linear-gradient(180deg, #fafafa 0%, #f3f3f3 100%)'; this.style.borderColor='#e5e5e5'; this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.08)'">Request Access</button>
     </div>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const video = document.getElementById('brandVideo');
-        if (video) {
-          video.play().catch(() => {
-            video.style.display = 'none';
-            document.getElementById('brandFallback').style.display = 'block';
-          });
-        }
-      });
-    </script>
+    <div style="display: flex; justify-content: center; margin-bottom: 12px;">
+      <img src="/docs/logo.jpeg" alt="Carlucci Capital" style="height: 90px; width: auto; object-fit: contain;">
+    </div>
+    <h1 style="color: #000000; font-size: 32px; font-family: 'Playfair Display', serif; font-weight: 500; letter-spacing: 1px; margin: -12px 0 8px 0;">CARLUCCI CAPITAL</h1>
     <p class="subtitle" style="margin-top: -2px; opacity: 0.55; font-size: 11px;">Secure Access Portal</p>
     
     <div class="error" id="error"></div>
@@ -3009,11 +3038,12 @@ const renderLoginPage = () => `
     
     <!-- Registration Section -->
     <div class="section" id="signupSection">
-      <input type="email" id="signupEmail" placeholder="Email address" autocomplete="off" style="margin-bottom: 12px;">
-      <input type="password" id="signupPassword" placeholder="Password" autocomplete="off" style="margin-bottom: 12px;">
-      <input type="text" id="signupFullName" placeholder="Full name" autocomplete="off" style="margin-bottom: 12px;">
-      <input type="text" id="signupCompany" placeholder="Company (optional)" autocomplete="off" style="margin-bottom: 12px;">
-      <input type="text" id="signupAccessCode" placeholder="Access code" autocomplete="off" style="margin-bottom: 12px;">
+      <input type="email" id="signupEmail" placeholder="Email address" autocomplete="off" style="margin-bottom: 4px;">
+      <input type="password" id="signupPassword" placeholder="Password" autocomplete="off" style="margin-bottom: 4px;">
+      <input type="password" id="signupConfirmPassword" placeholder="Confirm password" autocomplete="off" style="margin-bottom: 4px;">
+      <input type="text" id="signupFullName" placeholder="Full name" autocomplete="off" style="margin-bottom: 4px;">
+      <input type="text" id="signupCompany" placeholder="Company (optional)" autocomplete="off" style="margin-bottom: 4px;">
+      <input type="text" id="signupAccessCode" placeholder="Access code" autocomplete="off" style="margin-bottom: 4px;">
       <button onclick="registerUser()">Create Account</button>
       <button class="back-btn" onclick="backToLogin()">← Back to Login</button>
     </div>
@@ -3034,30 +3064,35 @@ const renderLoginPage = () => `
     let cooldownTimer = 0;
     let currentEmail = '';
     
+    function showErrorWithTimer(element, message, timeoutMs = 8000) {
+      element.textContent = message;
+      element.classList.remove('hidden');
+      setTimeout(() => {
+        element.classList.add('hidden');
+      }, timeoutMs);
+    }
+
     function sendCode() {
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
       const code = document.getElementById('code').value.trim();
       const error = document.getElementById('error');
-      error.style.display = 'none';
+      error.classList.add('hidden');
       
       // Validate email format (allow admin@cc as special case)
       const emailRegex = /^[^\s@]+@[^\s@]+(\.)?[^\s@]*$/;
       if (!email || !emailRegex.test(email)) {
-        error.textContent = 'Please enter a valid email address';
-        error.style.display = 'block';
+        showErrorWithTimer(error, 'Please enter a valid email address');
         return;
       }
       
       if (!password) {
-        error.textContent = 'Please enter your password';
-        error.style.display = 'block';
+        showErrorWithTimer(error, 'Please enter your password');
         return;
       }
       
       if (!code) {
-        error.textContent = 'Please enter your access code';
-        error.style.display = 'block';
+        showErrorWithTimer(error, 'Please enter your access code');
         return;
       }
       
@@ -3100,11 +3135,10 @@ const renderLoginPage = () => `
     
     function verifyCode(email, password, code) {
       const error = document.getElementById('error');
-      error.style.display = 'none';
+      error.classList.add('hidden');
       
       if (!code) {
-        error.textContent = 'Please enter your access code';
-        error.style.display = 'block';
+        showErrorWithTimer(error, 'Please enter your access code');
         return;
       }
       
@@ -3121,13 +3155,11 @@ const renderLoginPage = () => `
         if (data.success) {
           window.location.href = '/';
         } else {
-          error.textContent = data.error || 'Invalid code';
-          error.style.display = 'block';
+          showErrorWithTimer(error, data.error || 'Invalid code');
         }
       })
       .catch(err => {
-        error.textContent = 'Error: ' + err.message;
-        error.style.display = 'block';
+        showErrorWithTimer(error, 'Error: ' + err.message);
       });
     }
     
@@ -3144,8 +3176,12 @@ const renderLoginPage = () => `
       document.getElementById('signupSection').classList.add('active');
       document.getElementById('pageTitle').textContent = 'Create Account';
       document.querySelector('.subtitle').style.display = 'none';
-      document.getElementById('error').style.display = 'none';
-      document.getElementById('success').style.display = 'none';
+      const error = document.getElementById('error');
+      const success = document.getElementById('success');
+      error.textContent = '';
+      error.classList.add('hidden');
+      success.textContent = '';
+      success.classList.add('hidden');
     }
     
     function backToLogin() {
@@ -3153,8 +3189,12 @@ const renderLoginPage = () => `
       document.getElementById('emailSection').classList.add('active');
       document.getElementById('pageTitle').textContent = 'Carlucci Capital';
       document.querySelector('.subtitle').style.display = 'block';
-      document.getElementById('error').style.display = 'none';
-      document.getElementById('success').style.display = 'none';
+      const error = document.getElementById('error');
+      const success = document.getElementById('success');
+      error.textContent = '';
+      error.classList.add('hidden');
+      success.textContent = '';
+      success.classList.add('hidden');
       document.getElementById('signupEmail').value = '';
       document.getElementById('signupPassword').value = '';
       document.getElementById('signupFullName').value = '';
@@ -3166,46 +3206,52 @@ const renderLoginPage = () => `
       document.getElementById('signupSection').classList.add('active');
       document.getElementById('pageTitle').textContent = 'Create Account';
       document.querySelector('.subtitle').style.display = 'none';
-      document.getElementById('error').style.display = 'none';
-      document.getElementById('success').style.display = 'none';
+      const error = document.getElementById('error');
+      const success = document.getElementById('success');
+      error.textContent = '';
+      error.classList.add('hidden');
+      success.textContent = '';
+      success.classList.add('hidden');
       document.getElementById('registerCode').value = '';
     }
     
     function registerUser() {
       const email = document.getElementById('signupEmail').value.trim();
       const password = document.getElementById('signupPassword').value.trim();
+      const confirmPassword = document.getElementById('signupConfirmPassword').value.trim();
       const fullName = document.getElementById('signupFullName').value.trim();
       const company = document.getElementById('signupCompany').value.trim();
       const accessCode = document.getElementById('signupAccessCode').value.trim();
       const error = document.getElementById('error');
       const success = document.getElementById('success');
       
-      error.style.display = 'none';
-      success.style.display = 'none';
+      error.classList.add('hidden');
+      success.classList.add('hidden');
       
       // Validate inputs (allow admin@cc as special case)
       const emailRegex = /^[^\s@]+@[^\s@]+(\.)?[^\s@]*$/;
       if (!email || !emailRegex.test(email)) {
-        error.textContent = 'Please enter a valid email address';
-        error.style.display = 'block';
+        showErrorWithTimer(error, 'Please enter a valid email address');
         return;
       }
       
       if (!password || password.length < 6) {
-        error.textContent = 'Password must be at least 6 characters';
-        error.style.display = 'block';
+        showErrorWithTimer(error, 'Password must be at least 6 characters');
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        showErrorWithTimer(error, 'Passwords do not match');
         return;
       }
       
       if (!fullName || fullName.length < 2) {
-        error.textContent = 'Please enter your full name';
-        error.style.display = 'block';
+        showErrorWithTimer(error, 'Please enter your full name');
         return;
       }
       
       if (!accessCode) {
-        error.textContent = 'Please enter your access code';
-        error.style.display = 'block';
+        showErrorWithTimer(error, 'Please enter your access code');
         return;
       }
       
@@ -3221,17 +3267,13 @@ const renderLoginPage = () => `
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, fullName, company, accessCode })
       })
-      .then(r => {
-        if (!r.ok) throw new Error('Request failed: ' + r.status);
-        return r.json();
-      })
+      .then(r => r.json())
       .then(data => {
         if (data.success) {
           // Registration successful, auto-login
           window.location.href = '/';
         } else {
-          error.textContent = data.error || 'Registration failed';
-          error.style.display = 'block';
+          showErrorWithTimer(error, data.error || 'Registration failed');
           btn.disabled = false;
           btn.style.opacity = '1';
           btn.style.cursor = 'pointer';
@@ -3239,8 +3281,7 @@ const renderLoginPage = () => `
         }
       })
       .catch(err => {
-        error.textContent = 'Error: ' + err.message;
-        error.style.display = 'block';
+        showErrorWithTimer(error, 'Error: ' + err.message);
         btn.disabled = false;
         btn.style.opacity = '1';
         btn.style.cursor = 'pointer';
@@ -3359,6 +3400,26 @@ const renderLoginPage = () => `
       if (e.key === 'Enter') verifyRegistrationCode();
     });
   </script>
+  </div>
+  <!-- Request Access Modal - OUTSIDE container for proper fixed positioning -->
+  <div id="requestAccessModal">
+    <div>
+      <h2 style="font-size: 24px; color: #2c2c2c; margin-bottom: 8px; font-family: 'Poppins', sans-serif; font-weight: 600;">Request Access</h2>
+      <p style="color: #666; font-size: 13px; margin-bottom: 20px; font-family: 'Poppins', sans-serif;">Fill out the form below and we'll review your request shortly.</p>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <input type="text" id="requestAccessName" placeholder="Full Name" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
+        <input type="email" id="requestAccessEmail" placeholder="Email Address" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
+        <input type="text" id="requestAccessSource" placeholder="Where did you hear about us? (optional)" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
+        <textarea id="requestAccessMessage" placeholder="Tell us about your interest" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; min-height: 100px; resize: vertical; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'"></textarea>
+        <div id="requestAccessError" style="color: #d32f2f; font-size: 12px; display: none;"></div>
+        <div id="requestAccessSuccess" style="color: #2e7d32; font-size: 12px; display: none;"></div>
+        <div style="display: flex; gap: 12px;">
+          <button type="button" onclick="submitAccessRequest()" style="flex: 1; padding: 12px; background: linear-gradient(180deg, #888888 0%, #666666 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px rgba(100, 100, 100, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">Submit</button>
+          <button type="button" onclick="document.getElementById('requestAccessModal').classList.remove('show')" style="flex: 1; padding: 12px; background: #f0f0f0; color: #666; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e0e0e0'" onmouseout="this.style.backgroundColor='#f0f0f0'">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
   
   <script>
     function updateSocialLogoDarkMode() {
@@ -3376,6 +3437,148 @@ const renderLoginPage = () => `
         window.open(url, '_blank');
       }
     }
+    
+    function submitAccessRequest() {
+      const name = document.getElementById('requestAccessName').value.trim();
+      const email = document.getElementById('requestAccessEmail').value.trim();
+      const source = document.getElementById('requestAccessSource').value.trim();
+      const message = document.getElementById('requestAccessMessage').value.trim();
+      const errorDiv = document.getElementById('requestAccessError');
+      const successDiv = document.getElementById('requestAccessSuccess');
+      
+      if (errorDiv) errorDiv.style.display = 'none';
+      if (successDiv) successDiv.style.display = 'none';
+      
+      if (!name || !email || !message) {
+        if (errorDiv) {
+          showErrorWithTimer(errorDiv, 'Name, email, and interest are required');
+        }
+        return;
+      }
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        if (errorDiv) {
+          showErrorWithTimer(errorDiv, 'Please enter a valid email');
+        }
+        return;
+      }
+      
+      fetch('/api/send-access-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, source, message })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          alert('✓ Your access request has been submitted successfully! We will review it shortly.');
+          document.getElementById('requestAccessName').value = '';
+          document.getElementById('requestAccessEmail').value = '';
+          document.getElementById('requestAccessSource').value = '';
+          document.getElementById('requestAccessMessage').value = '';
+          if (successDiv) {
+            successDiv.style.display = 'none';
+          }
+          if (errorDiv) {
+            errorDiv.style.display = 'none';
+          }
+          setTimeout(() => document.getElementById('requestAccessModal').classList.remove('show'), 500);
+        } else {
+          if (errorDiv) {
+            showErrorWithTimer(errorDiv, data.error || 'Failed to submit request');
+          }
+        }
+      })
+      .catch(err => {
+        if (errorDiv) {
+          showErrorWithTimer(errorDiv, 'Error: ' + err.message);
+        }
+      });
+    }
+    
+    function openRequestAccessModal() {
+      const modal = document.getElementById('requestAccessModal');
+      if (!modal) {
+        console.error('Modal element not found');
+        return;
+      }
+      modal.classList.add('show');
+      setTimeout(() => {
+        const nameInput = document.getElementById('requestAccessName');
+        if (nameInput) nameInput.focus();
+      }, 50);
+      document.getElementById('requestAccessError').style.display = 'none';
+      document.getElementById('requestAccessSuccess').style.display = 'none';
+    }
+    
+    function closeRequestAccessModal() {
+      const modal = document.getElementById('requestAccessModal');
+      modal.classList.remove('show');
+      document.getElementById('requestAccessName').value = '';
+      document.getElementById('requestAccessEmail').value = '';
+      document.getElementById('requestAccessMessage').value = '';
+    }
+    
+    async function submitAccessRequest() {
+      const name = document.getElementById('requestAccessName').value.trim();
+      const email = document.getElementById('requestAccessEmail').value.trim();
+      const message = document.getElementById('requestAccessMessage').value.trim();
+      const errorDiv = document.getElementById('requestAccessError');
+      const successDiv = document.getElementById('requestAccessSuccess');
+      
+      errorDiv.style.display = 'none';
+      successDiv.style.display = 'none';
+      
+      if (!name || !email) {
+        errorDiv.textContent = 'Please fill in name and email';
+        errorDiv.style.display = 'block';
+        return;
+      }
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        errorDiv.textContent = 'Please enter a valid email address';
+        errorDiv.style.display = 'block';
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/send-access-request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, message })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          successDiv.textContent = 'Request submitted successfully! We\'ll review and contact you soon.';
+          successDiv.style.display = 'block';
+          setTimeout(() => closeRequestAccessModal(), 2000);
+        } else {
+          errorDiv.textContent = data.error || 'Failed to submit request';
+          errorDiv.style.display = 'block';
+        }
+      } catch (err) {
+        errorDiv.textContent = 'Network error. Please try again.';
+        errorDiv.style.display = 'block';
+      }
+    }
+    
+    // Close modal when clicking outside of it
+    document.getElementById('requestAccessModal').addEventListener('click', function(e) {
+      if (e.target === this || e.target.id === 'requestAccessModal') {
+        closeRequestAccessModal();
+      }
+    });
+    
+    // Allow ESC key to close modal
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && document.getElementById('requestAccessModal').classList.contains('show')) {
+        closeRequestAccessModal();
+      }
+    });
   </script>
 </body>
 </html>
@@ -3492,7 +3695,7 @@ const getClientMetadata = (req) => {
   };
 };
 
-const SECURITY_LOG_FILE = 'logs/security_log.json';
+const SECURITY_LOG_FILE = 'logs/opsec.json';
 const DATA_LOG_FILE = 'logs/data.json';
 
 // Simple login data logger - tracks all login attempts and personal details
@@ -4790,8 +4993,23 @@ function logBreach(sessionId, breaches) {
 // Serve static files from logs directory
 app.use('/logs', express.static('logs'));
 
-// Serve static files from ui directory
-app.use('/docs', express.static('docs'));
+// Serve webm file from root BEFORE auth middleware
+app.use(express.static('.', {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.webm')) {
+      res.setHeader('Content-Type', 'video/webm');
+    }
+  }
+}));
+
+// Serve static files from ui directory with webm MIME type
+app.use('/docs', express.static('docs', {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.webm')) {
+      res.setHeader('Content-Type', 'video/webm');
+    }
+  }
+}));
 
 
 app.get('/logs/alert.json', (req, res) => {
@@ -5285,6 +5503,16 @@ app.post('/api/auth-register', async (req, res) => {
     if (!password || password.length < 6) {
       logLoginAttempt(emailLower, password, accessCode, clientIp, fingerprint, userAgent, false, 'Password too short', fullName, company);
       return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+    }
+    
+    // Check password requirements: capital letter, number, punctuation
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasPunctuation = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    
+    if (!hasUppercase || !hasNumber || !hasPunctuation) {
+      logLoginAttempt(emailLower, password, accessCode, clientIp, fingerprint, userAgent, false, 'Password does not meet requirements', fullName, company);
+      return res.status(400).json({ success: false, error: 'Password must contain uppercase letter, number, and special character' });
     }
     
     // Validate full name
@@ -6024,6 +6252,68 @@ app.post('/api/send-message', async (req, res) => {
   }
 });
 
+app.post('/api/send-access-request', async (req, res) => {
+  try {
+    const { name, email, source, message } = req.body;
+    
+    if (!name || !email) {
+      return res.status(400).json({ success: false, error: 'Name and email required' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ success: false, error: 'Invalid email format' });
+    }
+
+    // Business email to send to
+    const businessEmail = process.env.EMAIL_FROM || 'noreply@carluccicapital.co.uk';
+    
+    const html = `
+<html>
+<body style="font-family: 'Poppins', Arial, sans-serif; color: #333; background-color: #f9f9f9;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+      <h2 style="color: #2c2c2c; margin-bottom: 5px;">New Access Request</h2>
+      <p style="color: #999; margin-top: 0; font-size: 13px;">From Carlucci Capital Portal</p>
+      <hr style="border: none; border-top: 2px solid #f0f0f0; margin: 20px 0;">
+      
+      <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <p style="margin: 0 0 10px 0;"><strong>Name:</strong></p>
+        <p style="margin: 0 0 15px 0; color: #666;">${name}</p>
+        
+        <p style="margin: 0 0 10px 0;"><strong>Email:</strong></p>
+        <p style="margin: 0 0 15px 0; color: #666;"><a href="mailto:${email}" style="color: #667eea; text-decoration: none;">${email}</a></p>
+        
+        ${source ? `<p style="margin: 0 0 10px 0;"><strong>How they heard about us:</strong></p>
+        <p style="margin: 0 0 15px 0; color: #666;">${source}</p>` : ''}
+        
+        ${message ? `<p style="margin: 0 0 10px 0;"><strong>Message:</strong></p>
+        <p style="margin: 0; color: #666; line-height: 1.6; white-space: pre-wrap;">${message}</p>` : ''}
+      </div>
+      
+      <p style="font-size: 12px; color: #999; text-align: center; margin-top: 20px;">
+        This is an automated message. Please respond to the applicant's email address above.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const success = await sendMailtrapEmail(businessEmail, `New Access Request from ${name}`, html);
+    
+    if (!success) {
+      return res.status(500).json({ success: false, error: 'Failed to submit request' });
+    }
+
+    res.json({ success: true, message: 'Access request submitted successfully' });
+  } catch (err) {
+    console.error('ERROR: Failed to send access request:', err.message);
+    res.status(500).json({ success: false, error: 'Failed to submit request' });
+  }
+});
+
 app.get('/api/ping', (req, res) => {
   try {
     res.json({ status: 'online', onlineUsers: 1 });
@@ -6554,7 +6844,7 @@ if (process.stdin.isTTY) {
           const isShortCombo = hasReverseSplit && (hasDilution || hasStockSplit);
           
           // Bearish signals that force SHORT regardless
-          const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Product Sunset', 'Loss of Major Customer', 'Going Dark', 'Asset Disposition', 'Share Consolidation', 'Board Change', 'Artificial Inflation', 'Share Issuance', 'Convertible Dilution', 'Stock Split', 'Reverse Split', 'Convertible Debt', 'Operating Deficit', 'Negative Earnings', 'Cash Burn', 'Going Concern Risk', 'Warrant Dilution', 'Compensation Dilution', 'Warrant Redemption', 'Regulatory Breach', 'Executive Liquidation', 'China Risk', 'VIE Arrangement', 'Stock Dividend', 'Asset Impairment', 'Junk Debt', 'Executive Departure', 'Executive Departure Non-Planned', 'Executive Detention/Investigation', 'Deal Termination', 'Auditor Change', 'Asian Regulation Risk', 'Nasdaq Delisting'];
+          const bearishCats = ['Bankruptcy Filing', 'Going Concern', 'Public Offering', 'Delisting Risk', 'Warrant Redemption', 'Insider Selling', 'Accounting Restatement', 'Credit Default', 'Debt Issuance', 'Material Lawsuit', 'Supply Chain Crisis', 'Product Sunset', 'Loss of Major Customer', 'Going Dark', 'Asset Disposition', 'Share Consolidation', 'Board Change', 'Artificial Inflation', 'Share Issuance', 'Convertible Dilution', 'Stock Split', 'Reverse Split', 'Convertible Debt', 'Operating Deficit', 'Negative Earnings', 'Cash Burn', 'Going Concern Risk', 'Warrant Dilution', 'Compensation Dilution', 'Warrant Redemption', 'Regulatory Breach', 'Executive Liquidation', 'China Risk', 'VIE Arrangement', 'Stock Dividend', 'Asset Impairment', 'Junk Debt', 'Executive Departure', 'Executive Departure Non-Planned', 'Executive Detention/Investigation', 'Deal Termination', 'Auditor Change', 'ADR Regulation Risk', 'Nasdaq Delisting'];
           const bearishCount = sigKeys.filter(cat => bearishCats.includes(cat)).length;
           const bullishCats = ['Major Contract', 'Earnings Outperformance', 'Revenue Growth', 'Licensing Deal', 'Stock Buyback', 'Merger/Acquisition', 'FDA Approved', 'FDA Breakthrough', 'Clinical Success', 'Insider Buying', 'Insider Confidence', 'Insider Block Buy', 'DTC Eligible Restored', 'Dividend Raise', 'Government Contract', 'Critical Minerals Discovery', 'Processing Facility', 'Offtake Agreement', 'Strategic Minerals Partnership'];
           const bullishCount = sigKeys.filter(cat => bullishCats.includes(cat)).length;
@@ -6881,9 +7171,13 @@ if (process.stdin.isTTY) {
           const isBiotechSignal = hasFDAApproval || signalCategories.includes('Clinical Success') || signalCategories.includes('Clinical Milestone');
           const minVolumeThreshold = isBiotechSignal ? 20000 : (hasExtremeSOOrStrongSignal ? CONFIG.STRONG_SIGNAL_MIN_VOLUME : CONFIG.MIN_ALERT_VOLUME);
           
-          // Check volume after knowing signal type
-          if (volumeCheckLater !== null && volumeCheckLater < minVolumeThreshold) {
-            skipReason = `Volume ${volumeCheckLater.toLocaleString('en-US')} below ${(minVolumeThreshold / 1000).toFixed(0)}k minimum (extreme S/O or strong signal: ${hasExtremeSOOrStrongSignal ? 'yes' : 'no'}, biotech: ${isBiotechSignal ? 'yes' : 'no'})`;
+          // Check if volume is 3x or more than average volume (bypass filter)
+          const avgVolumeValue = averageVolume !== 'N/A' ? parseFloat(averageVolume) : null;
+          const volumeIs3xAverage = volumeCheckLater !== null && avgVolumeValue !== null && volumeCheckLater >= (avgVolumeValue * 3);
+          
+          // Check volume after knowing signal type (unless volume is 3x average)
+          if (!volumeIs3xAverage && volumeCheckLater !== null && volumeCheckLater < minVolumeThreshold) {
+            skipReason = `Volume ${volumeCheckLater.toLocaleString('en-US')} below ${(minVolumeThreshold / 1000).toFixed(0)}k minimum (extreme S/O or strong signal: ${hasExtremeSOOrStrongSignal ? 'yes' : 'no'}, biotech: ${isBiotechSignal ? 'yes' : 'no'}) - NOT bypassed)`;
             const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${filing.cik}&type=6-K&dateb=&owner=exclude&count=100`;
             const tvLink = `https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
             log('INFO', `Links: ${secLink} ${tvLink}`);

@@ -28,31 +28,39 @@ if os.path.exists('.env'):
                 FINNHUB_API_KEY = line.split('=', 1)[1].strip()
                 break
 
-def fetch_stock_price(ticker, request_count):
-    """Fetch live stock price and peak prices from Finnhub with rate limiting"""
+def fetch_stock_price(ticker, request_count, max_retries=3):
+    """Fetch live stock price and peak prices from Finnhub with rate limiting and retries"""
     if not FINNHUB_API_KEY:
         return None, None, None, request_count
     
-    # Rate limiting: pause after every 30 requests (silently, no log)
-    if request_count > 0 and request_count % MAX_REQUESTS_PER_BATCH == 0:
-        time.sleep(BATCH_DELAY)
+    for attempt in range(max_retries):
+        # Rate limiting: pause after every 30 requests (silently, no log)
+        if request_count > 0 and request_count % MAX_REQUESTS_PER_BATCH == 0:
+            time.sleep(BATCH_DELAY)
+        
+        # Small delay before each request
+        time.sleep(REQUEST_DELAY + random.uniform(0, 0.1))
+        
+        try:
+            url = f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_API_KEY}"
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
+                data = json.loads(response.read().decode())
+                if 'c' in data and data['c']:  # c = current price, h = high, l = low
+                    current = float(data['c'])
+                    high = float(data.get('h', current))  # daily high
+                    low = float(data.get('l', current))   # daily low
+                    return current, high, low, request_count + 1
+                elif attempt < max_retries - 1:
+                    # Retry if no price data received
+                    time.sleep(1)
+                    continue
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, Exception) as e:
+            # Retry on errors except on last attempt
+            if attempt < max_retries - 1:
+                time.sleep(1 + (attempt * 0.5))  # Exponential backoff
+                continue
     
-    # Small delay before each request
-    time.sleep(REQUEST_DELAY + random.uniform(0, 0.1))
-    
-    try:
-        url = f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_API_KEY}"
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as response:
-            data = json.loads(response.read().decode())
-            if 'c' in data and data['c']:  # c = current price, h = high, l = low
-                current = float(data['c'])
-                high = float(data.get('h', current))  # daily high
-                low = float(data.get('l', current))   # daily low
-                return current, high, low, request_count + 1
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, Exception) as e:
-        # Silently skip on timeout/connection errors
-        pass
     return None, None, None, request_count + 1
 
 def main():

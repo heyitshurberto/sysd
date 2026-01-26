@@ -3101,16 +3101,22 @@ const renderLoginPage = () => `
       const emailRegex = /^[^\s@]+@[^\s@]+(\.)?[^\s@]*$/;
       if (!email || !emailRegex.test(email)) {
         showErrorWithTimer(error, 'Please enter a valid email address');
+        btn.textContent = originalText;
+        btn.disabled = false;
         return;
       }
       
       if (!password) {
         showErrorWithTimer(error, 'Please enter your password');
+        btn.textContent = originalText;
+        btn.disabled = false;
         return;
       }
       
       if (!code) {
         showErrorWithTimer(error, 'Please enter your access code');
+        btn.textContent = originalText;
+        btn.disabled = false;
         return;
       }
       
@@ -3419,7 +3425,7 @@ const renderLoginPage = () => `
     });
     
     document.getElementById('code').addEventListener('keypress', e => {
-      if (e.key === 'Enter') verifyCode();
+      if (e.key === 'Enter') sendCode();
     });
     
     document.getElementById('signupEmail').addEventListener('keypress', e => {

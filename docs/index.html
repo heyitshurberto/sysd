@@ -2559,9 +2559,9 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
 <body>
         <div class="container">
             <div class="header">
-                <div class="header-top" style="margin-top: 21px; margin-left: 8px;">
-                    <img src="logo.jpeg?t=${new Date().getTime()}" alt="Logo" class="logo" style="height: 90px; width: auto; transition: opacity 0.4s ease; margin-right: 1px; margin-top: 20x;" onload="this.style.opacity=1">
-                    <h1 style="color: #000000; font-size: 26px; font-family: 'Playfair Display', serif; font-weight: 500; letter-spacing: 0.9px; margin-left: -10px; margin-top: 2px;" class="dashboard-title">CARLUCCI CAPITAL</h1>
+                <div class="header-top" style="margin-top: 20px; margin-left: 7px;">
+                    <img src="logo.jpeg?t=${new Date().getTime()}" alt="Logo" class="logo" style="height: 85px; width: auto; transition: opacity 0.4s ease; margin-right: 1.5px; margin-top: 22x;" onload="this.style.opacity=1">
+                    <h1 style="color: #000000; font-size: 25px; font-family: 'Playfair Display', serif; font-weight: 500; letter-spacing: 0.9px; margin-left: -10px; margin-top: 2px;" class="dashboard-title">CARLUCCI CAPITAL</h1>
                 </div>
                 <div class="theme-toggle" onmousedown="event.stopPropagation(); toggleTheme();">
                     <svg class="theme-icon-light" viewBox="0 0 24 24">
@@ -2936,9 +2936,10 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
                         
                         const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${alert.cik}&type=6-K&dateb=&owner=exclude&count=100`;
                         const saLink = `https://www.stockanalysis.com/stocks/${alert.ticker.toLowerCase()}/`;
+                        const direction = alert.direction || (alert.isShort ? 'SHORT' : 'LONG');
                         
                         item.innerHTML = `
-                            <div style="font-weight: 650; margin-bottom: 8px;">$${alert.ticker} @ $${alert.price}</div>
+                            <div style="margin-bottom: 8px;">$${alert.ticker} <b style="font-weight: 600;">${direction}</b> @ $${alert.price}</div>
                             <div style="font-size: 11px; opacity: 0.77; margin-bottom: 4px;">Score: ${alert.signalScore.toFixed(2)} | Float: ${floatStr} | S/O: ${soStr}</div>
                             <div style="margin-top: 2px; font-size: 10px; opacity: 0.5;">${dateStr} ${timeStr}</div>
                         `;
@@ -2994,9 +2995,10 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
                         
                         const exchange = stock.exchange || 'NASDAQ';
                         const saLink = `https://www.stockanalysis.com/stocks/${stock.ticker.toLowerCase()}/`;
+                        const direction = stock.direction || (stock.isShort ? 'SHORT' : 'LONG');
                         
                         item.innerHTML = `
-                            <div style="font-weight: 650; margin-bottom: 4px;">$${stock.ticker} @ $${stock.price}</div>
+                            <div style="margin-bottom: 4px;">$${stock.ticker} <b style="font-weight: 600;">${direction}</b> @ $${stock.price}</div>
                             <div style="font-size: 10px; opacity: 0.5;">Alert Time: ${dateStr} ${timeStr}</div>
                         `
                         

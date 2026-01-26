@@ -1297,23 +1297,24 @@ const saveAlert = (alertData) => {
       }
     }
     
+    // Determine direction for CSV - check for ANY bearish signals
+    const bearishCategories = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Deficit', 'Negative Earnings', 'Cash Burn', 'Going Concern Risk', 'Public Offering', 'Share Issuance', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Nasdaq Delisting', 'Bid Price Delisting', 'Executive Liquidation', 'Accounting Restatement', 'Credit Default', 'Senior Debt', 'Convertible Debt', 'Junk Debt', 'Material Lawsuit', 'Supply Chain Crisis', 'Regulatory Breach', 'VIE Arrangement', 'China Risk', 'Product Sunset', 'Loss of Major Customer'];
+    const signalKeys = (alertData.intent && Array.isArray(alertData.intent)) ? alertData.intent : (alertData.intent ? String(alertData.intent).split(', ') : []);
+    const hasBearish = signalKeys.some(cat => bearishCategories.includes(cat));
+    const direction = hasBearish ? 'SHORT' : 'LONG';
+    
     const enrichedData = {
       ...alertData,
       recordedAt: new Date().toISOString(),
       recordId: `${alertData.ticker}-${Date.now()}`,
-      expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString()
+      expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+      direction: direction
     };
     
     alerts.push(enrichedData);
     if (alerts.length > 1000) alerts = alerts.slice(-1000);
     
     fs.writeFileSync(CONFIG.ALERTS_FILE, JSON.stringify(alerts, null, 2));
-    
-    // Determine direction for CSV - check for ANY bearish signals
-    const bearishCategories = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Deficit', 'Negative Earnings', 'Cash Burn', 'Going Concern Risk', 'Public Offering', 'Share Issuance', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Nasdaq Delisting', 'Bid Price Delisting', 'Executive Liquidation', 'Accounting Restatement', 'Credit Default', 'Senior Debt', 'Convertible Debt', 'Junk Debt', 'Material Lawsuit', 'Supply Chain Crisis', 'Regulatory Breach', 'VIE Arrangement', 'China Risk', 'Product Sunset', 'Loss of Major Customer'];
-    const signalKeys = (alertData.intent && Array.isArray(alertData.intent)) ? alertData.intent : (alertData.intent ? String(alertData.intent).split(', ') : []);
-    const hasBearish = signalKeys.some(cat => bearishCategories.includes(cat));
-    const direction = hasBearish ? 'SHORT' : 'LONG';
     const reason = (alertData.intent && Array.isArray(alertData.intent)) 
       ? alertData.intent.join('; ')
       : (alertData.intent ? String(alertData.intent) : 'Filing');

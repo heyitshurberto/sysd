@@ -7245,14 +7245,10 @@ if (process.stdin.isTTY) {
             validSignals = true; // Strong volume spike (2x+ average) with any signal
           } else if (neutralSignals.length > 0 && signalCategories.length >= 2) {
             validSignals = true; // Has neutral signal + at least 1 other signal
-          } else if (nonNeutralSignals.length >= 3) {
-            // Has 3+ non-neutral signals but apply float filter: <= 50m for 6-K, <= 100m for 8-K
-            const floatVal = floatValue !== null ? floatValue : Infinity;
-            const floatLimit = (filing.formType === '8-K' || filing.formType === '8-K/A') ? 100000000 : 50000000;
-            validSignals = floatVal <= floatLimit;
-            if (!validSignals) {
-              skipReason = `3-signal threshold requires float <= ${(floatLimit / 1000000).toFixed(0)}m for ${filing.formType} (actual: ${(floatVal / 1000000).toFixed(0)}m)`;
-            }
+          } else if (nonNeutralSignals.length >= 3 && signalCategories.length >= 3) {
+            validSignals = true; // Has 3+ signals from 3+ different categories (ensures diversity, avoids signal clustering)
+          } else if (nonNeutralSignals.length >= 4) {
+            validSignals = true; // Has 4+ non-neutral signals (original strength maintained)
           }
           
           if (!validSignals) {

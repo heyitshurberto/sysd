@@ -1297,7 +1297,7 @@ const saveAlert = (alertData) => {
     }
     
     // Determine direction for CSV - check for ANY bearish signals
-    const bearishCategories = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Deficit', 'Negative Earnings', 'Cash Burn', 'Going Concern Risk', 'Public Offering', 'Share Issuance', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Nasdaq Delisting', 'Bid Price Delisting', 'Executive Liquidation', 'Accounting Restatement', 'Credit Default', 'Senior Debt', 'Convertible Debt', 'Junk Debt', 'Material Lawsuit', 'Supply Chain Crisis', 'Regulatory Breach', 'VIE Arrangement', 'China Risk', 'Product Sunset', 'Loss of Major Customer'];
+    const bearishCategories = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Deficit', 'Negative Earnings', 'Cash Burn', 'Going Concern Risk', 'Public Offering', 'Share Issuance', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Nasdaq Delisting', 'Bid Price Delisting', 'Executive Liquidation', 'Accounting Restatement', 'Credit Default', 'Senior Debt', 'Convertible Debt', 'Junk Debt', 'Material Lawsuit', 'Supply Chain Crisis', 'Regulatory Breach', 'VIE Arrangement', 'China Risk', 'Product Sunset', 'Loss of Major Customer', 'Underwritten Offering', 'Deal Termination'];
     const signalKeys = (alertData.intent && Array.isArray(alertData.intent)) ? alertData.intent : (alertData.intent ? String(alertData.intent).split(', ') : []);
     const hasBearish = signalKeys.some(cat => bearishCategories.includes(cat));
     const direction = hasBearish ? 'SHORT' : 'LONG';
@@ -6695,7 +6695,7 @@ if (process.stdin.isTTY) {
           const formsDisplay = otherForms.length > 0 ? otherForms.join(', ') : '';
           const itemsDisplay = otherItems.length > 0 ? otherItems.sort((a, b) => parseFloat(a) - parseFloat(b)).map(item => `Item ${item}`).join(', ') : '';
           
-          const bearishCategories = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Deficit', 'Negative Earnings', 'Cash Burn', 'Going Concern Risk', 'Public Offering', 'Share Issuance', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Nasdaq Delisting', 'Bid Price Delisting', 'Executive Liquidation', 'Accounting Restatement', 'Credit Default', 'Senior Debt', 'Convertible Debt', 'Junk Debt', 'Material Lawsuit', 'Supply Chain Crisis', 'Regulatory Breach', 'VIE Arrangement', 'China Risk', 'Product Sunset', 'Loss of Major Customer'];
+          const bearishCategories = ['Artificial Inflation', 'Bankruptcy Filing', 'Operating Deficit', 'Negative Earnings', 'Cash Burn', 'Going Concern Risk', 'Public Offering', 'Share Issuance', 'Convertible Dilution', 'Warrant Dilution', 'Compensation Dilution', 'Nasdaq Delisting', 'Bid Price Delisting', 'Executive Liquidation', 'Accounting Restatement', 'Credit Default', 'Senior Debt', 'Convertible Debt', 'Junk Debt', 'Material Lawsuit', 'Supply Chain Crisis', 'Regulatory Breach', 'VIE Arrangement', 'China Risk', 'Product Sunset', 'Loss of Major Customer', 'Underwritten Offering', 'Deal Termination'];
           const signalKeys = Object.keys(semanticSignals);
           
           let formLogMessage = '';
@@ -7066,7 +7066,7 @@ if (process.stdin.isTTY) {
           const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
           
           // Calculate early for use in multiple filters
-          const hasExtremeSOOrStrongSignal = (soRatioValue !== null && soRatioValue > CONFIG.EXTREME_SO_RATIO) || nonNeutralSignals.length >= 4;
+          const hasExtremeSOOrStrongSignal = (soRatioValue !== null && soRatioValue > CONFIG.EXTREME_SO_RATIO) || nonNeutralSignals.length >= 3;
           
           // Check if country is whitelisted - ONLY for 6-K filings (8-K can be Delaware/US states)
           let countryWhitelisted = true;
@@ -7245,8 +7245,14 @@ if (process.stdin.isTTY) {
             validSignals = true; // Strong volume spike (2x+ average) with any signal
           } else if (neutralSignals.length > 0 && signalCategories.length >= 2) {
             validSignals = true; // Has neutral signal + at least 1 other signal
-          } else if (nonNeutralSignals.length >= 4) {
-            validSignals = true; // Has 3+ non-neutral signals from different categories
+          } else if (nonNeutralSignals.length >= 3) {
+            // Has 3+ non-neutral signals but apply float filter: <= 50m for 6-K, <= 100m for 8-K
+            const floatVal = floatValue !== null ? floatValue : Infinity;
+            const floatLimit = (filing.formType === '8-K' || filing.formType === '8-K/A') ? 100000000 : 50000000;
+            validSignals = floatVal <= floatLimit;
+            if (!validSignals) {
+              skipReason = `3-signal threshold requires float <= ${(floatLimit / 1000000).toFixed(0)}m for ${filing.formType} (actual: ${(floatVal / 1000000).toFixed(0)}m)`;
+            }
           }
           
           if (!validSignals) {

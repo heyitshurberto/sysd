@@ -7067,7 +7067,7 @@ if (process.stdin.isTTY) {
           const nonNeutralSignals = signalCategories.filter(cat => !neutralCategories.includes(cat));
           
           // Calculate early for use in multiple filters
-          const hasExtremeSOOrStrongSignal = (soRatioValue !== null && soRatioValue > CONFIG.EXTREME_SO_RATIO) || nonNeutralSignals.length >= 3;
+          const hasExtremeSOOrStrongSignal = (soRatioValue !== null && soRatioValue > CONFIG.EXTREME_SO_RATIO) || nonNeutralSignals.length >= 4;
           
           // Check if country is whitelisted - ONLY for 6-K filings (8-K can be Delaware/US states)
           let countryWhitelisted = true;
@@ -7246,7 +7246,7 @@ if (process.stdin.isTTY) {
             validSignals = true; // Strong volume spike (2x+ average) with any signal
           } else if (neutralSignals.length > 0 && signalCategories.length >= 2) {
             validSignals = true; // Has neutral signal + at least 1 other signal
-          } else if (nonNeutralSignals.length >= 3) {
+          } else if (nonNeutralSignals.length >= 4) {
             validSignals = true; // Has 3+ non-neutral signals from different categories
           }
           

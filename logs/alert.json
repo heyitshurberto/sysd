@@ -811,5 +811,61 @@
     "recordedAt": "2026-01-26T12:55:25.995Z",
     "recordId": "BMRN-1769432125995",
     "expiresAt": "2026-01-31T12:55:25.995Z"
+  },
+  {
+    "ticker": "ITOC",
+    "title": "6-K - iTonic Holdings Ltd (0001970544) (Filer)",
+    "companyName": "iTonic Holdings Ltd",
+    "filerName": null,
+    "price": 0.5315,
+    "wa": "0.29",
+    "signalScore": 0.57,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1,
+    "volume": 114645,
+    "averageVolume": 1365719,
+    "float": 8318888,
+    "sharesOutstanding": 9382000,
+    "soRatio": "88.67%",
+    "marketCap": 13137617,
+    "isShort": true,
+    "ftd": false,
+    "ftdPercent": null,
+    "intent": "Share Consolidation, Partnership, Strategic Minerals Partnership",
+    "incorporated": "Cayman Islands",
+    "located": "China",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Share Consolidation": [
+        "Consolidation"
+      ],
+      "Partnership": [
+        "Joint Venture"
+      ],
+      "Strategic Minerals Partnership": [
+        "Joint Venture"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "20-F",
+      "EX-4.1",
+      "EX-4.2"
+    ],
+    "filingType": "6-K, 20-F, EX-4.1, EX-4.2",
+    "cik": "1970544",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T13:01:09.702Z",
+    "recordId": "ITOC-1769432469702",
+    "expiresAt": "2026-01-31T13:01:09.702Z"
   }
 ]

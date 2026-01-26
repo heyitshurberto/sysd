@@ -552,5 +552,62 @@
     "recordedAt": "2026-01-26T11:43:28.723Z",
     "recordId": "GORO-1769427808723",
     "expiresAt": "2026-01-31T11:43:28.723Z"
+  },
+  {
+    "ticker": "LKFN",
+    "title": "8-K - LAKELAND FINANCIAL CORP (0000721994) (Filer)",
+    "companyName": "LAKELAND FINANCIAL CORP",
+    "filerName": null,
+    "price": 58.83,
+    "wa": "44.57",
+    "signalScore": 0.43,
+    "hasTuesdayBonus": false,
+    "custodianControl": false,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1,
+    "volume": 169686,
+    "averageVolume": 159700,
+    "float": 25623703,
+    "sharesOutstanding": 25528732,
+    "soRatio": "100.4%",
+    "marketCap": 1501938816,
+    "isShort": true,
+    "ftd": 88,
+    "ftdPercent": "0.00",
+    "intent": "Revenue Growth, Asset Disposition, Stock Buyback",
+    "incorporated": "Indiana",
+    "located": "Indiana",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Revenue Growth": [
+        "Organic Growth"
+      ],
+      "Asset Disposition": [
+        "Disposition"
+      ],
+      "Stock Buyback": [
+        "Share Repurchase",
+        "Repurchase Program"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "Item 2.02",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, Item 2.02, Item 9.01",
+    "cik": "721994",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T12:00:29.132Z",
+    "recordId": "LKFN-1769428829132",
+    "expiresAt": "2026-01-31T12:00:29.132Z"
   }
 ]

@@ -1249,5 +1249,16 @@
     "averageVolume": 852052,
     "marketCap": 24534298624,
     "performance": 0
+  },
+  "GORO": {
+    "alert": 1.61,
+    "highest": 1.61,
+    "lowest": 1.61,
+    "current": 1.61,
+    "currentPrice": 1.61,
+    "volume": 23553038,
+    "averageVolume": 3597516,
+    "marketCap": 260442752,
+    "performance": 0
   }
 }

@@ -1777,5 +1777,59 @@
     "recordedAt": "2026-01-26T14:19:44.912Z",
     "recordId": "AXL-1769437184912",
     "expiresAt": "2026-01-31T14:19:44.912Z"
+  },
+  {
+    "ticker": "BOH",
+    "title": "8-K - BANK OF HAWAII CORP (0000046195) (Filer)",
+    "companyName": "BANK OF HAWAII CORP",
+    "filerName": null,
+    "price": 70.8,
+    "wa": "56.12",
+    "signalScore": 0.51,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.2,
+    "filingTimeBonus": 1.2,
+    "soBonus": 1.05,
+    "volume": 539843,
+    "averageVolume": 382334,
+    "float": 14082050,
+    "sharesOutstanding": 39785092,
+    "soRatio": "35.40%",
+    "marketCap": 2816784640,
+    "isShort": true,
+    "ftd": false,
+    "ftdPercent": null,
+    "intent": "Compensation Dilution, Stock Buyback",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Hawaii",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Compensation Dilution": [
+        "Equity Compensation"
+      ],
+      "Stock Buyback": [
+        "Share Repurchase",
+        "Repurchase Program"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "Item 2.02",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, Item 2.02, Item 9.01",
+    "cik": "46195",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T14:20:11.957Z",
+    "recordId": "BOH-1769437211957",
+    "expiresAt": "2026-01-31T14:20:11.957Z"
   }
 ]

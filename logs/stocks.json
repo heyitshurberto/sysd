@@ -1218,5 +1218,74 @@
     "recordedAt": "2026-01-26T13:02:18.411Z",
     "recordId": "ARMP-1769432538411",
     "expiresAt": "2026-01-31T13:02:18.411Z"
+  },
+  {
+    "ticker": "VWAV",
+    "title": "8-K - VisionWave Holdings, Inc. (0002038439) (Filer)",
+    "companyName": "VisionWave Holdings, Inc.",
+    "filerName": null,
+    "price": 10.25,
+    "wa": "7.17",
+    "signalScore": 0.32,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1,
+    "volume": 210143,
+    "averageVolume": 316149,
+    "float": 50000000,
+    "sharesOutstanding": 16496603,
+    "soRatio": "303.1%",
+    "marketCap": 169090176,
+    "isShort": true,
+    "ftd": 67953,
+    "ftdPercent": "0.14",
+    "intent": "Major Contract, Regulatory Approval, Share Issuance, Asset Disposition, Licensing Deal",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Major Contract": [
+        "Exclusive License"
+      ],
+      "Regulatory Approval": [
+        "License Granted"
+      ],
+      "Share Issuance": [
+        "Issuance of shares"
+      ],
+      "Asset Disposition": [
+        "Disposed",
+        "Disposition"
+      ],
+      "Licensing Deal": [
+        "Exclusive License",
+        "License Agreement"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "8-K",
+      "S-1",
+      "S-3",
+      "Form D",
+      "EX-10.1",
+      "Item 1.01",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "6-K, 8-K, S-1, S-3, Form D, EX-10.1, Item 1.01, Item 7.01, Item 9.01",
+    "cik": "2038439",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T13:02:23.057Z",
+    "recordId": "VWAV-1769432543058",
+    "expiresAt": "2026-01-31T13:02:23.058Z"
   }
 ]

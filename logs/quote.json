@@ -1227,5 +1227,27 @@
     "volume": 2692950,
     "averageVolume": 2135406,
     "marketCap": 1519270528
+  },
+  "IONQ": {
+    "alert": 47.25,
+    "highest": 47.25,
+    "lowest": 47.25,
+    "current": 47.25,
+    "currentPrice": 47.25,
+    "volume": 14610176,
+    "averageVolume": 20884998,
+    "marketCap": 16739709952,
+    "performance": 0
+  },
+  "LDOS": {
+    "alert": 191.23,
+    "highest": 191.23,
+    "lowest": 191.23,
+    "current": 191.23,
+    "currentPrice": 191.23,
+    "volume": 479992,
+    "averageVolume": 852052,
+    "marketCap": 24534298624,
+    "performance": 0
   }
 }

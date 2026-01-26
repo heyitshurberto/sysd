@@ -493,5 +493,64 @@
     "recordedAt": "2026-01-26T11:29:48.209Z",
     "recordId": "LDOS-1769426988209",
     "expiresAt": "2026-01-31T11:29:48.209Z"
+  },
+  {
+    "ticker": "GORO",
+    "title": "8-K - GOLD RESOURCE CORP (0001160791) (Filer)",
+    "companyName": "GOLD RESOURCE CORP",
+    "filerName": null,
+    "price": 1.61,
+    "wa": "1.50",
+    "signalScore": 0.77,
+    "hasTuesdayBonus": false,
+    "custodianControl": false,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1,
+    "volume": 23553038,
+    "averageVolume": 3597516,
+    "float": 161614000,
+    "sharesOutstanding": 161765685,
+    "soRatio": "99.91%",
+    "marketCap": 260442752,
+    "isShort": true,
+    "ftd": 129281,
+    "ftdPercent": "0.08",
+    "intent": "Merger/Acquisition, Artificial Inflation, Share Consolidation, Asian Regulation Risk",
+    "incorporated": "Colorado",
+    "located": "Colorado",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "Merger/Acquisition": [
+        "Agreed To Acquire"
+      ],
+      "Artificial Inflation": [
+        "Share Consolidation"
+      ],
+      "Share Consolidation": [
+        "Consolidation"
+      ],
+      "Asian Regulation Risk": [
+        "Subject To Risks"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": 348,
+    "reverseSplitReason": "Share consolidation",
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "Item 8.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, Item 8.01, Item 9.01",
+    "cik": "1160791",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T11:43:28.723Z",
+    "recordId": "GORO-1769427808723",
+    "expiresAt": "2026-01-31T11:43:28.723Z"
   }
 ]

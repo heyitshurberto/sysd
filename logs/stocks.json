@@ -1703,5 +1703,81 @@
     "recordedAt": "2026-01-26T13:46:58.551Z",
     "recordId": "BMRC-1769435218551",
     "expiresAt": "2026-01-31T13:46:58.551Z"
+  },
+  {
+    "ticker": "SAFX",
+    "title": "8-K - XCF Global, Inc. (0002019793) (Filer)",
+    "companyName": "XCF Global, Inc.",
+    "filerName": null,
+    "price": 0.1373,
+    "wa": "0.10",
+    "signalScore": 0.7,
+    "hasTuesdayBonus": false,
+    "custodianControl": true,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.15,
+    "filingTimeBonus": 1.15,
+    "soBonus": 1.2,
+    "volume": 3541646,
+    "averageVolume": 5170327,
+    "float": 180,
+    "sharesOutstanding": 208323544,
+    "soRatio": "0.00%",
+    "marketCap": 28602824,
+    "isShort": true,
+    "ftd": 5362669,
+    "ftdPercent": "2979260.56",
+    "intent": "FDA Approved, Artificial Inflation, Bid Price Delisting, Debt Restructure, ADR Regulation Risk, Financing Events, Offtake Agreement",
+    "incorporated": "Wilmington, Delaware",
+    "located": "Nevada",
+    "filingDate": "2026-01-26",
+    "signals": {
+      "FDA Approved": [
+        "Approves"
+      ],
+      "Artificial Inflation": [
+        "Reverse Split"
+      ],
+      "Bid Price Delisting": [
+        "Minimum Bid Price"
+      ],
+      "Debt Restructure": [
+        "Forbearance Agreement"
+      ],
+      "ADR Regulation Risk": [
+        "Subject To Risks"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ],
+      "Offtake Agreement": [
+        "Offtake Agreement"
+      ]
+    },
+    "bonusSignals": {},
+    "reverseSplitRatio": 4,
+    "reverseSplitReason": "Nasdaq minimum bid price requirement",
+    "formType": [
+      "8-K",
+      "8-K/A",
+      "S-4",
+      "F-3",
+      "S-9",
+      "Form D",
+      "EX-99.1",
+      "EX-10.1",
+      "Item 1.01",
+      "Item 3.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, 8-K/A, S-4, F-3, Form D, EX-99.1, EX-10.1, Item 1.01, Item 3.02, Item 7.01, Item 9.01",
+    "cik": "2019793",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-26T13:49:53.940Z",
+    "recordId": "SAFX-1769435393940",
+    "expiresAt": "2026-01-31T13:49:53.940Z"
   }
 ]

@@ -1420,5 +1420,16 @@
     "averageVolume": 112639,
     "marketCap": 64125000,
     "performance": 0
+  },
+  "DEVS": {
+    "alert": 1.02,
+    "highest": 1.02,
+    "lowest": 1.02,
+    "current": 1.02,
+    "currentPrice": 1.02,
+    "volume": 78103,
+    "averageVolume": 375262,
+    "marketCap": 4467612,
+    "performance": 0
   }
 }

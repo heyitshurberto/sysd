@@ -894,7 +894,7 @@ const parseFinancialRatios = (filingText) => {
       signals.push('Debt Service Risk - Interest Coverage Below 0.5');
       severity = Math.max(severity, 0.85);
     } else if (ic < 1.0) {
-      signals.push('Debt Service Concern - Interest Coverage Below 1.0');
+      signals.push('Debt Service Concern (IC < 1.0)');
       severity = Math.max(severity, 0.75);
     }
   }
@@ -1351,7 +1351,7 @@ const saveToCSV = (alertData) => {
       }
     }
     
-    // Format financial ratio signals (deterministic bankruptcy indicators)
+    // Format financial ratio signals
     let financialRatiosStr = 'N/A';
     if (alertData.financialRatioSignals && alertData.financialRatioSignals.signals && Array.isArray(alertData.financialRatioSignals.signals)) {
       financialRatiosStr = alertData.financialRatioSignals.signals.join('; ') + ` [Severity: ${alertData.financialRatioSignals.severity.toFixed(2)}]`;
@@ -1458,8 +1458,8 @@ const saveAlert = (alertData) => {
     let financialRatioIndicator = '';
     if (alertData.financialRatioSignals && alertData.financialRatioSignals.signals && alertData.financialRatioSignals.signals.length > 0) {
       const ratioLabels = alertData.financialRatioSignals.signals.map(s => s.split('(')[0].trim()).join(' + ');
-      const severityLevel = alertData.financialRatioSignals.severity > 0.85 ? '[CRITICAL]' : '[HIGH]';
-      financialRatioIndicator = ` (Financial Ratios ${severityLevel}: ${ratioLabels})`;
+      const severityLevel = alertData.financialRatioSignals.severity > 0.85 ? 'Critical' : 'Elevated';
+      financialRatioIndicator = ` (Financial Ratios - ${severityLevel}: ${ratioLabels})`;
     }
     const bonusIndicator = bonusItems.length > 0 ? ` (Bonus: ${bonusItems.join(' + ')})` : '';
     alertData.skipReason = `Alert sent: [${direction}] ${reason}${financialRatioIndicator}${bonusIndicator}`;
@@ -1501,10 +1501,10 @@ const saveAlert = (alertData) => {
     const floatDisplay = alertData.float && alertData.float !== 'N/A' && !isNaN(alertData.float) ? (alertData.float / 1000000).toFixed(2) + 'm' : 'n/a';
     const soDisplay = alertData.soRatio || 'n/a';
     
-    // Log financial ratio signals if detected (deterministic bankruptcy signals)
+    // Log financial ratio signals if detected
     if (alertData.financialRatioSignals && alertData.financialRatioSignals.signals && alertData.financialRatioSignals.signals.length > 0) {
-      log('INFO', `Ratio: ${alertData.financialRatioSignals.signals.join(', ')}`);
-      log('INFO', `Severity: ${alertData.financialRatioSignals.severity.toFixed(2)}/1.0 - ${alertData.financialRatioSignals.severity > 0.85 ? 'CRITICAL BANKRUPTCY RISK' : 'HIGH FINANCIAL DISTRESS'}`);
+      log('INFO', `Arithmetics: ${alertData.financialRatioSignals.signals.join(', ')}`);
+      log('INFO', `Severity: ${alertData.financialRatioSignals.severity.toFixed(2)}/1.0 - ${alertData.financialRatioSignals.severity > 0.85 ? 'Critical Bankruptcy Risk' : 'Elevated Financial Distress'}`);
     }
     
     const priceDisplay = alertData.price && alertData.price !== 'N/A' ? `$${alertData.price.toFixed(2)}` : 'N/A';

@@ -50,7 +50,7 @@ const CONFIG = {
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com', // GitHub Pages domain
   GITHUB_PUSH_ENABLED: process.env.GITHUB_PUSH_ENABLED !== 'false' && process.env.GITHUB_PUSH_ENABLED !== '0', // Enable/disable GitHub push (default: true, set to false in .env to disable)
   PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '', // Personal Discord webhook URL
-  DISCORD_ENABLED: process.env.DISCORD_ENABLED !== 'true' && process.env.DISCORD_ENABLED !== '0', // Enable/disable Discord alerts (default: true)
+  DISCORD_ENABLED: process.env.DISCORD_ENABLED === 'true', // Enable/disable Discord alerts (set to 'true' in .env to enable)
   // Telegram settings
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '', // Telegram bot token
   TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID || '', // Telegram chat ID for alerts
@@ -1493,7 +1493,9 @@ const saveAlert = (alertData) => {
     // Update performance tracking data for HTML dashboard (non-blocking)
     setImmediate(() => updatePerformanceData(alertData));
     
-    log('INFO', `Log: Alert saved ${alertData.ticker} (pushed to GitHub)`);
+    // Log push status based on config
+    const pushStatus = CONFIG.GITHUB_PUSH_ENABLED ? '(pushed to GitHub)' : '(GitHub push disabled)';
+    log('INFO', `Log: Alert saved ${alertData.ticker} ${pushStatus}`);
     
     const volDisplay = alertData.volume && alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(2) + 'm' : 'n/a';
     const avgVolDisplay = alertData.averageVolume && alertData.averageVolume !== 'N/A' ? (alertData.averageVolume / 1000000).toFixed(2) + 'm' : 'n/a';
@@ -1561,10 +1563,13 @@ const updatePerformanceData = (alertData) => {
         alert: currentPrice,
         highest: currentPrice,
         lowest: currentPrice,
+        highest5Day: currentPrice,
+        highest5DayPercent: 0,
         current: currentPrice,
-        currentPrice: currentPrice,  // Live price - gets updated by price fetcher
-        performance: 0,  // Will be calculated when live price is available
+        currentPrice: currentPrice,
+        performance: 0,
         date: new Date().toISOString(),
+        alertDate: new Date().toISOString(),
         reverseSplitRatio: null
       };
     } else {
@@ -1576,6 +1581,26 @@ const updatePerformanceData = (alertData) => {
       }
       if (currentPrice < performanceData[ticker].lowest) {
         performanceData[ticker].lowest = currentPrice;
+      }
+      
+      // Track 5-day peak (reset daily)
+      const alertDate = new Date(performanceData[ticker].alertDate);
+      const now = new Date();
+      const daysDiff = Math.floor((now - alertDate) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff <= 5) {
+        if (currentPrice > performanceData[ticker].highest5Day) {
+          performanceData[ticker].highest5Day = currentPrice;
+          const alertPrice = performanceData[ticker].alert || 0;
+          if (alertPrice > 0) {
+            const peak5DayChange = currentPrice - alertPrice;
+            performanceData[ticker].highest5DayPercent = parseFloat((peak5DayChange / alertPrice * 100).toFixed(2));
+          }
+        }
+      } else {
+        // Reset 5-day peak after 5 days
+        performanceData[ticker].highest5Day = currentPrice;
+        performanceData[ticker].highest5DayPercent = 0;
       }
     }
     
@@ -3025,6 +3050,9 @@ const renderLoginPage = () => `
     .error.hidden {
       display: none !important;
     }
+    .error:not(.hidden) {
+      display: block !important;
+    }
     .success {
       color: #2e7d32;
       font-size: 13px;
@@ -3033,6 +3061,9 @@ const renderLoginPage = () => `
     }
     .success.hidden {
       display: none !important;
+    }
+    .success:not(.hidden) {
+      display: block !important;
     }
     .section {
       display: none;
@@ -3149,6 +3180,24 @@ const renderLoginPage = () => `
     
     <!-- Email Entry Section -->
     <div class="section active" id="emailSection">
+      <!-- Performance Stats Section - LOGIN PAGE ONLY -->
+      <div id="loginStatsBox" style="background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; padding: 12px 16px; margin-bottom: 20px; font-size: 12px; display: block;">
+        <div style="display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+          <div>
+            <div style="opacity: 0.7; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Win Rate</div>
+            <div style="font-weight: 600; font-size: 14px;" id="landing-win-rate">-- %</div>
+          </div>
+          <div>
+            <div style="opacity: 0.7; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Total Trades</div>
+            <div style="font-weight: 600; font-size: 14px;" id="landing-total-trades">--</div>
+          </div>
+          <div>
+            <div style="opacity: 0.7; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Best Trade (5d)</div>
+            <div style="font-weight: 600; font-size: 14px; color: #2a7f3c;" id="landing-best-trade">--</div>
+          </div>
+        </div>
+      </div>
+      
       <input type="email" id="email" placeholder="Enter your email" autocomplete="off" style="margin-bottom: 12px;">
       <input type="password" id="password" placeholder="Enter your password" autocomplete="off" style="margin-bottom: 12px;">
       <input type="text" id="code" placeholder="Access code" autocomplete="off" style="margin-bottom: 12px;">
@@ -3196,8 +3245,10 @@ const renderLoginPage = () => `
     function showErrorWithTimer(element, message, timeoutMs = 8000) {
       element.textContent = message;
       element.classList.remove('hidden');
+      element.style.display = 'block';
       setTimeout(() => {
         element.classList.add('hidden');
+        element.style.display = 'none';
       }, timeoutMs);
     }
 
@@ -3213,6 +3264,39 @@ const renderLoginPage = () => `
     
     For now: Admin manually generates codes and shares via secure channel
     */
+    
+    // Load landing page performance stats
+    function loadLandingPerformanceStats() {
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (!isLocalhost) return; // Only show on localhost
+      
+      fetch('/api/performance-summary')
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.totalTrades > 0) {
+            document.getElementById('landing-win-rate').textContent = data.winRate + '%';
+            document.getElementById('landing-total-trades').textContent = data.totalTrades;
+            
+            if (data.bestPerformer) {
+              const peak = data.bestPerformer.peak5Day;
+              const direction = data.bestPerformer.direction === 'short' ? '↓' : '↑';
+              const tickerText = '$' + data.bestPerformer.ticker + ' ' + direction + ' ' + Math.abs(peak).toFixed(1) + '%';
+              document.getElementById('landing-best-trade').textContent = tickerText;
+            }
+          }
+        })
+        .catch(err => {
+          // Silently fail - optional feature
+        });
+    }
+    
+    // Load stats when page loads
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadLandingPerformanceStats);
+    } else {
+      loadLandingPerformanceStats();
+    }
+    
     function sendCode() {
       const btn = document.querySelector('button[onclick="sendCode()"]');
       const originalText = btn.textContent;
@@ -3229,27 +3313,33 @@ const renderLoginPage = () => `
       const emailRegex = /^[^\s@]+@[^\s@]+(\.)?[^\s@]*$/;
       if (!email || !emailRegex.test(email)) {
         showErrorWithTimer(error, 'Please enter a valid email address');
-        btn.textContent = originalText;
-        btn.disabled = false;
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }, 1000);
         return;
       }
       
       if (!password) {
         showErrorWithTimer(error, 'Please enter your password');
-        btn.textContent = originalText;
-        btn.disabled = false;
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }, 1000);
         return;
       }
       
       if (!code) {
         showErrorWithTimer(error, 'Please enter your access code');
-        btn.textContent = originalText;
-        btn.disabled = false;
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }, 1000);
         return;
       }
       
       // Call verifyCode with all three values
-      verifyCode(email, password, code);
+      verifyCode(email, password, code, originalText);
     }
     
     function startCooldown() {
@@ -3285,28 +3375,43 @@ const renderLoginPage = () => `
       sendCode();
     }
     
-    function verifyCode(email, password, code) {
+    function verifyCode(email, password, code, originalText) {
       const error = document.getElementById('error');
       const btn = document.querySelector('button[onclick="sendCode()"]');
-      const originalText = btn?.textContent || 'Send Code';
       
-      error.classList.add('hidden');
+      error.classList.remove('hidden');
       
       if (!code) {
         showErrorWithTimer(error, 'Please enter your access code');
+        btn.textContent = originalText;
+        btn.disabled = false;
         return;
       }
+      
+      // Create an AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      // Set timer to reset button after 4 seconds if no response
+      const resetTimer = setTimeout(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }, 4000);
       
       fetch('/api/auth-verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, code })
+        body: JSON.stringify({ email, password, code }),
+        signal: controller.signal
       })
       .then(r => {
+        clearTimeout(timeoutId);
+        clearTimeout(resetTimer);
         if (!r.ok) throw new Error('Request failed: ' + r.status);
         return r.json();
       })
       .then(data => {
+        clearTimeout(resetTimer);
         if (btn) {
           btn.textContent = originalText;
           btn.disabled = false;
@@ -3315,15 +3420,18 @@ const renderLoginPage = () => `
         if (data.success) {
           window.location.href = '/';
         } else {
-          showErrorWithTimer(error, data.error || 'Invalid code');
+          showErrorWithTimer(error, data.error || 'Invalid credentials or code');
         }
       })
       .catch(err => {
+        clearTimeout(timeoutId);
+        clearTimeout(resetTimer);
         if (btn) {
           btn.textContent = originalText;
           btn.disabled = false;
         }
-        showErrorWithTimer(error, 'Error: ' + err.message);
+        
+        showErrorWithTimer(error, 'Invalid credentials or code');
       });
     }
     
@@ -3343,9 +3451,9 @@ const renderLoginPage = () => `
       const error = document.getElementById('error');
       const success = document.getElementById('success');
       error.textContent = '';
-      error.classList.add('hidden');
+      error.style.display = 'none';
       success.textContent = '';
-      success.classList.add('hidden');
+      success.style.display = 'none';
     }
     
     function backToLogin() {
@@ -3356,9 +3464,9 @@ const renderLoginPage = () => `
       const error = document.getElementById('error');
       const success = document.getElementById('success');
       error.textContent = '';
-      error.classList.add('hidden');
+      error.style.display = 'none';
       success.textContent = '';
-      success.classList.add('hidden');
+      success.style.display = 'none';
       document.getElementById('signupEmail').value = '';
       document.getElementById('signupPassword').value = '';
       document.getElementById('signupFullName').value = '';
@@ -3426,12 +3534,21 @@ const renderLoginPage = () => `
       const originalText = btn.textContent;
       btn.textContent = 'Creating...';
       
+      // Create an AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       fetch('/api/auth-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, fullName, company, accessCode })
+        body: JSON.stringify({ email, password, fullName, company, accessCode }),
+        signal: controller.signal
       })
-      .then(r => r.json())
+      .then(r => {
+        clearTimeout(timeoutId);
+        if (!r.ok) throw new Error('Request failed: ' + r.status);
+        return r.json();
+      })
       .then(data => {
         if (data.success) {
           // Registration successful, auto-login
@@ -3445,7 +3562,16 @@ const renderLoginPage = () => `
         }
       })
       .catch(err => {
-        showErrorWithTimer(error, 'Error: ' + err.message);
+        clearTimeout(timeoutId);
+        
+        let errorMsg = 'Error: ' + err.message;
+        if (err.name === 'AbortError') {
+          errorMsg = 'Request timed out. Please try again.';
+        } else if (err.message.includes('Failed')) {
+          errorMsg = 'Registration failed. Please check your information.';
+        }
+        
+        showErrorWithTimer(error, errorMsg);
         btn.disabled = false;
         btn.style.opacity = '1';
         btn.style.cursor = 'pointer';
@@ -3519,12 +3645,18 @@ const renderLoginPage = () => `
       const originalText = btn.textContent;
       btn.textContent = 'Verifying...';
       
+      // Create an AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       fetch('/api/auth-verify-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code, password, fullName, company })
+        body: JSON.stringify({ email, code, password, fullName, company }),
+        signal: controller.signal
       })
       .then(r => {
+        clearTimeout(timeoutId);
         if (!r.ok) throw new Error('Request failed: ' + r.status);
         return r.json();
       })
@@ -3540,7 +3672,16 @@ const renderLoginPage = () => `
         }
       })
       .catch(err => {
-        error.textContent = 'Error: ' + err.message;
+        clearTimeout(timeoutId);
+        
+        let errorMsg = 'Error: ' + err.message;
+        if (err.name === 'AbortError') {
+          errorMsg = 'Request timed out. Please try again.';
+        } else if (err.message.includes('Failed')) {
+          errorMsg = 'Verification failed. Please check your code.';
+        }
+        
+        error.textContent = errorMsg;
         error.style.display = 'block';
         btn.disabled = false;
         btn.style.opacity = '1';
@@ -3578,8 +3719,8 @@ const renderLoginPage = () => `
         <input type="email" id="requestAccessEmail" placeholder="Email Address" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
         <input type="text" id="requestAccessSource" placeholder="Where did you hear about us? (optional)" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
         <textarea id="requestAccessMessage" placeholder="Please describe your investment background and intended use case" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; min-height: 100px; resize: vertical; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'"></textarea>
-        <div id="requestAccessError" style="color: #d32f2f; font-size: 12px; display: none;"></div>
-        <div id="requestAccessSuccess" style="color: #2e7d32; font-size: 12px; display: none;"></div>
+        <div id="requestAccessError" style="color: #d32f2f; font-size: 12px; display: none; padding: 8px 12px; background: #ffebee; border-radius: 4px; margin-bottom: 8px;"></div>
+        <div id="requestAccessSuccess" style="color: #2e7d32; font-size: 12px; display: none; padding: 8px 12px; background: #e8f5e9; border-radius: 4px; margin-bottom: 8px;"></div>
         <div style="display: flex; gap: 12px;">
           <button type="button" onclick="submitAccessRequest()" style="flex: 1; padding: 12px; background: linear-gradient(180deg, #888888 0%, #666666 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px rgba(100, 100, 100, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">Submit Request</button>
           <button type="button" onclick="document.getElementById('requestAccessModal').classList.remove('show')" style="flex: 1; padding: 12px; background: #f0f0f0; color: #666; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e0e0e0'" onmouseout="this.style.backgroundColor='#f0f0f0'">Cancel</button>
@@ -3604,66 +3745,7 @@ const renderLoginPage = () => `
         window.open(url, '_blank');
       }
     }
-    
-    function submitAccessRequest() {
-      const name = document.getElementById('requestAccessName').value.trim();
-      const email = document.getElementById('requestAccessEmail').value.trim();
-      const source = document.getElementById('requestAccessSource').value.trim();
-      const message = document.getElementById('requestAccessMessage').value.trim();
-      const errorDiv = document.getElementById('requestAccessError');
-      const successDiv = document.getElementById('requestAccessSuccess');
-      
-      if (errorDiv) errorDiv.style.display = 'none';
-      if (successDiv) successDiv.style.display = 'none';
-      
-      if (!name || !email || !message) {
-        if (errorDiv) {
-          showErrorWithTimer(errorDiv, 'Name, email, and interest are required');
-        }
-        return;
-      }
-      
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        if (errorDiv) {
-          showErrorWithTimer(errorDiv, 'Please enter a valid email');
-        }
-        return;
-      }
-      
-      fetch('/api/send-access-request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, source, message })
-      })
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          alert('✓ Your access request has been submitted successfully! We will review it shortly.');
-          document.getElementById('requestAccessName').value = '';
-          document.getElementById('requestAccessEmail').value = '';
-          document.getElementById('requestAccessSource').value = '';
-          document.getElementById('requestAccessMessage').value = '';
-          if (successDiv) {
-            successDiv.style.display = 'none';
-          }
-          if (errorDiv) {
-            errorDiv.style.display = 'none';
-          }
-          setTimeout(() => document.getElementById('requestAccessModal').classList.remove('show'), 500);
-        } else {
-          if (errorDiv) {
-            showErrorWithTimer(errorDiv, data.error || 'Failed to submit request');
-          }
-        }
-      })
-      .catch(err => {
-        if (errorDiv) {
-          showErrorWithTimer(errorDiv, 'Error: ' + err.message);
-        }
-      });
-    }
-    
+        
     function openRequestAccessModal() {
       const modal = document.getElementById('requestAccessModal');
       if (!modal) {
@@ -3693,6 +3775,9 @@ const renderLoginPage = () => `
       const message = document.getElementById('requestAccessMessage').value.trim();
       const errorDiv = document.getElementById('requestAccessError');
       const successDiv = document.getElementById('requestAccessSuccess');
+      const buttons = document.querySelectorAll('#requestAccessModal button');
+      const btn = buttons.length > 0 ? buttons[0] : null;
+      const originalText = btn?.textContent || 'Submit Request';
       
       errorDiv.style.display = 'none';
       successDiv.style.display = 'none';
@@ -3700,7 +3785,6 @@ const renderLoginPage = () => `
       if (!name || !email || !message) {
         errorDiv.textContent = 'Please fill in all required fields';
         errorDiv.style.display = 'block';
-        setTimeout(() => { errorDiv.style.display = 'none'; }, 8000);
         return;
       }
       
@@ -3708,9 +3792,20 @@ const renderLoginPage = () => `
       if (!emailRegex.test(email)) {
         errorDiv.textContent = 'Please enter a valid email address';
         errorDiv.style.display = 'block';
-        setTimeout(() => { errorDiv.style.display = 'none'; }, 8000);
         return;
       }
+      
+      if (btn) {
+        btn.textContent = 'Submitting...';
+        btn.disabled = true;
+      }
+      
+      const resetTimer = setTimeout(() => {
+        if (btn) {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      }, 4000);
       
       try {
         const response = await fetch('/api/send-access-request', {
@@ -3721,6 +3816,12 @@ const renderLoginPage = () => `
         
         const data = await response.json();
         
+        clearTimeout(resetTimer);
+        if (btn) {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+        
         if (data.success) {
           successDiv.textContent = 'Request submitted successfully! We\'ll review and contact you soon.';
           successDiv.style.display = 'block';
@@ -3728,12 +3829,15 @@ const renderLoginPage = () => `
         } else {
           errorDiv.textContent = data.error || 'Failed to submit request';
           errorDiv.style.display = 'block';
-          setTimeout(() => { errorDiv.style.display = 'none'; }, 8000);
         }
       } catch (err) {
+        clearTimeout(resetTimer);
+        if (btn) {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
         errorDiv.textContent = 'Network error. Please try again.';
         errorDiv.style.display = 'block';
-        setTimeout(() => { errorDiv.style.display = 'none'; }, 8000);
       }
     }
     
@@ -6628,6 +6732,64 @@ app.get('/api/ping', (req, res) => {
   }
 });
 
+// Performance summary endpoint - shows win rate and top performers for login page
+app.get('/api/performance-summary', (req, res) => {
+  try {
+    let performanceData = {};
+    
+    if (fs.existsSync(CONFIG.PERFORMANCE_FILE)) {
+      const content = fs.readFileSync(CONFIG.PERFORMANCE_FILE, 'utf8').trim();
+      if (content) {
+        try {
+          performanceData = JSON.parse(content);
+        } catch (e) {
+          performanceData = {};
+        }
+      }
+    }
+    
+    if (!performanceData || Object.keys(performanceData).length === 0) {
+      return res.json({ winRate: 0, totalTrades: 0, topPerformers: [], bestPerformer: null });
+    }
+    
+    // Calculate win rate
+    const allTrades = Object.values(performanceData);
+    const winningTrades = allTrades.filter(t => {
+      if (t.short) {
+        return t.performance < 0; // Short wins if price went down
+      } else {
+        return t.performance > 0; // Long wins if price went up
+      }
+    });
+    
+    const winRate = allTrades.length > 0 ? Math.round((winningTrades.length / allTrades.length) * 100) : 0;
+    
+    // Get top 5 performers by 5-day peak
+    const topPerformers = allTrades
+      .filter(t => t.highest5DayPercent !== undefined && t.highest5DayPercent !== null)
+      .sort((a, b) => Math.abs(b.highest5DayPercent) - Math.abs(a.highest5DayPercent))
+      .slice(0, 5)
+      .map(t => ({
+        ticker: Object.keys(performanceData).find(k => performanceData[k] === t),
+        peak5Day: t.highest5DayPercent,
+        direction: t.short ? 'short' : 'long'
+      }));
+    
+    // Find best performer
+    const bestPerformer = topPerformers.length > 0 ? topPerformers[0] : null;
+    
+    res.json({
+      winRate: winRate,
+      totalTrades: allTrades.length,
+      winningTrades: winningTrades.length,
+      topPerformers: topPerformers,
+      bestPerformer: bestPerformer
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
+});
+
 // Background task to update performance data for all tracked stocks
 const updateAllPerformanceData = async () => {
   try {
@@ -7715,6 +7877,8 @@ if (process.stdin.isTTY) {
               // Set skip reason if this alert has borderline characteristics
               if (signalScoreData.score < 0.3) {
                 alertData.skipReason = 'Low Score';
+              } else if (alertData.intent === 'neutral') {
+                alertData.skipReason = 'Neutral Signal';
               } else if (Object.keys(semanticSignals).length < 2) {
                 alertData.skipReason = 'Not Enough Signals';
               } else if (float !== 'N/A' && parseFloat(float) > CONFIG.MAX_FLOAT * 0.8) {

@@ -3598,8 +3598,7 @@ ${alert.financialRatioSignals && alert.financialRatioSignals.signals && alert.fi
         // Format financial ratio signals with simple phrasing
         const simplePhrase = sig.replace(/\s*\([^)]*\)/g, '');
         return '• ' + simplePhrase;
-    }).join('\n') : ''}
-${(alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals === 'object' && Object.keys(alert.bonusSignals).length > 0)) ? '<span style="opacity: 0.7;">Bonus:</span> ' + (() => {
+    }).join('\n') + (alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals === 'object' && Object.keys(alert.bonusSignals).length > 0) ? '\n' : '') : ''}${(alert.hasTuesdayBonus || (alert.bonusSignals && typeof alert.bonusSignals === 'object' && Object.keys(alert.bonusSignals).length > 0)) ? '<span style="opacity: 0.7;">Bonus:</span> ' + (() => {
         let bonusItems = [];
         let services = [];
         if (alert.hasTuesdayBonus) bonusItems.push('Tuesday Window');

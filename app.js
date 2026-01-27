@@ -482,7 +482,7 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   }
 
   // ADR Detection - verify ONLY actual custodian banks, NOT mere country mismatch
-  // Removed strict ADR structure matching (incorporated != located) as it filters pumps
+  // Removed strict ADR structure matching (incorporated != located)
   let adrMultiplier = 1.0;
   let isCustodianVerified = false;
   let custodianName = null;
@@ -550,9 +550,8 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
     }
   }
   
-  // Layer 5: LOW FLOAT PUMP DETECTION - catches momentum plays your system filters
   let lowFloatPumpBonus = 1.0;
-  const floatUnderThreshold = numFloat < 5000000; // Under 5M shares = pump candidate
+  const floatUnderThreshold = numFloat < 5000000; // Under 5M shares = explosivity candidate
   const hasCleanCatalyst = signalCategories?.some(cat => 
     ['Partnership', 'Major Contract', 'Licensing Deal', 'Revenue Growth', 'Earnings Outperformance'].includes(cat)
   );

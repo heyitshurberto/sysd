@@ -23,9 +23,9 @@ const CONFIG = {
   MIN_ALERT_VOLUME: 20000,          // Lower base, conditional on signal strength
   STRONG_SIGNAL_MIN_VOLUME: 1000,   // Very low for penny stocks with extreme S/O
   EXTREME_SO_RATIO: 80,             // 80%+ S/O = tight float
-  MAX_FLOAT_6K: 100000000,           // Max float size for 6-K
+  MAX_FLOAT_6K: 100000000,          // Max float size for 6-K
   MAX_FLOAT_8K: 250000000,          // Max float size for 8-K 
-  MAX_SO_RATIO: 1000.0,              // Max short interest ratio
+  MAX_SO_RATIO: 1000.0,             // Max short interest ratio
   ALLOWED_COUNTRIES: ['israel', 'china', 'hong kong', 'australia', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'nevada', 'delaware'], // Allowed incorporation/located countries
   // Enable optimizations for Raspberry Pi devices
   PI_MODE: true,              // Enable Pi optimizations          
@@ -458,10 +458,28 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   const hasDeathSpiral = signalCategories?.some(cat => deathSpiralCats.includes(cat));
   const hasSqueeze = signalCategories?.some(cat => cat === 'Artificial Inflation');
   
-  if (hasStructuralMover) signalMultiplier = 1.30;  // Structural events with mechanical execution
-  else if (hasDeathSpiral) signalMultiplier = 1.15;    // Death spirals force selling
-  else if (hasSqueeze) signalMultiplier = 1.10;        // Supply shocks
-  else signalMultiplier = 1.0;
+  // FINANCIAL RATIO DETECTION - deterministic bankruptcy signals
+  const financialRatios = parseFinancialRatios(filingText);
+  const hasFinancialCrisis = financialRatios.severity > 0.60;
+  
+  // Add financial ratio signals to signalCategories for scoring context
+  if (financialRatios.signals && financialRatios.signals.length > 0) {
+    signalCategories = [...(signalCategories || []), ...financialRatios.signals];
+  }
+  
+  if (hasFinancialCrisis && financialRatios.severity > 0.85) {
+    signalMultiplier = 1.40;  // Critical bankruptcy risk (current ratio <0.2, negative BVPS, etc.)
+  } else if (hasStructuralMover) {
+    signalMultiplier = 1.30;  // Structural events with mechanical execution
+  } else if (hasFinancialCrisis) {
+    signalMultiplier = 1.25;  // High financial distress multiplier
+  } else if (hasDeathSpiral) {
+    signalMultiplier = 1.15;    // Death spirals force selling
+  } else if (hasSqueeze) {
+    signalMultiplier = 1.10;        // Supply shocks
+  } else {
+    signalMultiplier = 1.0;
+  }
 
   // ADR Detection - verify ONLY actual custodian banks, NOT mere country mismatch
   // Removed strict ADR structure matching (incorporated != located) as it filters pumps
@@ -792,6 +810,97 @@ const SEMANTIC_KEYWORDS = {
   'Offtake Agreement': ['Offtake Agreement', 'Offtake MOU', 'Off-take', 'Offtake Contract', 'Secured Offtake', 'Offtake Term Sheet'],
 };
 
+
+// FINANCIAL RATIO PARSER - Extract & analyze balance sheet metrics
+// Deterministic: Current Ratio < 0.5, Working Capital < 0, Net Cash < 0, Book Value < 0
+const parseFinancialRatios = (filingText) => {
+  if (!filingText) return { signals: [], severity: 0 };
+  
+  const signals = [];
+  let severity = 0;
+  
+  // Current Ratio parser (liquidity crisis threshold = 0.5)
+  const currentRatioMatch = filingText.match(/current ratio[:\s]+([0-9.]+)/i);
+  if (currentRatioMatch) {
+    const ratio = parseFloat(currentRatioMatch[1]);
+    if (ratio < 0.2) {
+      signals.push('Critical Liquidity Crisis (CR < 0.2)');
+      severity = Math.max(severity, 0.95); // Near certain bankruptcy
+    } else if (ratio < 0.5) {
+      signals.push('Severe Liquidity Shortage (CR < 0.5)');
+      severity = Math.max(severity, 0.80);
+    } else if (ratio < 1.0) {
+      signals.push('Liquidity Concern (CR < 1.0)');
+      severity = Math.max(severity, 0.60);
+    }
+  }
+  
+  // Working Capital parser (negative = can't pay bills)
+  const wcMatch = filingText.match(/working capital[:\s]+\(([0-9,.]+)\)|working capital[:\s]*-([0-9,.]+)|working capital[:\s]+\$?\(?([0-9,]+)\)?M/i);
+  if (wcMatch) {
+    const wcText = (wcMatch[1] || wcMatch[2] || wcMatch[3] || '').replace(/[,$M]/g, '');
+    const wc = parseFloat(wcText);
+    if (wc < -10000000) { // < -$10M
+      signals.push('Massive Working Capital Deficit (WC < -$10M)');
+      severity = Math.max(severity, 0.85);
+    } else if (wc < 0) {
+      signals.push('Working Capital Deficit (WC < 0)');
+      severity = Math.max(severity, 0.70);
+    }
+  }
+  
+  // Book Value per Share parser (negative = insolvent on paper)
+  const bvpsMatch = filingText.match(/book value per share[:\s]+\$?([0-9.-]+)|equity.*per share[:\s]+\$?([0-9.-]+)/i);
+  if (bvpsMatch) {
+    const bvps = parseFloat(bvpsMatch[1] || bvpsMatch[2]);
+    if (bvps < 0) {
+      signals.push('Negative Book Value Per Share (BVPS < 0)');
+      severity = Math.max(severity, 0.90); // Technically insolvent
+    }
+  }
+  
+  // Net Cash parser (negative debt = more debt than cash)
+  const netCashMatch = filingText.match(/net cash[:\s]+\(?([0-9,.-]+)\)?M|net debt[:\s]+\$?([0-9,.-]+)M/i);
+  if (netCashMatch) {
+    const ncText = (netCashMatch[1] || netCashMatch[2] || '').replace(/[,$M]/g, '');
+    const nc = parseFloat(ncText);
+    if (nc < -5000) { // < -$5B
+      signals.push('Extreme Negative Net Cash (< -$5B)');
+      severity = Math.max(severity, 0.75);
+    } else if (nc < 0) {
+      signals.push('Negative Net Cash (net debt position)');
+      severity = Math.max(severity, 0.65);
+    }
+  }
+  
+  // Debt/Equity parser (> 2.0 = highly leveraged)
+  const deMatch = filingText.match(/debt.*equity[:\s]+([0-9.]+)|leverage ratio[:\s]+([0-9.]+)/i);
+  if (deMatch) {
+    const de = parseFloat(deMatch[1] || deMatch[2]);
+    if (de > 3.0) {
+      signals.push('Extreme Leverage (D/E > 3.0)');
+      severity = Math.max(severity, 0.75);
+    } else if (de > 2.0) {
+      signals.push('High Leverage (D/E > 2.0)');
+      severity = Math.max(severity, 0.65);
+    }
+  }
+  
+  // Interest Coverage parser (< 1.0 = can't service debt)
+  const icMatch = filingText.match(/interest coverage[:\s]+([0-9.]+)|times interest earned[:\s]+([0-9.]+)/i);
+  if (icMatch) {
+    const ic = parseFloat(icMatch[1] || icMatch[2]);
+    if (ic < 0.5) {
+      signals.push('Critical Debt Service Risk (IC < 0.5)');
+      severity = Math.max(severity, 0.85);
+    } else if (ic < 1.0) {
+      signals.push('Debt Service Concern (IC < 1.0)');
+      severity = Math.max(severity, 0.75);
+    }
+  }
+  
+  return { signals, severity };
+};
 
 // 1. DTC Chill Lift Detector
 const detectDTCChillLift = (text) => {

@@ -458,7 +458,7 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   const hasDeathSpiral = signalCategories?.some(cat => deathSpiralCats.includes(cat));
   const hasSqueeze = signalCategories?.some(cat => cat === 'Artificial Inflation');
   
-  // FINANCIAL RATIO DETECTION - deterministic bankruptcy signals
+  // Financial ratio detection - objective bankruptcy indicators from balance sheet
   const financialRatios = parseFinancialRatios(filingText);
   const hasFinancialCrisis = financialRatios.severity > 0.60;
   
@@ -487,9 +487,9 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   let isCustodianVerified = false;
   let custodianName = null;
   
-  // MAXIMUM RED FLAG: "Not Applicable" = Ghost company (no origin, pure shell)
+  // Red flag: "Not Applicable" indicates shell company with no legitimate origin
   if ((incorporated && incorporated.includes('Not Applicable')) || (located && located.includes('Not Applicable')) || (companyName && companyName.includes('Not Applicable'))) {
-    adrMultiplier = 1.15;  // MEGA BONUS - absolute scam signal
+    adrMultiplier = 1.15;  // Shell company multiplier boost
     isCustodianVerified = false;
     custodianName = 'Ghost Company (N/A)';
   }
@@ -812,7 +812,7 @@ const SEMANTIC_KEYWORDS = {
 
 
 // FINANCIAL RATIO PARSER - Extract & analyze balance sheet metrics
-// Deterministic: Current Ratio < 0.5, Working Capital < 0, Net Cash < 0, Book Value < 0
+// Financial ratio parser: extracts quantitative balance sheet metrics from filing text
 const parseFinancialRatios = (filingText) => {
   if (!filingText) return { signals: [], severity: 0 };
   
@@ -824,13 +824,13 @@ const parseFinancialRatios = (filingText) => {
   if (currentRatioMatch) {
     const ratio = parseFloat(currentRatioMatch[1]);
     if (ratio < 0.2) {
-      signals.push('Critical Liquidity Crisis (CR < 0.2)');
+      signals.push('Liquidity Crisis - Current Ratio Below 0.2');
       severity = Math.max(severity, 0.95); // Near certain bankruptcy
     } else if (ratio < 0.5) {
-      signals.push('Severe Liquidity Shortage (CR < 0.5)');
+      signals.push('Liquidity Shortage - Current Ratio Below 0.5');
       severity = Math.max(severity, 0.80);
     } else if (ratio < 1.0) {
-      signals.push('Liquidity Concern (CR < 1.0)');
+      signals.push('Liquidity Concern - Current Ratio Below 1.0');
       severity = Math.max(severity, 0.60);
     }
   }
@@ -865,10 +865,10 @@ const parseFinancialRatios = (filingText) => {
     const ncText = (netCashMatch[1] || netCashMatch[2] || '').replace(/[,$M]/g, '');
     const nc = parseFloat(ncText);
     if (nc < -5000) { // < -$5B
-      signals.push('Extreme Negative Net Cash (< -$5B)');
+      signals.push('Severe Net Debt Position - Over $5B');
       severity = Math.max(severity, 0.75);
     } else if (nc < 0) {
-      signals.push('Negative Net Cash (net debt position)');
+      signals.push('Net Debt Position');
       severity = Math.max(severity, 0.65);
     }
   }
@@ -878,10 +878,10 @@ const parseFinancialRatios = (filingText) => {
   if (deMatch) {
     const de = parseFloat(deMatch[1] || deMatch[2]);
     if (de > 3.0) {
-      signals.push('Extreme Leverage (D/E > 3.0)');
+      signals.push('High Leverage - Debt/Equity Exceeds 3.0');
       severity = Math.max(severity, 0.75);
     } else if (de > 2.0) {
-      signals.push('High Leverage (D/E > 2.0)');
+      signals.push('Leverage Concern - Debt/Equity Exceeds 2.0');
       severity = Math.max(severity, 0.65);
     }
   }
@@ -891,10 +891,10 @@ const parseFinancialRatios = (filingText) => {
   if (icMatch) {
     const ic = parseFloat(icMatch[1] || icMatch[2]);
     if (ic < 0.5) {
-      signals.push('Critical Debt Service Risk (IC < 0.5)');
+      signals.push('Debt Service Risk - Interest Coverage Below 0.5');
       severity = Math.max(severity, 0.85);
     } else if (ic < 1.0) {
-      signals.push('Debt Service Concern (IC < 1.0)');
+      signals.push('Debt Service Concern - Interest Coverage Below 1.0');
       severity = Math.max(severity, 0.75);
     }
   }
@@ -1289,7 +1289,7 @@ const cleanupStaleAlerts = () => {
 const saveToCSV = (alertData) => {
   try {
     const csvPath = CONFIG.CSV_FILE;
-    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Registrant Name,Price,Score,Float,Shares Outstanding,S/O Ratio,Weighted Average,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Bonus Signals,Alert Type,Skip Reason\n';
+    const headers = 'Filed Date,Filed Time,Scanned Date,Scanned Time,CIK,Ticker,Registrant Name,Price,Score,Float,Shares Outstanding,S/O Ratio,Weighted Average,FTD,FTD %,Volume,Average Volume,Incorporated,Located,Filing Type,Catalyst,Custodian Control,Filing Time Bonus,S/O Bonus,Bonus Signals,Financial Ratios,Alert Type,Skip Reason\n';
     
     // Create file with headers if it doesn't exist
     if (!fs.existsSync(csvPath)) {
@@ -1351,6 +1351,12 @@ const saveToCSV = (alertData) => {
       }
     }
     
+    // Format financial ratio signals (deterministic bankruptcy indicators)
+    let financialRatiosStr = 'N/A';
+    if (alertData.financialRatioSignals && alertData.financialRatioSignals.signals && Array.isArray(alertData.financialRatioSignals.signals)) {
+      financialRatiosStr = alertData.financialRatioSignals.signals.join('; ') + ` [Severity: ${alertData.financialRatioSignals.severity.toFixed(2)}]`;
+    }
+    
     // Build CSV row with data
     const csvWA = alertData.wa || 'N/A';
     const row = [
@@ -1379,6 +1385,7 @@ const saveToCSV = (alertData) => {
       escapeCSV(alertData.filingTimeBonus ? `${alertData.filingTimeBonus}x Filing Time` : 'No'),
       escapeCSV(alertData.soBonus && alertData.soBonus > 1.0 ? `${alertData.soBonus}x S/O` : 'No'),
       escapeCSV(bonusSignalsStr),
+      escapeCSV(financialRatiosStr),
       escapeCSV(alertData.alertType || 'N/A'),
       escapeCSV(alertData.skipReason || ''),
     ];
@@ -1447,8 +1454,15 @@ const saveAlert = (alertData) => {
         bonusItems.push(`Services: ${alertData.bonusSignals['Third Party'].join(', ')}`);
       }
     }
+    // Add financial ratio signals to log output if detected
+    let financialRatioIndicator = '';
+    if (alertData.financialRatioSignals && alertData.financialRatioSignals.signals && alertData.financialRatioSignals.signals.length > 0) {
+      const ratioLabels = alertData.financialRatioSignals.signals.map(s => s.split('(')[0].trim()).join(' + ');
+      const severityLevel = alertData.financialRatioSignals.severity > 0.85 ? '[CRITICAL]' : '[HIGH]';
+      financialRatioIndicator = ` (Financial Ratios ${severityLevel}: ${ratioLabels})`;
+    }
     const bonusIndicator = bonusItems.length > 0 ? ` (Bonus: ${bonusItems.join(' + ')})` : '';
-    alertData.skipReason = `Alert sent: [${direction}] ${reason}${bonusIndicator}`;
+    alertData.skipReason = `Alert sent: [${direction}] ${reason}${financialRatioIndicator}${bonusIndicator}`;
     
     // Save to CSV for analysis (non-blocking)
     setImmediate(() => saveToCSV(alertData));
@@ -1486,6 +1500,12 @@ const saveAlert = (alertData) => {
     const avgVolDisplay = alertData.averageVolume && alertData.averageVolume !== 'N/A' ? (alertData.averageVolume / 1000000).toFixed(2) + 'm' : 'n/a';
     const floatDisplay = alertData.float && alertData.float !== 'N/A' && !isNaN(alertData.float) ? (alertData.float / 1000000).toFixed(2) + 'm' : 'n/a';
     const soDisplay = alertData.soRatio || 'n/a';
+    
+    // Log financial ratio signals if detected (deterministic bankruptcy signals)
+    if (alertData.financialRatioSignals && alertData.financialRatioSignals.signals && alertData.financialRatioSignals.signals.length > 0) {
+      log('INFO', `Ratio: ${alertData.financialRatioSignals.signals.join(', ')}`);
+      log('INFO', `Severity: ${alertData.financialRatioSignals.severity.toFixed(2)}/1.0 - ${alertData.financialRatioSignals.severity > 0.85 ? 'CRITICAL BANKRUPTCY RISK' : 'HIGH FINANCIAL DISTRESS'}`);
+    }
     
     const priceDisplay = alertData.price && alertData.price !== 'N/A' ? `$${alertData.price.toFixed(2)}` : 'N/A';
     const formTypeStr = Array.isArray(alertData.formType) ? (alertData.formType[0] || '6-K') : (alertData.formType || '6-K');
@@ -6817,6 +6837,17 @@ if (process.stdin.isTTY) {
           
           let semanticSignals = parseSemanticSignals(text);
           
+          // Extract financial ratio signals - bankruptcy indicators
+          const financialRatioData = parseFinancialRatios(text);
+          let financialRatioSignals = {};
+          if (financialRatioData.signals && financialRatioData.signals.length > 0) {
+            financialRatioSignals = {
+              signals: financialRatioData.signals,
+              severity: financialRatioData.severity,
+              isDeterministic: true
+            };
+          }
+          
           let bonusSignals = {};
           
           // Check DTC chill lift (100% mechanical)
@@ -7641,6 +7672,7 @@ if (process.stdin.isTTY) {
             filingDate: periodOfReport,
             signals: semanticSignals,
             bonusSignals: bonusSignals,
+            financialRatioSignals: financialRatioSignals,
             reverseSplitRatio: reverseSplitRatio,
             reverseSplitReason: reverseSplitReason,
             formType: Array.from(foundForms),

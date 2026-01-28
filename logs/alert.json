@@ -906,5 +906,72 @@
     "highest5Day": 12.26,
     "highest5DayPercent": 0,
     "peakPrice": 12.26
+  },
+  {
+    "ticker": "BCAL",
+    "title": "8-K - California BanCorp \\ CA (0001795815) (Filer)",
+    "companyName": "California BanCorp \\ CA",
+    "filerName": null,
+    "price": 18.43,
+    "wa": "13.24",
+    "signalScore": 0.45,
+    "hasTuesdayBonus": false,
+    "custodianControl": false,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.1,
+    "filingTimeBonus": 1.1,
+    "soBonus": 1.2,
+    "volume": 157937,
+    "averageVolume": 203351,
+    "float": 1388072,
+    "sharesOutstanding": 32322651,
+    "soRatio": "4.29%",
+    "marketCap": 599299328,
+    "isShort": true,
+    "ftd": 150,
+    "ftdPercent": "0.01",
+    "intent": "Revenue Growth, Share Issuance, Stock Buyback",
+    "incorporated": "Toronto, Canada",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-28",
+    "signals": {
+      "Revenue Growth": [
+        "Organic Growth"
+      ],
+      "Share Issuance": [
+        "Share increase"
+      ],
+      "Stock Buyback": [
+        "Repurchase Program"
+      ]
+    },
+    "bonusSignals": {},
+    "financialRatioSignals": {
+      "signals": [
+        "High Leverage - Debt/Equity Exceeds 3.0"
+      ],
+      "severity": 0.75,
+      "isDeterministic": true
+    },
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "8-K",
+      "EX-99.1",
+      "Item 2.02",
+      "Item 7.01",
+      "Item 9.01"
+    ],
+    "filingType": "8-K, EX-99.1, Item 2.02, Item 7.01, Item 9.01",
+    "cik": "1795815",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-28T13:07:09.410Z",
+    "recordId": "BCAL-1769605629410",
+    "expiresAt": "2026-02-02T13:07:09.410Z",
+    "direction": "SHORT",
+    "highest5Day": 18.43,
+    "highest5DayPercent": 0
   }
 ]

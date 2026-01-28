@@ -734,7 +734,7 @@ const FORM_TYPES = ['6-K', '6-K/A', '8-K', '8-K/A', 'S-1', 'S-3', 'S-4', 'S-8', 
 const SEMANTIC_KEYWORDS = {
   'Merger/Acquisition': ['Merger Agreement', 'Acquisition Agreement', 'Agreed To Acquire', 'Merger Consideration', 'Premium Valuation', 'Going Private', 'Take Private', 'Acquisition Closing', 'Closing Of Acquisition', 'Completed Acquisition'],
   'M&A Rebrand': ['Corporate Name Change', 'Ticker Change', 'Trading Name Change', 'Change Of Company Name', 'Formerly Known As', 'Name Changed To'],
-  'FDA Approved': ['FDA Approval', 'FDA Clearance', 'Approval Granted', 'Approval Letter', 'Approves', 'EMA Approval', 'Post-Market Approval'],
+  'FDA Approved': ['FDA Approval', 'FDA Clearance', 'Approval Granted', 'Approval Letter', 'FDA Approves', 'FDA approved', 'FDA approval', 'EMA Approval', 'Post-Market Approval', 'PMA Approval', '510(k) Clearance', 'De Novo Clearance'],
   'FDA Breakthrough': ['Breakthrough Therapy', 'Breakthrough Designation', 'Fast Track Designation', 'Priority Review', 'Priority Status'],
   'FDA Filing': ['NDA Submission', 'NDA Filed', 'BLA Submission', 'BLA Filed', 'IND Application', 'Regulatory Filing'],
   'Clinical Success': ['Positive Trial Results', 'Phase 3 Success', 'Topline Results Beat', 'Efficacy Demonstrated', 'Safety Profile Met', 'Positive Results', 'Phase 1', 'Phase 2', 'Phase 3', 'Trial Results', 'Efficacy', 'Safety Profile', 'Cohort Results', 'Primary Endpoint', 'Enrollment Complete', 'Data Readout', 'Topline Data', 'Meaningful Improvement', 'Beat Placebo', 'Indication', 'Mechanism Of Action', 'Biomarker', 'Immune Rebalancing', 'Comparator', 'Patient Population', 'Favorable Safety', 'Separation From Placebo', 'Demonstrated Benefit', 'Clinical Benefit', 'Strong Efficacy'],
@@ -1423,7 +1423,9 @@ const saveAlert = (alertData) => {
       recordedAt: new Date().toISOString(),
       recordId: `${alertData.ticker}-${Date.now()}`,
       expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-      direction: direction
+      direction: direction,
+      highest5Day: alertData.price || 0,
+      highest5DayPercent: 0
     };
     
     alerts.push(enrichedData);
@@ -1616,8 +1618,110 @@ const updatePerformanceData = (alertData) => {
     // Write updated performance data
     fs.writeFileSync(CONFIG.PERFORMANCE_FILE, JSON.stringify(performanceData, null, 2));
     
+    // Sync peak data back to stocks.json
+    syncPeakDataToStocks(ticker, performanceData[ticker]);
+    
   } catch (err) {
     log('WARN', `Failed to update performance data: ${err.message}`);
+  }
+};
+
+// Sync peak price and % change to stocks.json for history display
+const syncPeakDataToStocks = (ticker, peakData) => {
+  try {
+    if (!fs.existsSync(CONFIG.STOCKS_FILE)) return;
+    
+    const content = fs.readFileSync(CONFIG.STOCKS_FILE, 'utf8').trim();
+    if (!content) return;
+    
+    let stocks = JSON.parse(content);
+    if (!Array.isArray(stocks)) return;
+    
+    // Get current price from quote.json if available
+    let currentPrice = peakData.highest5Day;
+    if (fs.existsSync(CONFIG.PERFORMANCE_FILE)) {
+      try {
+        const quoteContent = fs.readFileSync(CONFIG.PERFORMANCE_FILE, 'utf8').trim();
+        if (quoteContent) {
+          const quotes = JSON.parse(quoteContent);
+          if (quotes[ticker] && quotes[ticker].current) {
+            currentPrice = quotes[ticker].current;
+          }
+        }
+      } catch (e) {
+        // Fall back to peakData
+      }
+    }
+    
+    // Find and update matching ticker entries in stocks.json
+    stocks = stocks.map(stock => {
+      if (stock.ticker === ticker) {
+        // Calculate percent change from alert price to peak
+        const alertPrice = stock.price || 0;
+        const peakPrice = currentPrice || peakData.highest5Day || stock.price;
+        let peakPercent = 0;
+        
+        if (alertPrice > 0) {
+          const change = peakPrice - alertPrice;
+          peakPercent = parseFloat(((change / alertPrice) * 100).toFixed(2));
+        }
+        
+        return {
+          ...stock,
+          highest5Day: peakPrice,
+          highest5DayPercent: peakPercent
+        };
+      }
+      return stock;
+    });
+    
+    fs.writeFileSync(CONFIG.STOCKS_FILE, JSON.stringify(stocks, null, 2));
+  } catch (err) {
+    // Silent fail - don't spam logs for this background sync
+  }
+};
+
+// Periodically sync all stocks with current prices from quote.json
+const syncAllPeakData = () => {
+  try {
+    if (!fs.existsSync(CONFIG.STOCKS_FILE) || !fs.existsSync(CONFIG.PERFORMANCE_FILE)) return;
+    
+    const stocksContent = fs.readFileSync(CONFIG.STOCKS_FILE, 'utf8').trim();
+    const quotesContent = fs.readFileSync(CONFIG.PERFORMANCE_FILE, 'utf8').trim();
+    
+    if (!stocksContent || !quotesContent) return;
+    
+    let stocks = JSON.parse(stocksContent);
+    const quotes = JSON.parse(quotesContent);
+    
+    if (!Array.isArray(stocks) || typeof quotes !== 'object') return;
+    
+    // Update each stock with current price and peak data
+    stocks = stocks.map(stock => {
+      if (quotes[stock.ticker]) {
+        const quoteData = quotes[stock.ticker];
+        const alertPrice = stock.price || 0;
+        const currentPrice = quoteData.current || quoteData.currentPrice || stock.price;
+        const highest5Day = quoteData.highest5Day || currentPrice;
+        
+        let peakPercent = 0;
+        if (alertPrice > 0) {
+          const change = highest5Day - alertPrice;
+          peakPercent = parseFloat(((change / alertPrice) * 100).toFixed(2));
+        }
+        
+        return {
+          ...stock,
+          highest5Day: highest5Day,
+          highest5DayPercent: peakPercent
+        };
+      }
+      return stock;
+    });
+    
+    fs.writeFileSync(CONFIG.STOCKS_FILE, JSON.stringify(stocks, null, 2));
+  } catch (err) {
+    // Silent fail
   }
 };
 
@@ -3267,26 +3371,32 @@ const renderLoginPage = () => `
     
     // Load landing page performance stats
     function loadLandingPerformanceStats() {
-      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      if (!isLocalhost) return; // Only show on localhost
-      
+      console.log('Loading performance stats...');
       fetch('/api/performance-summary')
-        .then(r => r.json())
+        .then(r => {
+          console.log('Response status:', r.status);
+          return r.json();
+        })
         .then(data => {
+          console.log('Performance data received:', data);
           if (data && data.totalTrades > 0) {
+            console.log('Setting stats - winRate:', data.winRate, 'totalTrades:', data.totalTrades);
             document.getElementById('landing-win-rate').textContent = data.winRate + '%';
             document.getElementById('landing-total-trades').textContent = data.totalTrades;
             
             if (data.bestPerformer) {
               const peak = data.bestPerformer.peak5Day;
-              const direction = data.bestPerformer.direction === 'short' ? '↓' : '↑';
+              const direction = data.bestPerformer.direction === 'SHORT' ? '↓' : '↑';
               const tickerText = '$' + data.bestPerformer.ticker + ' ' + direction + ' ' + Math.abs(peak).toFixed(1) + '%';
+              console.log('Setting best trade:', tickerText);
               document.getElementById('landing-best-trade').textContent = tickerText;
             }
+          } else {
+            console.log('No trade data available');
           }
         })
         .catch(err => {
-          // Silently fail - optional feature
+          console.error('Error loading performance stats:', err);
         });
     }
     
@@ -3719,9 +3829,9 @@ const renderLoginPage = () => `
         <input type="email" id="requestAccessEmail" placeholder="Email Address" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
         <input type="text" id="requestAccessSource" placeholder="Where did you hear about us? (optional)" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
         <textarea id="requestAccessMessage" placeholder="Please describe your investment background and intended use case" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; min-height: 100px; resize: vertical; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'"></textarea>
-        <div id="requestAccessError" style="color: #d32f2f; font-size: 12px; display: none; padding: 8px 12px; background: #ffebee; border-radius: 4px; margin-bottom: 8px;"></div>
-        <div id="requestAccessSuccess" style="color: #2e7d32; font-size: 12px; display: none; padding: 8px 12px; background: #e8f5e9; border-radius: 4px; margin-bottom: 8px;"></div>
-        <div style="display: flex; gap: 12px;">
+        <div id="requestAccessError" style="color: #d32f2f !important; font-size: 14px !important; display: none !important; padding: 12px 16px !important; background: #ffebee !important; border-radius: 6px !important; margin: 0 0 12px 0 !important; border: 2px solid #ef5350 !important; font-weight: 500 !important; width: 100% !important; box-sizing: border-box !important; opacity: 1 !important; visibility: visible !important; min-height: 44px !important; line-height: 1.4 !important;"></div>
+        <div id="requestAccessSuccess" style="color: #2e7d32; font-size: 12px; display: none; padding: 8px 12px; background: #e8f5e9; border-radius: 4px; margin-bottom: 8px; border: 1px solid #66bb6a;"></div>
+        <div style="display: flex; gap: 12px; margin-top: 8px;">
           <button type="button" onclick="submitAccessRequest()" style="flex: 1; padding: 12px; background: linear-gradient(180deg, #888888 0%, #666666 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px rgba(100, 100, 100, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">Submit Request</button>
           <button type="button" onclick="document.getElementById('requestAccessModal').classList.remove('show')" style="flex: 1; padding: 12px; background: #f0f0f0; color: #666; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#e0e0e0'" onmouseout="this.style.backgroundColor='#f0f0f0'">Cancel</button>
         </div>
@@ -3767,33 +3877,44 @@ const renderLoginPage = () => `
       document.getElementById('requestAccessName').value = '';
       document.getElementById('requestAccessEmail').value = '';
       document.getElementById('requestAccessMessage').value = '';
+      const errorDiv = document.getElementById('requestAccessError');
+      if (errorDiv) errorDiv.style.cssText = 'display: none !important; color: #d32f2f !important; font-size: 14px !important; padding: 12px 16px !important; background: #ffebee !important; border-radius: 6px !important; margin: 0 0 12px 0 !important; border: 2px solid #ef5350 !important; font-weight: 500 !important; width: 100% !important; box-sizing: border-box !important; opacity: 1 !important; visibility: visible !important; min-height: 44px !important; line-height: 1.4 !important;';
     }
     
     async function submitAccessRequest() {
       const name = document.getElementById('requestAccessName').value.trim();
       const email = document.getElementById('requestAccessEmail').value.trim();
       const message = document.getElementById('requestAccessMessage').value.trim();
+      
+      
       const errorDiv = document.getElementById('requestAccessError');
       const successDiv = document.getElementById('requestAccessSuccess');
+      
+      // Hide previous messages
+      if (errorDiv) errorDiv.style.cssText = 'display: none !important;';
+      if (successDiv) successDiv.style.cssText = 'display: none !important;';
+      
+      // Validation check
+      if (!name || !email || !message) {
+        if (errorDiv) {
+          errorDiv.textContent = 'Please fill in all required fields';
+          errorDiv.style.cssText = 'display: block !important; color: #d32f2f !important; background: #ffebee !important; border: 2px solid #ef5350 !important; padding: 12px 16px !important; border-radius: 6px !important; font-weight: 500 !important; font-size: 14px !important; opacity: 1 !important; visibility: visible !important;';
+        }
+        return;
+      }
+      
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        if (errorDiv) {
+          errorDiv.textContent = 'Please enter a valid email address';
+          errorDiv.style.cssText = 'display: block !important; color: #d32f2f !important; background: #ffebee !important; border: 2px solid #ef5350 !important; padding: 12px 16px !important; border-radius: 6px !important; font-weight: 500 !important; font-size: 14px !important; opacity: 1 !important; visibility: visible !important;';
+        }
+        return;
+      }
       const buttons = document.querySelectorAll('#requestAccessModal button');
       const btn = buttons.length > 0 ? buttons[0] : null;
       const originalText = btn?.textContent || 'Submit Request';
-      
-      errorDiv.style.display = 'none';
-      successDiv.style.display = 'none';
-      
-      if (!name || !email || !message) {
-        errorDiv.textContent = 'Please fill in all required fields';
-        errorDiv.style.display = 'block';
-        return;
-      }
-      
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        errorDiv.textContent = 'Please enter a valid email address';
-        errorDiv.style.display = 'block';
-        return;
-      }
       
       if (btn) {
         btn.textContent = 'Submitting...';
@@ -3823,12 +3944,16 @@ const renderLoginPage = () => `
         }
         
         if (data.success) {
-          successDiv.textContent = 'Request submitted successfully! We\'ll review and contact you soon.';
-          successDiv.style.display = 'block';
+          if (successDiv) {
+            successDiv.style.cssText = 'display: block !important;';
+            successDiv.textContent = 'Request submitted successfully! We\'ll review and contact you soon.';
+          }
           setTimeout(() => closeRequestAccessModal(), 2000);
         } else {
-          errorDiv.textContent = data.error || 'Failed to submit request';
-          errorDiv.style.display = 'block';
+          if (errorDiv) {
+            errorDiv.style.cssText = 'display: block !important; color: #d32f2f !important; background: #ffebee !important; border: 2px solid #ef5350 !important; padding: 12px 16px !important; border-radius: 6px !important; font-weight: 500 !important; font-size: 14px !important; opacity: 1 !important; visibility: visible !important;';
+            errorDiv.textContent = data.error || 'Failed to submit request';
+          }
         }
       } catch (err) {
         clearTimeout(resetTimer);
@@ -3836,21 +3961,34 @@ const renderLoginPage = () => `
           btn.textContent = originalText;
           btn.disabled = false;
         }
-        errorDiv.textContent = 'Network error. Please try again.';
-        errorDiv.style.display = 'block';
+        if (errorDiv) {
+          errorDiv.style.cssText = 'display: block !important; color: #d32f2f !important; background: #ffebee !important; border: 2px solid #ef5350 !important; padding: 12px 16px !important; border-radius: 6px !important; font-weight: 500 !important; font-size: 14px !important; opacity: 1 !important; visibility: visible !important;';
+          errorDiv.textContent = 'Network error. Please try again.';
+        }
       }
+    }
     }
     
     // Close modal when clicking outside of it
-    document.getElementById('requestAccessModal').addEventListener('click', function(e) {
-      if (e.target === this || e.target.id === 'requestAccessModal') {
-        closeRequestAccessModal();
+    const requestAccessModal = document.getElementById('requestAccessModal');
+    if (requestAccessModal) {
+      requestAccessModal.addEventListener('click', function(e) {
+        if (e.target === this || e.target.id === 'requestAccessModal') {
+          closeRequestAccessModal();
+        }
+      });
+      
+      // Add event listener to submit button
+      const submitBtn = requestAccessModal.querySelector('button[onclick*="submitAccessRequest"]');
+      if (submitBtn) {
+        submitBtn.addEventListener('click', submitAccessRequest);
       }
-    });
+    }
     
     // Allow ESC key to close modal
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && document.getElementById('requestAccessModal').classList.contains('show')) {
+      const modal = document.getElementById('requestAccessModal');
+      if (modal && e.key === 'Escape' && modal.classList.contains('show')) {
         closeRequestAccessModal();
       }
     });
@@ -4954,6 +5092,105 @@ const loginApprovalGate = (req, res, next) => {
   // Existing pending session - still waiting on owner
   return renderWaitingPage(res, sessionId);
 };
+
+app.get('/api/performance-summary', (req, res) => {
+  try {
+    let alerts = [];
+    let performanceData = {};
+    
+    // Load alerts
+    if (fs.existsSync(CONFIG.ALERTS_FILE)) {
+      const content = fs.readFileSync(CONFIG.ALERTS_FILE, 'utf8').trim();
+      if (content) {
+        try {
+          alerts = JSON.parse(content);
+          if (!Array.isArray(alerts)) alerts = [];
+        } catch (e) {
+          alerts = [];
+        }
+      }
+    }
+    
+    // Load performance data for cross-reference
+    if (fs.existsSync(CONFIG.PERFORMANCE_FILE)) {
+      const content = fs.readFileSync(CONFIG.PERFORMANCE_FILE, 'utf8').trim();
+      if (content) {
+        try {
+          performanceData = JSON.parse(content);
+        } catch (e) {
+          performanceData = {};
+        }
+      }
+    }
+    
+    if (!alerts || alerts.length === 0) {
+      return res.json({ winRate: 0, totalTrades: 0, topPerformers: [], bestPerformer: null });
+    }
+    
+    // Get all trades with their PEAK performance data
+    const allTrades = alerts.map(alert => {
+      const ticker = alert.ticker;
+      const alertPrice = parseFloat(alert.price) || 0;
+      const isShort = alert.isShort === true;
+      
+      // Try to get highest/lowest from performance data, fallback to alert data
+      let highestPrice = alertPrice;
+      let lowestPrice = alertPrice;
+      
+      if (performanceData[ticker]) {
+        const perfData = performanceData[ticker];
+        highestPrice = parseFloat(perfData.highest) || alertPrice;
+        lowestPrice = parseFloat(perfData.lowest) || alertPrice;
+      }
+      
+      // Calculate peak % based on position
+      let peakPercent;
+      if (isShort) {
+        // For shorts: peak profit is when price goes down to lowest
+        peakPercent = ((alertPrice - lowestPrice) / alertPrice) * 100;
+      } else {
+        // For longs: peak profit is when price goes up to highest
+        peakPercent = ((highestPrice - alertPrice) / alertPrice) * 100;
+      }
+      
+      return {
+        ticker,
+        peakPercent: isNaN(peakPercent) || peakPercent < 0 ? 0 : peakPercent,
+        isShort: isShort,
+        alert: alertPrice,
+        highest: highestPrice,
+        lowest: lowestPrice
+      };
+    });
+    
+    // Calculate win rate based on peak performance
+    const winningTrades = allTrades.filter(t => t.peakPercent > 0);
+    const winRate = allTrades.length > 0 ? Math.round((winningTrades.length / allTrades.length) * 100) : 0;
+    
+    // Get top 5 performers by peak %
+    const topPerformers = allTrades
+      .sort((a, b) => b.peakPercent - a.peakPercent)
+      .slice(0, 5)
+      .map(t => ({
+        ticker: t.ticker,
+        peak5Day: t.peakPercent,
+        direction: t.isShort ? 'short' : 'long'
+      }));
+    
+    // Find best performer
+    const bestPerformer = topPerformers.length > 0 ? topPerformers[0] : null;
+    
+    res.json({
+      winRate: winRate,
+      totalTrades: allTrades.length,
+      winningTrades: winningTrades.length,
+      topPerformers: topPerformers,
+      bestPerformer: bestPerformer
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
+});
 
 // Apply both factors (basic auth + manual approval) to all routes
 app.use(auth, loginApprovalGate);
@@ -6664,10 +6901,10 @@ SECURITY NOTES:
 
 app.post('/api/send-access-request', async (req, res) => {
   try {
-    const { name, email, source, message } = req.body;
+    const { name, email, credentials, source, message } = req.body;
     
-    if (!name || !email) {
-      return res.status(400).json({ success: false, error: 'Name and email required' });
+    if (!name || !email || !credentials) {
+      return res.status(400).json({ success: false, error: 'Name, email, and credentials are required' });
     }
 
     // Validate email format
@@ -6727,64 +6964,6 @@ app.post('/api/send-access-request', async (req, res) => {
 app.get('/api/ping', (req, res) => {
   try {
     res.json({ status: 'online', onlineUsers: 1 });
-  } catch (err) {
-    res.status(500).json({ status: 'error', error: err.message });
-  }
-});
-
-// Performance summary endpoint - shows win rate and top performers for login page
-app.get('/api/performance-summary', (req, res) => {
-  try {
-    let performanceData = {};
-    
-    if (fs.existsSync(CONFIG.PERFORMANCE_FILE)) {
-      const content = fs.readFileSync(CONFIG.PERFORMANCE_FILE, 'utf8').trim();
-      if (content) {
-        try {
-          performanceData = JSON.parse(content);
-        } catch (e) {
-          performanceData = {};
-        }
-      }
-    }
-    
-    if (!performanceData || Object.keys(performanceData).length === 0) {
-      return res.json({ winRate: 0, totalTrades: 0, topPerformers: [], bestPerformer: null });
-    }
-    
-    // Calculate win rate
-    const allTrades = Object.values(performanceData);
-    const winningTrades = allTrades.filter(t => {
-      if (t.short) {
-        return t.performance < 0; // Short wins if price went down
-      } else {
-        return t.performance > 0; // Long wins if price went up
-      }
-    });
-    
-    const winRate = allTrades.length > 0 ? Math.round((winningTrades.length / allTrades.length) * 100) : 0;
-    
-    // Get top 5 performers by 5-day peak
-    const topPerformers = allTrades
-      .filter(t => t.highest5DayPercent !== undefined && t.highest5DayPercent !== null)
-      .sort((a, b) => Math.abs(b.highest5DayPercent) - Math.abs(a.highest5DayPercent))
-      .slice(0, 5)
-      .map(t => ({
-        ticker: Object.keys(performanceData).find(k => performanceData[k] === t),
-        peak5Day: t.highest5DayPercent,
-        direction: t.short ? 'short' : 'long'
-      }));
-    
-    // Find best performer
-    const bestPerformer = topPerformers.length > 0 ? topPerformers[0] : null;
-    
-    res.json({
-      winRate: winRate,
-      totalTrades: allTrades.length,
-      winningTrades: winningTrades.length,
-      topPerformers: topPerformers,
-      bestPerformer: bestPerformer
-    });
   } catch (err) {
     res.status(500).json({ status: 'error', error: err.message });
   }
@@ -6856,6 +7035,9 @@ const updateAllPerformanceData = async () => {
 
 // Run performance update every 30 seconds
 setInterval(updateAllPerformanceData, 30000);
+
+// Sync all peak data to stocks.json every 10 seconds
+setInterval(syncAllPeakData, 10000);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {

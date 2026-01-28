@@ -2936,7 +2936,7 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
                         
                         const secLink = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${alert.cik}&type=6-K&dateb=&owner=exclude&count=100`;
                         const saLink = `https://www.stockanalysis.com/stocks/${alert.ticker.toLowerCase()}/`;
-                        const direction = alert.direction || (alert.isShort ? 'SHORT' : 'LONG');
+                        const direction = alert.isShort ? 'SHORT' : 'LONG';
                         
                         item.innerHTML = `
                             <div style="margin-bottom: 8px;">$${alert.ticker} <b style="font-weight: 600;">${direction}</b> @ $${alert.price}</div>
@@ -2982,24 +2982,63 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
                         return;
                     }
                     
-                    stocks.reverse().forEach(stock => {
+                    stocks.slice().reverse().forEach(stock => {
                         const item = document.createElement('div');
                         item.className = 'notification-item';
                         item.style.cursor = 'pointer';
                         const date = new Date(stock.recordedAt);
                         const dateStr = date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
                         const timeStr = date.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-                        const floatStr = stock.float && stock.float !== 'N/A' ? (stock.float / 1000000).toFixed(2) + 'm' : 'N/A';
-                        const soStr = stock.soRatio || 'N/A';
-                        const insiderStr = stock.insiderPercent !== 'N/A' ? (stock.insiderPercent * 100).toFixed(2) + '%' : 'N/A';
                         
-                        const exchange = stock.exchange || 'NASDAQ';
                         const saLink = `https://www.stockanalysis.com/stocks/${stock.ticker.toLowerCase()}/`;
-                        const direction = stock.direction || (stock.isShort ? 'SHORT' : 'LONG');
+                        const direction = stock.isShort ? 'SHORT' : 'LONG';
+                        
+                        // Use peakPrice (highest5Day) and calculate peak percent correctly
+                        const peakPrice = stock.highest5Day !== undefined && stock.highest5Day !== null ? parseFloat(stock.highest5Day).toFixed(2) : stock.price;
+                        const alertPrice = parseFloat(stock.price); // stock.price is alert price
+                        const highestPrice = parseFloat(stock.highest5Day || stock.price);
+                        
+                        // Calculate peak percent based on position type
+                        let peakPercent = 0;
+                        if (alertPrice > 0) {
+                            const isShortPos = stock.isShort;
+                            if (isShortPos) {
+                                // SHORT: peakPrice is lowest price (profit when price drops)
+                                // Peak % = (alert - peak) / alert * 100
+                                peakPercent = ((alertPrice - highestPrice) / alertPrice) * 100;
+                            } else {
+                                // LONG: peakPrice is highest price (profit when price rises)
+                                // Peak % = (peak - alert) / alert * 100
+                                peakPercent = ((highestPrice - alertPrice) / alertPrice) * 100;
+                            }
+                        }
+                        
+                        // Calculate days, hours and minutes remaining
+                        let daysLeft = 0;
+                        let hoursLeft = 0;
+                        let minutesLeft = 0;
+                        if (stock.expiresAt) {
+                          const now = new Date();
+                          const expiry = new Date(stock.expiresAt);
+                          const msRemaining = expiry - now;
+                          if (msRemaining > 0) {
+                            daysLeft = Math.floor(msRemaining / (1000 * 60 * 60 * 24));
+                            hoursLeft = Math.floor((msRemaining / (1000 * 60 * 60)) % 24);
+                            minutesLeft = Math.floor((msRemaining / (1000 * 60)) % 60);
+                          }
+                        }
+                        
+                        // Format percentage with proper sign
+                        const percentSign = peakPercent >= 0 ? '+' : '';
+                        const peakDisplay = `Peak: $${peakPrice}   <b style="font-weight: 600;">${percentSign}${peakPercent.toFixed(2)}%</b> (Expires: ${daysLeft}d ${hoursLeft}h ${minutesLeft}m)`;
+                        
+                        // Determine color based on performance
+                        let peakColor = peakPercent > 0 ? '#00aa00' : peakPercent < 0 ? '#ff4444' : 'inherit';
                         
                         item.innerHTML = `
-                            <div style="margin-bottom: 4px;">$${stock.ticker} <b style="font-weight: 600;">${direction}</b> @ $${stock.price}</div>
-                            <div style="font-size: 10px; opacity: 0.5;">Alert Time: ${dateStr} ${timeStr}</div>
+                            <div style="margin-bottom: 5px;">$${stock.ticker} <b style="font-weight: 750;">${direction}</b> @ $${stock.price}</div>
+                            <div style="font-size: 11px; opacity: 0.5; margin-bottom: 3px;">Alert Time: ${dateStr} ${timeStr}</div>
+                            <div style="font-size: 11.5px; opacity: 0.75; color: ${peakColor}; font-style: italic;">${peakDisplay}</div>
                         `
                         
                         item.addEventListener('click', () => {
@@ -4285,35 +4324,15 @@ ${alert.financialRatioSignals && alert.financialRatioSignals.signals && alert.fi
                         // Detect if short: check isShort OR short field (can be boolean, array, or undefined)
                         const isShort = (Array.isArray(alert.isShort) ? alert.isShort.length > 0 : (alert.isShort === true || alert.short === true)) || alert.position === 'short';
                         
-                        // Always calculate from live currentPrice and alertPrice (don't use stale performance data)
-                        let priceChangePercent = ((alert.currentPrice - alert.alertPrice) / alert.alertPrice) * 100;
-                        
-                        // Check for reverse split ratio
-                        let reverseSplitRatio = alert.reverseSplitRatio;
-                        if (!reverseSplitRatio && (isShort || (priceChangePercent > 1000))) {
-                            // Auto-detect from price ratio for HUGE moves
-                            const priceRatio = alert.currentPrice / alert.alertPrice;
-                            if (priceRatio > 2.5 && priceRatio < 10) reverseSplitRatio = 100;
-                            else if (priceRatio >= 10 && priceRatio < 20) reverseSplitRatio = 50;
-                            else if (priceRatio >= 20 && priceRatio < 30) reverseSplitRatio = 20;
-                            else if (priceRatio >= 30 && priceRatio < 50) reverseSplitRatio = 10;
-                            else if (priceRatio >= 50 && priceRatio < 100) reverseSplitRatio = 5;
-                        }
-                        
-                        // Apply reverse split adjustment
+                        // Use 5d best PEAK % from performance data, fallback to current price P&L
                         let returnPercent;
-                        if (reverseSplitRatio && reverseSplitRatio > 1) {
-                            // For BOTH LONG and SHORT with reverse splits
-                            const adjustedEntry = alert.alertPrice * reverseSplitRatio;
-                            if (isShort) {
-                                returnPercent = ((adjustedEntry - alert.currentPrice) / adjustedEntry) * 100;
-                            } else {
-                                // LONG: adjust current price back to pre-split basis for accurate calculation
-                                const adjustedCurrent = alert.currentPrice * reverseSplitRatio;
-                                returnPercent = ((adjustedCurrent - adjustedEntry) / adjustedEntry) * 100;
-                            }
+                        if (alert.performance && typeof alert.performance.adjustedPeakPercent === 'number') {
+                            returnPercent = alert.performance.adjustedPeakPercent;
+                        } else if (alert.performance && typeof alert.performance.peakPercent === 'number') {
+                            returnPercent = isShort ? -alert.performance.peakPercent : alert.performance.peakPercent;
                         } else {
-                            // For P&L: LONG profits when price goes UP (positive), SHORTS profit when price goes DOWN (negative price change = positive P&L)
+                            // Fallback: calculate from current price
+                            let priceChangePercent = ((alert.currentPrice - alert.alertPrice) / alert.alertPrice) * 100;
                             returnPercent = isShort ? -priceChangePercent : priceChangePercent;
                         }
                         

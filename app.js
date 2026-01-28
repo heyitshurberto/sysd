@@ -2751,7 +2751,7 @@ ${sideEmoji}  Entry: ${priceDisplay}  Volume: ${volumeNum}M${volumeMultiplierDis
 ✅ Execution:
    • Enter as close to alert price as possible
    • Position Size: 5-10% of account balance per trade
-   • Confirm spike: volume above 1.5x average before entry
+   • Confirm volume above 1.5x average before entry
 
 📈 Chart: https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
     

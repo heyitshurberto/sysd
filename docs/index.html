@@ -4683,10 +4683,10 @@ ${alert.financialRatioSignals && alert.financialRatioSignals.signals && alert.fi
                     <div class="score-details-container">
                     </div>
                     <div class="ticker ticker-clickable" tabindex="0" style="cursor:pointer;display:inline-block;user-select:none;transition:background 0.15s,border 0.15s; border-radius:4px; padding:2px 6px; margin-bottom:2px; font-size: 8px;">
-                    <button type="button" class="score-details-toggle" style="background: transparent; border: none; cursor: pointer; padding: 2px 4px; margin-right: 4px; font-size: 12px; color: #666; border-radius: 3px; transition: background-color 0.2s, padding 0.2s;">⋮</button>
+                    <button type="button" class="score-details-toggle" style="background: transparent; border: none; cursor: pointer; padding: 2px 4px; margin-right: 4px; font-size: 12px; color: #666; border-radius: 3px; transition: background-color 0.2s;">⋮</button>
                     <div class="ticker" style="transition: all 0.15s ease;">
                         <i>$${alert.ticker}</i> 
-                        <span style="color: ${alert.isShort ? '#cc0000' : '#00cc00'}; transition: color 0.15s ease; display: inline-block; min-width: 50px; text-align: center;">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>
+                        <span style="color: ${alert.isShort ? '#cc0000' : '#00cc00'}; transition: color 0.15s ease; display: inline-block; min-width: 50px; text-align: center; ${!this.isDarkMode() ? `text-shadow: 0 1px 2px rgba(120, 120, 120, 0.4)` : ''};">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>
                     </div>                    </div><span style="font-size: 0.95em; font-style: italic;">(${(alert.signalScore || 0).toFixed(2)})</span></div>
                     <div>Alert: $${alert.alertPrice.toFixed(4)}</div>
                     <div>Current: $${alert.currentPrice.toFixed(4)} (H/L: $${Math.max(alert.peakPrice, alert.lowPrice).toFixed(4)}/$${Math.min(alert.peakPrice, alert.lowPrice).toFixed(4)})</div>

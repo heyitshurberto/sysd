@@ -2715,9 +2715,45 @@ const sendTelegramAlert = (alertData) => {
     const wa = alertData.wa || 'N/A';
     const waDisplay = wa !== 'N/A' ? `$${parseFloat(wa).toFixed(2)}` : 'N/A';
     
-    const telegramAlertContent = `↳ [${direction}] $${ticker} @ ${priceDisplay} (${countryDisplay}), score: ${signalScoreDisplay}, ${reason}, vol/avg: ${volDisplay}/${avgDisplay}${volumeMultiplier}, float: ${floatDisplay}, s/o: ${alertData.soRatio}, wa: ${waDisplay}\nhttps://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+    // Calculate volume multiplier for display
+    let volumeMultiplierDisplay = '';
+    if (alertData.volume && alertData.averageVolume && alertData.volume !== 'N/A' && alertData.averageVolume !== 'N/A') {
+      const ratio = alertData.volume / alertData.averageVolume;
+      if (ratio >= 2) {
+        volumeMultiplierDisplay = `${ratio.toFixed(1)}x`;
+      }
+    }
     
-    const telegramMsg = { text: telegramAlertContent };
+    const volumeNum = alertData.volume && alertData.volume !== 'N/A' ? (alertData.volume / 1000000).toFixed(1) : 'N/A';
+    const sideEmoji = direction === 'SHORT' ? '🔴 SHORT' : '🟢 LONG';
+    const entryPrice = parseFloat(priceDisplay.replace('$', ''));
+    const stopLoss = direction === 'SHORT' ? (entryPrice * 1.05).toFixed(3) : (entryPrice * 0.95).toFixed(3);
+    const takeProfitLevel = direction === 'SHORT' ? (entryPrice * 0.95).toFixed(3) : (entryPrice * 1.05).toFixed(3);
+    
+    const marketCapDisplay = alertData.marketCap && alertData.marketCap !== 'N/A' ? `$${(alertData.marketCap / 1000000000).toFixed(2)}B` : 'N/A';
+    const ftdDisplay = alertData.ftdPercent ? `${alertData.ftdPercent}%` : 'N/A';
+    
+    const telegramAlertContent = `Ж CARLUCCI CAPITAL
+
+🚀 NEW TRADE ALERT: $${ticker}
+${sideEmoji}  Entry: ${priceDisplay}  Volume: ${volumeNum}M${volumeMultiplierDisplay ? ' (' + volumeMultiplierDisplay + ')' : ''} ⚡
+
+📊 SIGNAL METRICS
+• Confidence Score: ${signalScoreDisplay}/1.0
+• Market Cap: ${marketCapDisplay}
+• FTD: ${ftdDisplay}
+• Float: ${floatDisplay}
+• S/O Ratio: ${alertData.soRatio}
+
+🛡️ CARLUCCI RISK PROTOCOL
+📍 Stop Loss: ${direction === 'SHORT' ? '+' : '-'}3-5%
+
+✅ Execution:
+   • Enter as close to alert price as possible
+   • Position Size: 5-10% of account balance per trade
+   • Confirm spike: volume above 1.5x average before entry
+
+📈 Chart: https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
     
     const waLog = wa !== 'N/A' ? `$${wa.toFixed(2)}` : 'N/A';
     log('INFO', `Telegram Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}`);
@@ -6824,7 +6860,7 @@ app.post('/api/send-message', async (req, res) => {
     const cookies = parseCookies(req.headers.cookie || '');
     const sessionId = cookies.sid;
     const sessionData = pendingLogins.get(sessionId);
-    const userEmail = sessionData?.email || 'carluccicapital@atomicmail.io';
+    const userEmail = sessionData?.email || 'cartelwrld@gmail.com';
 
     const html = `
 <html>
@@ -6941,7 +6977,7 @@ app.post('/api/send-access-request', async (req, res) => {
     }
 
     // Business email to send to
-    const businessEmail = 'carluccicapital@atomicmail.io';
+    const businessEmail = 'cartelwrld@gmail.com';
     
     const html = `
 <html>
@@ -7960,10 +7996,10 @@ if (process.stdin.isTTY) {
             validSignals = true; // Strong volume spike (2x+ average) with any signal
           } else if (neutralSignals.length > 0 && signalCategories.length >= 2) {
             validSignals = true; // Has neutral signal + at least 1 other signal
-          } else if (nonNeutralSignals.length >= 3 && signalCategories.length >= 3) {
-            validSignals = true; // Has 3+ signals from 3+ different categories (ensures diversity, avoids signal clustering)
-          } else if (nonNeutralSignals.length >= 4) {
-            validSignals = true; // Has 4+ non-neutral signals (original strength maintained)
+          } else if (nonNeutralSignals.length >= 4 && signalCategories.length >= 4) {
+            validSignals = true; // Has 4+ signals from 4+ different categories (ensures diversity, avoids signal clustering)
+          } else if (nonNeutralSignals.length >= 5) {
+            validSignals = true; // Has 5+ non-neutral signals (original strength maintained)
           }
           
           if (!validSignals) {

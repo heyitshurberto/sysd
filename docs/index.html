@@ -3037,8 +3037,8 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
                         
                         item.innerHTML = `
                             <div style="margin-bottom: 5px;">$${stock.ticker} <b style="font-weight: 750;">${direction}</b> @ $${stock.price}</div>
-                            <div style="font-size: 11px; opacity: 0.5; margin-bottom: 3px;">Alert Time: ${dateStr} ${timeStr}</div>
-                            <div style="font-size: 11.5px; opacity: 0.75; color: ${peakColor}; font-style: italic;">${peakDisplay}</div>
+                            <div style="font-size: 11px; opacity: 0.6; margin-bottom: 3px;">Alert Time: ${dateStr} ${timeStr}</div>
+                            <div style="font-size: 12px; opacity: 0.9; color: ${peakColor}; font-style: italic;">${peakDisplay}</div>
                         `
                         
                         item.addEventListener('click', () => {
@@ -3420,6 +3420,7 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
 
                     // Load performance/PnL data for reverse split adjustments
                     let performanceData = {};
+                    let stocksData = [];
                     try {
                         const quoteUrl = isLocalhost ? '/logs/quote.json' : 'https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/quote.json';
                         const pnlResponse = await fetch(quoteUrl);
@@ -3428,6 +3429,17 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
                         }
                     } catch (err) {
                         smartLog('warn', `Could not load quote.json for performance data: ${err.message}`);
+                    }
+
+                    // Load stocks.json to get peak prices (highest5Day)
+                    try {
+                        const stockUrl = isLocalhost ? '/logs/stocks.json' : 'https://raw.githubusercontent.com/heyitshurberto/sysd/main/logs/stocks.json';
+                        const stockResponse = await fetch(stockUrl);
+                        if (stockResponse.ok) {
+                            stocksData = await stockResponse.json();
+                        }
+                    } catch (err) {
+                        smartLog('warn', `Could not load stocks.json for peak data: ${err.message}`);
                     }
 
                     // Process all alerts in chronological order
@@ -3483,6 +3495,10 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
                             // Get performance data for this ticker if available
                             const tickerPerfData = performanceData[alert.ticker] || {};
                             
+                            // Get peak price from stocks.json if available
+                            const stockRecord = stocksData.find(s => s.ticker === alert.ticker);
+                            const peakPriceFromStock = stockRecord && stockRecord.highest5Day ? parseFloat(stockRecord.highest5Day) : null;
+                            
                             this.addAlert({
                                 ticker: alert.ticker,
                                 title: alert.title,
@@ -3513,8 +3529,9 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
                                 performance: tickerPerfData.performance,
                                 reverseSplitRatio: tickerPerfData.reverseSplitRatio || alert.reverseSplitRatio || null, // From quote.json or alert.json
                                 reverseSplitReason: alert.reverseSplitReason || null, // From alert.json
-                                peakPrice: tickerPerfData.peakPrice || price,
-                                lowPrice: tickerPerfData.lowPrice || price,
+                                peakPrice: peakPriceFromStock || tickerPerfData.peakPrice || price,
+                                stockPeakPrice: peakPriceFromStock || tickerPerfData.peakPrice || price, // Preserve original peak from stocks.json
+                                lowPrice: peakPriceFromStock || tickerPerfData.lowPrice || price,
                                 priceChange: (price - price) / price || 0,
                                 hasTuesdayBonus: alert.hasTuesdayBonus || false,
                                 custodianName: alert.custodianName || null,
@@ -4689,7 +4706,7 @@ ${alert.financialRatioSignals && alert.financialRatioSignals.signals && alert.fi
                         <span style="color: ${alert.isShort ? '#cc0000' : '#00cc00'}; transition: color 0.15s ease; display: inline-block; min-width: 50px; text-align: center; ${!this.isDarkMode() ? `text-shadow: 0 1px 2px rgba(120, 120, 120, 0.4)` : ''};">[${alert.isShort ? 'SHORT' : 'LONG'}]</span>
                     </div>                    </div><span style="font-size: 0.95em; font-style: italic;">(${(alert.signalScore || 0).toFixed(2)})</span></div>
                     <div>Alert: $${alert.alertPrice.toFixed(4)}</div>
-                    <div>Current: $${alert.currentPrice.toFixed(4)} (H/L: $${Math.max(alert.peakPrice, alert.lowPrice).toFixed(4)}/$${Math.min(alert.peakPrice, alert.lowPrice).toFixed(4)})</div>
+                    <div>Current: $${alert.currentPrice.toFixed(4)} (H/L: $${Math.max(alert.currentPrice, alert.alertPrice, parseFloat(alert.stockPeakPrice || alert.alertPrice)).toFixed(4)}/$${Math.min(alert.currentPrice, alert.alertPrice, parseFloat(alert.stockPeakPrice || alert.alertPrice)).toFixed(4)})</div>
                     <div class="price-change ${parseFloat(percentChange) > 0 ? 'positive' : (parseFloat(percentChange) === 0 ? 'neutral' : 'negative')}">
                         (${priceDiff > 0 ? '+' : ''}$${Math.abs(priceDiff).toFixed(4)}) ${percentChange > 0 ? '+' : ''}${percentChange}%
                     </div>

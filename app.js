@@ -1666,10 +1666,15 @@ const syncPeakDataToStocks = (ticker, peakData) => {
           peakPercent = parseFloat(((change / alertPrice) * 100).toFixed(2));
         }
         
+        // Preserve manually entered values if they differ significantly from calculated
+        const existingPercent = stock.highest5DayPercent || 0;
+        const calcDiff = Math.abs(peakPercent - existingPercent);
+        const shouldPreserve = calcDiff > 5 && existingPercent !== 0; // Manual edit threshold
+        
         return {
           ...stock,
-          highest5Day: peakPrice,
-          highest5DayPercent: peakPercent
+          highest5Day: shouldPreserve ? stock.highest5Day : peakPrice,
+          highest5DayPercent: shouldPreserve ? existingPercent : peakPercent
         };
       }
       return stock;
@@ -1710,10 +1715,15 @@ const syncAllPeakData = () => {
           peakPercent = parseFloat(((change / alertPrice) * 100).toFixed(2));
         }
         
+        // Preserve manually entered values if they differ significantly from calculated
+        const existingPercent = stock.highest5DayPercent || 0;
+        const calcDiff = Math.abs(peakPercent - existingPercent);
+        const shouldPreserve = calcDiff > 5 && existingPercent !== 0; // Manual edit threshold
+        
         return {
           ...stock,
-          highest5Day: highest5Day,
-          highest5DayPercent: peakPercent
+          highest5Day: shouldPreserve ? stock.highest5Day : highest5Day,
+          highest5DayPercent: shouldPreserve ? existingPercent : peakPercent
         };
       }
       return stock;

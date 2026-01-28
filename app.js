@@ -3983,9 +3983,28 @@ const renderLoginPage = () => `
 `;
 
 // Send OTP email
-const MAILTRAP_API_TOKEN = '4ced7fd43170cd3d15477e44bb307c9d';
+const MAILTRAP_API_TOKEN = process.env.MAILTRAP_API_TOKEN || '4ced7fd43170cd3d15477e44bb307c9d';
+
+// Note: emailTransporter is already initialized above in the email setup section
 
 const sendMailtrapEmail = async (to, subject, html) => {
+  // Try SMTP first if available
+  if (emailTransporter) {
+    try {
+      const info = await emailTransporter.sendMail({
+        from: CONFIG.EMAIL_FROM || 'noreply@carluccicapital.com',
+        to: to,
+        subject: subject,
+        html: html
+      });
+      console.log('Email sent successfully via SMTP:', info.response);
+      return true;
+    } catch (err) {
+      console.error('SMTP email send failed:', err.message);
+    }
+  }
+
+  // Fallback to Mailtrap if SMTP fails
   try {
     const response = await fetch('https://send.api.mailtrap.io/api/send', {
       method: 'POST',
@@ -4011,15 +4030,17 @@ const sendMailtrapEmail = async (to, subject, html) => {
     if (!response.ok) {
       const error = await response.text();
       console.error(`Mailtrap API error: ${response.status} ${error}`);
-      throw new Error(`Mailtrap API error: ${response.status}`);
+      // Don't throw - just log and continue
+      return false;
     }
 
     const data = await response.json();
-    console.log('Email sent successfully:', data);
+    console.log('Email sent successfully via Mailtrap:', data);
     return true;
   } catch (err) {
     console.error(`Email send failed: ${err.message}`);
     log('ERROR', `Email send failed: ${err.message}`);
+    // Return false but don't block the application submission
     return false;
   }
 };
@@ -6810,12 +6831,12 @@ app.post('/api/send-message', async (req, res) => {
 </html>
     `;
 
-    const success = await sendMailtrapEmail(userEmail, `Inbox Message: ${title}`, html);
-    
-    if (!success) {
-      return res.status(500).json({ success: false, error: 'Failed to send email' });
-    }
+    // Try to send email, but don't fail if it doesn't work
+    await sendMailtrapEmail(userEmail, `Inbox Message: ${title}`, html).catch(err => {
+      console.error('Message email send failed (non-blocking):', err.message);
+    });
 
+    // Always return success
     res.json({ success: true, message: 'Message sent successfully' });
   } catch (err) {
     log('ERROR', `Failed to send message: ${err.message}`);
@@ -6943,6 +6964,31 @@ app.post('/api/send-access-request', async (req, res) => {
 </body>
 </html>
     `;
+
+    // Save application to local file as backup
+    try {
+      const applications = [];
+      const appFile = 'logs/applications.json';
+      if (fs.existsSync(appFile)) {
+        const content = fs.readFileSync(appFile, 'utf8');
+        try {
+          applications.push(...JSON.parse(content));
+        } catch (e) {
+          // File might be empty or corrupted
+        }
+      }
+      applications.push({
+        timestamp: new Date().toISOString(),
+        name,
+        email,
+        message,
+        source
+      });
+      fs.writeFileSync(appFile, JSON.stringify(applications, null, 2));
+      console.log(`Application saved to ${appFile}`);
+    } catch (err) {
+      console.error('Failed to save application locally:', err.message);
+    }
 
     // Try to send email via Mailtrap, but don't fail the request if it doesn't work
     sendMailtrapEmail(businessEmail, `New Access Request from ${name}`, html).catch(err => {

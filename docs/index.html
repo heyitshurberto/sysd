@@ -341,7 +341,7 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
         };
     })();
     </script>
-    <script src="app.js"></script>
+    <!-- Note: app.js is backend/server code and should not be loaded in browser -->
     <script>
         // Initialize global variables
         window.activeDropdown = null;
@@ -1297,7 +1297,7 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
         }
 
         body.dark-mode .alert-card.triggered.down .price-change {
-            text-shadow: 0 0 1.5px rgba(255, 51, 51, 0.6), 0 0 4px rgb(147, 0, 0) !important;
+            text-shadow: 0 0 3.5px rgba(0, 0, 0, 1) !important;
         }
 
         .alert-card.triggered.down > *:not(.score-details-container):not([style*="margin-top: 2px"]):not(button) {
@@ -1688,23 +1688,23 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
             }
         @keyframes flashDark {
             0% {
-                background: rgba(200, 10, 10, 0.85);
+                background: rgba(204, 0, 0, 0.85);
                 opacity: 1;
             }
             25% {
-                background: rgba(180, 15, 15, 0.8);
+                background: rgba(179, 0, 0, 0.75);
                 opacity: 0.98;
             }
             50% {
-                background: rgba(160, 10, 10, 0.85);
+                background: rgba(153, 0, 0, 0.85);
                 opacity: 0.95;
             }
             75% {
-                background: rgba(180, 15, 15, 0.8);
+                background: rgba(179, 0, 0, 0.75);
                 opacity: 0.97;
             }
             100% {
-                background: rgba(200, 10, 10, 0.85);
+                background: rgba(204, 0, 0, 0.85);
                 opacity: 1;
             }
         }
@@ -3785,7 +3785,7 @@ ${alert.financialRatioSignals && alert.financialRatioSignals.signals && alert.fi
             }
             
             updatePriceDisplay(alert, card) {
-                if (!card) return;
+                if (!card || !alert.currentPrice) return;
                 
                 // Save dropdown state before updates
                 const dropdown = card.querySelector('.score-breakdown');
@@ -3890,6 +3890,9 @@ ${alert.financialRatioSignals && alert.financialRatioSignals.signals && alert.fi
                     const plStats = this.calculateProfitLoss();
                     const plCount = document.getElementById('pl-count');
                     if (plCount) {
+                        const totalSign = plStats.total > 0 ? '+' : '';
+                        const longSign = plStats.longStr && parseFloat(plStats.longStr) > 0 ? '+' : '';
+                        const shortSign = plStats.shortStr && parseFloat(plStats.shortStr) > 0 ? '+' : '';
                         plCount.innerHTML = `${totalSign}${plStats.total}% <span style="font-size: 11.5px;">(L:${plStats.longCount}/${longSign}${plStats.longStr}% | S:${plStats.shortCount}/${shortSign}${plStats.shortStr}%)</span>`;
                         plCount.style.color = plStats.total > 0 ?
                             (document.body.classList.contains('dark-mode') ? '#1fff1f' : '#00aa00') :

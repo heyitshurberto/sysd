@@ -3046,8 +3046,8 @@ const renderLoginPage = () => `
       background: white;
       border-radius: 12px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      padding: 12px 14px;
-      max-width: 390px;
+      padding: 5px 20px;
+      max-width: 420px;
       width: 100%;
       text-align: center;
     }
@@ -3266,9 +3266,9 @@ const renderLoginPage = () => `
 </head>
 <body>
   <div class="container">
-    <div style="position: absolute; top: 10px; left: 10px; display: flex; gap: 10px; align-items: center;">
-      <a href="#" onclick="if(confirm('Visit Carlucci Community on Telegram?')) window.open('https://t.me/+3rtL-9Cwr6Y2ZmM0', '_blank'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s; cursor: pointer;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/tele.png" alt="Telegram" style="height: 25px; width: 25px; filter: brightness(0) saturate(100%) invert(100%);" class="social-logo"></a>
-      <a href="#" onclick="if(confirm('Visit @cartelwrld on X?')) window.open('https://x.com/cartelwrld', '_blank'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s; cursor: pointer;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/twit.png" alt="X" style="height: 19px; width: 19px; filter: brightness(0) saturate(100%) invert(100%);" class="social-logo"></a>
+    <div style="position: absolute; top: 10px; left: 10px; display: flex; gap: 9px; align-items: center;">
+      <a href="#" onclick="if(confirm('Visit Carlucci Community on Telegram?')) window.open('https://t.me/+3rtL-9Cwr6Y2ZmM0', '_blank'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s; cursor: pointer;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/tele.png" alt="Telegram" style="height: 23px; width: 23px; filter: brightness(0) saturate(100%) invert(100%);" class="social-logo"></a>
+      <a href="#" onclick="if(confirm('Visit @cartelwrld on X?')) window.open('https://x.com/cartelwrld', '_blank'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s; cursor: pointer;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/twit.png" alt="X" style="height: 17px; width: 17px; filter: brightness(0) saturate(100%) invert(100%);" class="social-logo"></a>
     </div>
     <div style="position: absolute; top: 15px; right: 15px;">
       <button onclick="document.getElementById('requestAccessModal').classList.add('show')" style="text-decoration: none; display: inline-flex; align-items: center; padding: 8px 18px; background: linear-gradient(180deg, #fafafa 0%, #f3f3f3 100%); color: #2c2c2c; border-radius: 6px; font-size: 12px; font-weight: 500; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 0.3px; transition: all 0.3s ease; cursor: pointer; border: 1px solid #e5e5e5; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);" onmouseover="this.style.background='linear-gradient(180deg, #f5f5f5 0%, #f0f0f0 100%)'; this.style.borderColor='#d9d9d9'; this.style.boxShadow='0 2px 5px rgba(0, 0, 0, 0.1)'" onmouseout="this.style.background='linear-gradient(180deg, #fafafa 0%, #f3f3f3 100%)'; this.style.borderColor='#e5e5e5'; this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.08)'">Request Access</button>
@@ -3346,7 +3346,7 @@ const renderLoginPage = () => `
     let cooldownTimer = 0;
     let currentEmail = '';
     
-    function showErrorWithTimer(element, message, timeoutMs = 8000) {
+    function showErrorWithTimer(element, message, timeoutMs = 4500) {
       element.textContent = message;
       element.classList.remove('hidden');
       element.style.display = 'block';
@@ -3829,7 +3829,7 @@ const renderLoginPage = () => `
         <input type="email" id="requestAccessEmail" placeholder="Email Address" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
         <input type="text" id="requestAccessSource" placeholder="Where did you hear about us? (optional)" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'">
         <textarea id="requestAccessMessage" placeholder="Please describe your investment background and intended use case" style="padding: 11px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; min-height: 100px; resize: vertical; transition: border-color 0.3s;" onmouseover="this.style.borderColor='#999'" onmouseout="this.style.borderColor='#e0e0e0'"></textarea>
-        <div id="requestAccessError" style="color: #d32f2f !important; font-size: 14px !important; display: none !important; padding: 12px 16px !important; background: #ffebee !important; border-radius: 6px !important; margin: 0 0 12px 0 !important; border: 2px solid #ef5350 !important; font-weight: 500 !important; width: 100% !important; box-sizing: border-box !important; opacity: 1 !important; visibility: visible !important; min-height: 44px !important; line-height: 1.4 !important;"></div>
+        <div id="requestAccessError" style="background: linear-gradient(135deg, #fee 0%, #fdd 100%); border-left: 4px solid #d32f2f; color: #c62828; font-size: 13px; display: none; padding: 11px 11px; border-radius: 5px; margin: 0 0 4px 0; font-weight: 500; width: 100%; box-sizing: border-box; box-shadow: 0 2px 8px rgba(211, 47, 47, 0.1); animation: slideIn 0.3s ease-out;"></div>
         <div id="requestAccessSuccess" style="color: #2e7d32; font-size: 12px; display: none; padding: 8px 12px; background: #e8f5e9; border-radius: 4px; margin-bottom: 8px; border: 1px solid #66bb6a;"></div>
         <div style="display: flex; gap: 12px; margin-top: 8px;">
           <button type="button" onclick="submitAccessRequest()" style="flex: 1; padding: 12px; background: linear-gradient(180deg, #888888 0%, #666666 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px rgba(100, 100, 100, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">Submit Request</button>
@@ -3871,34 +3871,17 @@ const renderLoginPage = () => `
       document.getElementById('requestAccessSuccess').style.display = 'none';
     }
     
-    function closeRequestAccessModal() {
-      const modal = document.getElementById('requestAccessModal');
-      modal.classList.remove('show');
-      document.getElementById('requestAccessName').value = '';
-      document.getElementById('requestAccessEmail').value = '';
-      document.getElementById('requestAccessMessage').value = '';
-      const errorDiv = document.getElementById('requestAccessError');
-      if (errorDiv) errorDiv.style.cssText = 'display: none !important; color: #d32f2f !important; font-size: 14px !important; padding: 12px 16px !important; background: #ffebee !important; border-radius: 6px !important; margin: 0 0 12px 0 !important; border: 2px solid #ef5350 !important; font-weight: 500 !important; width: 100% !important; box-sizing: border-box !important; opacity: 1 !important; visibility: visible !important; min-height: 44px !important; line-height: 1.4 !important;';
-    }
-    
     async function submitAccessRequest() {
       const name = document.getElementById('requestAccessName').value.trim();
       const email = document.getElementById('requestAccessEmail').value.trim();
       const message = document.getElementById('requestAccessMessage').value.trim();
-      
-      
       const errorDiv = document.getElementById('requestAccessError');
-      const successDiv = document.getElementById('requestAccessSuccess');
       
-      // Hide previous messages
-      if (errorDiv) errorDiv.style.cssText = 'display: none !important;';
-      if (successDiv) successDiv.style.cssText = 'display: none !important;';
-      
-      // Validation check
+      // Validation
       if (!name || !email || !message) {
         if (errorDiv) {
           errorDiv.textContent = 'Please fill in all required fields';
-          errorDiv.style.cssText = 'display: block !important; color: #d32f2f !important; background: #ffebee !important; border: 2px solid #ef5350 !important; padding: 12px 16px !important; border-radius: 6px !important; font-weight: 500 !important; font-size: 14px !important; opacity: 1 !important; visibility: visible !important;';
+          errorDiv.style.display = 'block';
         }
         return;
       }
@@ -3908,25 +3891,15 @@ const renderLoginPage = () => `
       if (!emailRegex.test(email)) {
         if (errorDiv) {
           errorDiv.textContent = 'Please enter a valid email address';
-          errorDiv.style.cssText = 'display: block !important; color: #d32f2f !important; background: #ffebee !important; border: 2px solid #ef5350 !important; padding: 12px 16px !important; border-radius: 6px !important; font-weight: 500 !important; font-size: 14px !important; opacity: 1 !important; visibility: visible !important;';
+          errorDiv.style.display = 'block';
         }
         return;
       }
-      const buttons = document.querySelectorAll('#requestAccessModal button');
-      const btn = buttons.length > 0 ? buttons[0] : null;
-      const originalText = btn?.textContent || 'Submit Request';
       
-      if (btn) {
-        btn.textContent = 'Submitting...';
-        btn.disabled = true;
+      // Show confirmation
+      if (!confirm('Submit access request for ' + email + '?')) {
+        return;
       }
-      
-      const resetTimer = setTimeout(() => {
-        if (btn) {
-          btn.textContent = originalText;
-          btn.disabled = false;
-        }
-      }, 4000);
       
       try {
         const response = await fetch('/api/send-access-request', {
@@ -3937,36 +3910,21 @@ const renderLoginPage = () => `
         
         const data = await response.json();
         
-        clearTimeout(resetTimer);
-        if (btn) {
-          btn.textContent = originalText;
-          btn.disabled = false;
-        }
-        
         if (data.success) {
-          if (successDiv) {
-            successDiv.style.cssText = 'display: block !important;';
-            successDiv.textContent = 'Request submitted successfully! We\'ll review and contact you soon.';
-          }
-          setTimeout(() => closeRequestAccessModal(), 2000);
+          alert('Request submitted successfully! We will review and contact you soon.');
+          closeRequestAccessModal();
         } else {
           if (errorDiv) {
-            errorDiv.style.cssText = 'display: block !important; color: #d32f2f !important; background: #ffebee !important; border: 2px solid #ef5350 !important; padding: 12px 16px !important; border-radius: 6px !important; font-weight: 500 !important; font-size: 14px !important; opacity: 1 !important; visibility: visible !important;';
             errorDiv.textContent = data.error || 'Failed to submit request';
+            errorDiv.style.display = 'block';
           }
         }
       } catch (err) {
-        clearTimeout(resetTimer);
-        if (btn) {
-          btn.textContent = originalText;
-          btn.disabled = false;
-        }
         if (errorDiv) {
-          errorDiv.style.cssText = 'display: block !important; color: #d32f2f !important; background: #ffebee !important; border: 2px solid #ef5350 !important; padding: 12px 16px !important; border-radius: 6px !important; font-weight: 500 !important; font-size: 14px !important; opacity: 1 !important; visibility: visible !important;';
           errorDiv.textContent = 'Network error. Please try again.';
+          errorDiv.style.display = 'block';
         }
       }
-    }
     }
     
     // Close modal when clicking outside of it
@@ -3977,12 +3935,6 @@ const renderLoginPage = () => `
           closeRequestAccessModal();
         }
       });
-      
-      // Add event listener to submit button
-      const submitBtn = requestAccessModal.querySelector('button[onclick*="submitAccessRequest"]');
-      if (submitBtn) {
-        submitBtn.addEventListener('click', submitAccessRequest);
-      }
     }
     
     // Allow ESC key to close modal

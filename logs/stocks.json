@@ -314,7 +314,7 @@
     "expiresAt": "2026-02-01T11:23:20.302Z",
     "direction": "SHORT",
     "highest5Day": 0.392,
-    "highest5DayPercent": 0
+    "highest5DayPercent": 54.2
   },
   {
     "ticker": "TWNP",
@@ -382,7 +382,7 @@
     "expiresAt": "2026-02-01T11:26:59.164Z",
     "direction": "SHORT",
     "highest5Day": 0.35,
-    "highest5DayPercent": -34.06
+    "highest5DayPercent": 52.5
   },
   {
     "ticker": "CNL",

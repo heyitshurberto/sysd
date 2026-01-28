@@ -65,7 +65,7 @@ const CONFIG = {
   SMTP_PORT: process.env.SMTP_PORT || 587,
   SMTP_USER: process.env.SMTP_USER || '',
   SMTP_PASS: process.env.SMTP_PASS || '',
-  EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@cartelventures.com'
+  EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@carluccicapital.com'
 };
 
 const originalLog = console.log;
@@ -6793,7 +6793,7 @@ app.post('/api/send-message', async (req, res) => {
     const cookies = parseCookies(req.headers.cookie || '');
     const sessionId = cookies.sid;
     const sessionData = pendingLogins.get(sessionId);
-    const userEmail = sessionData?.email || 'cartelventures@outlook.com';
+    const userEmail = sessionData?.email || 'carluccicapital@atomicmail.io';
 
     const html = `
 <html>
@@ -6910,7 +6910,7 @@ app.post('/api/send-access-request', async (req, res) => {
     }
 
     // Business email to send to
-    const businessEmail = 'carluccicapital@outlook.com';
+    const businessEmail = 'carluccicapital@atomicmail.io';
     
     const html = `
 <html>

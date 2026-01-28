@@ -2873,6 +2873,7 @@ const auth = (req, res, next) => {
   if (req.path === '/api/auth-send-code' || req.path === '/api/auth-verify' || 
       req.path === '/api/auth-register' || req.path === '/api/auth-verify-register' ||
       req.path === '/api/login-verify' || req.path === '/api/ping' || 
+      req.path === '/api/send-access-request' ||
       req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/i)) {
     return next();
   }
@@ -3912,13 +3913,22 @@ const renderLoginPage = () => `
       }
       
       try {
+        console.log('Sending request with:', { name, email, message });
         const response = await fetch('/api/send-access-request', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, email, message })
         });
         
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          console.error('Response not ok:', response.statusText);
+          throw new Error('Request failed with status ' + response.status);
+        }
+        
         const data = await response.json();
+        console.log('Response data:', data);
         
         if (data.success) {
           alert('Request submitted successfully! We will review and contact you soon.');
@@ -3930,6 +3940,7 @@ const renderLoginPage = () => `
           }
         }
       } catch (err) {
+        console.error('Fetch error:', err);
         if (errorDiv) {
           errorDiv.textContent = 'Network error. Please try again.';
           errorDiv.style.display = 'block';
@@ -5017,6 +5028,7 @@ const loginApprovalGate = (req, res, next) => {
   if (req.path === '/api/auth-status' || req.path === '/api/auth-send-code' || 
       req.path === '/api/auth-verify' || req.path === '/api/auth-register' || 
       req.path === '/api/auth-verify-register' || req.path === '/api/ping' || 
+      req.path === '/api/send-access-request' ||
       req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/i)) {
     return next();
   }

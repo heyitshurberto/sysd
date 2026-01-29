@@ -22,11 +22,11 @@ const CONFIG = {
   FILE_TIME: 1,                     // Minutes retro to fetch filings
   MIN_ALERT_VOLUME: 20000,          // Lower base, conditional on signal strength
   STRONG_SIGNAL_MIN_VOLUME: 1000,   // Very low for penny stocks with extreme S/O
-  EXTREME_SO_RATIO: 80,             // 80%+ S/O = tight float
+  EXTREME_SO_RATIO: 60,             // 80%+ S/O = tight float
   MAX_FLOAT_6K: 100000000,          // Max float size for 6-K
   MAX_FLOAT_8K: 250000000,          // Max float size for 8-K 
   MAX_SO_RATIO: 1000.0,             // Max short interest ratio
-  ALLOWED_COUNTRIES: ['israel', 'china', 'hong kong', 'australia', 'cayman islands', 'virgin islands', 'singapore', 'canada', 'nevada', 'delaware'], // Allowed incorporation/located countries
+  ALLOWED_COUNTRIES: ['israel', 'china', 'hong kong', 'australia', 'cayman islands', 'virgin islands', 'singapore', 'greece', 'canada', 'nevada', 'delaware'], // Allowed incorporation/located countries
   // Enable optimizations for Raspberry Pi devices
   PI_MODE: true,              // Enable Pi optimizations          
   REFRESH_PEAK: 1,            // 10s during trading hours (7am-10am ET)
@@ -54,9 +54,10 @@ const CONFIG = {
   // Telegram settings
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '', // Telegram bot token
   TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID || '', // Telegram chat ID for alerts
-  TELEGRAM_ENABLED: process.env.TELEGRAM_ENABLED !== 'true' && process.env.TELEGRAM_ENABLED !== '0', // Enable/disable Telegram alerts (default: true)
+  TELEGRAM_ENABLED: process.env.TELEGRAM_ENABLED === 'true', // Enable/disable Telegram alerts (set to 'true' in .env to enable)
   // Domain settings
   GITHUB_PAGES_ENABLED: process.env.GITHUB_PAGES_ENABLED !== 'false' && process.env.GITHUB_PAGES_ENABLED !== '0', // Enable/disable GitHub Pages domain push (default: true)
+  GITHUB_QUOTE_PUSH_ENABLED: process.env.GITHUB_QUOTE_PUSH_ENABLED !== 'false' && process.env.GITHUB_QUOTE_PUSH_ENABLED !== '0', // Enable/disable auto-push of quotes to GitHub (default: true)
   // 2FA settings
   TWO_FACTOR_ENABLED: true, // Set to false to disable 2FA approval gate (keep basic auth always on)
   // Email authentication settings
@@ -1617,6 +1618,11 @@ const updatePerformanceData = (alertData) => {
     
     // Write updated performance data
     fs.writeFileSync(CONFIG.PERFORMANCE_FILE, JSON.stringify(performanceData, null, 2));
+    
+    // Auto-push quotes to GitHub if enabled
+    if (CONFIG.GITHUB_QUOTE_PUSH_ENABLED) {
+      pushToGitHub();
+    }
     
     // Sync peak data back to stocks.json
     syncPeakDataToStocks(ticker, performanceData[ticker]);

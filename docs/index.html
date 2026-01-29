@@ -3015,16 +3015,13 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
                     const statsDiv = document.createElement('div');
                     const perfSign = parseFloat(avgPerformance) >= 0 ? '+' : '';
                     const perfColor = parseFloat(avgPerformance) > 0 ? '#00dd00' : parseFloat(avgPerformance) < 0 ? '#ff3333' : '#888';
-                    const bgColor = document.body.classList.contains('dark-mode') ? 'rgba(60,60,60,0.4)' : 'rgba(240,240,240,0.8)';
-                    const borderColor = document.body.classList.contains('dark-mode') ? '#555' : '#ddd';
-                    const textColor = document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#333';
-                    statsDiv.style.cssText = `padding: 14px 16px; background: ${bgColor}; border-radius: 8px; margin-bottom: 14px; border: 1px solid ${borderColor}; border-left: 3px solid #00aa00;`;
+                    statsDiv.style.cssText = `padding: 12px 14px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #00aa00;`;
                     statsDiv.innerHTML = `
-                        <div style="font-size: 14px; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.3px;">
-                            All-Time Return: <span style="color: ${perfColor}; font-style: italic;">${perfSign}${avgPerformance}%</span>
+                        <div style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">
+                            All-Time Return: <span style="color: ${perfColor};">${perfSign}${avgPerformance}%</span>
                         </div>
-                        <div style="font-size: 11px; color: ${textColor}; opacity: 0.75; letter-spacing: 0.2px;">
-                            Win Rate: <b style="color: ${perfColor}; font-style: italic;">${winRate}%</b> • Trades: <b style="color: ${textColor};">${winningTrades}W / ${totalTrades - winningTrades}L</b>
+                        <div style="font-size: 10px; opacity: 0.7;">
+                            Win Rate: <span style="color: ${perfColor};">${winRate}%</span> • Trades: ${winningTrades}W / ${totalTrades - winningTrades}L
                         </div>
                     `;
                     list.appendChild(statsDiv);
@@ -3084,8 +3081,8 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
                         
                         item.innerHTML = `
                             <div style="margin-bottom: 5px;">$${stock.ticker} <b style="font-weight: 750;">${direction}</b> @ $${stock.price}</div>
-                            <div style="font-size: 11px; opacity: 0.6; margin-bottom: 3px;">Alert Time: ${dateStr} ${timeStr}</div>
-                            <div style="font-size: 12px; opacity: 0.9; color: ${peakColor}; font-style: italic;">${peakDisplay}</div>
+                            <div style="font-size: 10.5px; opacity: 0.6; margin-bottom: 3px;">Alert Time: ${dateStr} ${timeStr}</div>
+                            <div style="font-size: 11px; opacity: 0.9; color: ${peakColor}; font-style: italic;">${peakDisplay}</div>
                         `
                         
                         item.addEventListener('click', () => {

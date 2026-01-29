@@ -64,9 +64,26 @@ def fetch_stock_price(ticker, request_count, max_retries=3):
     return None, None, None, request_count + 1
 
 def main():
+    # Load data from track.csv with proper handling for column misalignment
     try:
         with open('logs/track.csv', 'r') as f:
-            rows = list(csv.DictReader(f))
+            csv_reader = csv.reader(f)
+            header = next(csv_reader)
+            rows = []
+            for line in csv_reader:
+                # Create dict using actual column count
+                row_dict = {}
+                for i, key in enumerate(header):
+                    if i < len(line):
+                        row_dict[key] = line[i]
+                # Always use the actual last column as Skip Reason
+                if len(line) > len(header):
+                    row_dict['Skip Reason'] = line[-1]
+                elif 'Skip Reason' in header:
+                    idx = header.index('Skip Reason')
+                    if idx < len(line):
+                        row_dict['Skip Reason'] = line[idx]
+                rows.append(row_dict)
     except FileNotFoundError:
         print("ERROR: No track.csv found.")
         sys.exit(1)
@@ -88,7 +105,7 @@ def main():
     
     print(f"\nAlerts ({len(tickers)})")
     print("-" * 180)
-    print(f"{'Ticker':<8} {'Alert':<10} {'Current':<10} {'Peak':<10} {'Change':<10} {'Inc':<12} {'Ops':<12} {'Filed':<19} {'Reason'}")
+    print(f"{'Ticker':<8} {'Alert':<10} {'Current':<10} {'Peak':<10} {'Change':<10} {'Inc':<12} {'Ops':<12} {'S/O %':<8} {'Filed':<19} {'Reason'}")
     print("-" * 180)
     
     total_move = 0
@@ -109,6 +126,12 @@ def main():
             continue
         
         skip_reason = ticker_rows[0].get('Skip Reason', '')
+        # If Skip Reason column is not found, it might be the last column due to CSV formatting
+        if not skip_reason or skip_reason == '':
+            # Try to get it from the raw row values as the last non-empty field
+            all_vals = list(ticker_rows[0].values())
+            if all_vals:
+                skip_reason = all_vals[-1] if all_vals[-1] else ''
         # Remove bonus filter text for cleaner display
         if '(Bonus:' in skip_reason:
             skip_reason = skip_reason.split('(Bonus:')[0].strip()
@@ -168,7 +191,8 @@ def main():
             na_tickers.append({'ticker': ticker, 'skip_reason': skip_reason})
         
         alert_str = f"${alert_price:.2f}"
-        print(f"{ticker:<8} {alert_str:<10} {current_str:<10} {peak_str:<10} {move_str:<10} {incorporated:<12} {located:<12} {filed_display:<19} {skip_reason}")
+        so_ratio = ticker_rows[0].get('S/O Ratio', 'N/A')
+        print(f"{ticker:<8} {alert_str:<10} {current_str:<10} {peak_str:<10} {move_str:<10} {incorporated:<12} {located:<12} {so_ratio:<8} {filed_display:<19} {skip_reason}")
     
     print("-" * 180)
     avg_move = total_move / count if count > 0 else 0
@@ -200,4 +224,8 @@ def main():
             print(f"{na['ticker']:<8} {na['skip_reason']}")
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\nInterrupted by user. Exiting gracefully...")
+        sys.exit(0)

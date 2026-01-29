@@ -916,5 +916,63 @@
     "direction": "SHORT",
     "highest5Day": 11.2662,
     "highest5DayPercent": -8.11
+  },
+  {
+    "ticker": "GP",
+    "title": "6-K - GREENPOWER MOTOR Co INC. (0001584547) (Filer)",
+    "companyName": "GREENPOWER MOTOR Co INC.",
+    "filerName": null,
+    "price": 0.8926,
+    "wa": "0.46",
+    "signalScore": 0.31,
+    "hasTuesdayBonus": false,
+    "custodianControl": false,
+    "custodianVerified": false,
+    "custodianName": null,
+    "filingTimeMultiplier": 1.05,
+    "filingTimeBonus": 1.05,
+    "soBonus": 1,
+    "volume": 32250,
+    "averageVolume": 1439463,
+    "float": 6539207,
+    "sharesOutstanding": 3077483,
+    "soRatio": "212.5%",
+    "marketCap": 2767375,
+    "isShort": true,
+    "ftd": 9369,
+    "ftdPercent": "0.14",
+    "intent": "Asset Disposition, Financing Events",
+    "incorporated": "Toronto, Canada",
+    "located": "Toronto, Canada",
+    "filingDate": "2026-01-29",
+    "signals": {
+      "Asset Disposition": [
+        "Disposed"
+      ],
+      "Financing Events": [
+        "Capital Structure"
+      ]
+    },
+    "bonusSignals": {},
+    "financialRatioSignals": {},
+    "reverseSplitRatio": null,
+    "reverseSplitReason": null,
+    "formType": [
+      "6-K",
+      "S-8",
+      "F-3",
+      "20-F",
+      "EX-99.1"
+    ],
+    "filingType": "6-K, S-8, F-3, 20-F, EX-99.1",
+    "cik": "1584547",
+    "skipReason": "",
+    "alertType": null,
+    "recordedAt": "2026-01-29T17:11:27.594Z",
+    "recordId": "GP-1769706687594",
+    "expiresAt": "2026-02-03T17:11:27.594Z",
+    "direction": "LONG",
+    "highest5Day": 0.8926,
+    "highest5DayPercent": 0
   }
 ]

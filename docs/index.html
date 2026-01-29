@@ -3018,10 +3018,10 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
                     statsDiv.style.cssText = `padding: 12px 14px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #00aa00;`;
                     statsDiv.innerHTML = `
                         <div style="font-size: 13px; font-weight: 600; margin-bottom: 6px;">
-                            All-Time Return: <span style="color: ${perfColor};">${perfSign}${avgPerformance}%</span>
+                            All-Time Return: <span style="color: ${perfColor}; font-style: italic;">${perfSign}${avgPerformance}%</span>
                         </div>
-                        <div style="font-size: 10px; opacity: 0.7;">
-                            Win Rate: <span style="color: ${perfColor};">${winRate}%</span> • Trades: ${winningTrades}W / ${totalTrades - winningTrades}L
+                        <div style="font-size: 10px; opacity: 0.96;">
+                            Win Rate: <span style="color: ${perfColor}; font-style: italic;">${winRate}%</span> • Trades: ${winningTrades}W / ${totalTrades - winningTrades}L
                         </div>
                     `;
                     list.appendChild(statsDiv);

@@ -58,8 +58,8 @@
     "recordedAt": "2026-01-26T14:12:51.640Z",
     "recordId": "HSAI-1769436771640",
     "expiresAt": "2026-01-31T14:12:51.640Z",
-    "highest5Day": 25.87,
-    "highest5DayPercent": -7.41
+    "highest5Day": 24.105,
+    "highest5DayPercent": -13.73
   },
   {
     "ticker": "AXL",
@@ -120,8 +120,8 @@
     "recordedAt": "2026-01-26T14:19:44.912Z",
     "recordId": "AXL-1769437184912",
     "expiresAt": "2026-01-31T14:19:44.912Z",
-    "highest5Day": 8.04,
-    "highest5DayPercent": -2.9
+    "highest5Day": 8.105,
+    "highest5DayPercent": -2.11
   },
   {
     "ticker": "CRDL",
@@ -176,8 +176,8 @@
     "recordId": "CRDL-1769451197487",
     "expiresAt": "2026-01-31T18:13:17.487Z",
     "direction": "LONG",
-    "highest5Day": 1,
-    "highest5DayPercent": 0
+    "highest5Day": 0.96,
+    "highest5DayPercent": -4
   },
   {
     "ticker": "BIYA",
@@ -245,8 +245,8 @@
     "recordId": "BIYA-1769462189874",
     "expiresAt": "2026-01-31T21:16:29.874Z",
     "direction": "SHORT",
-    "highest5Day": 3.99,
-    "highest5DayPercent": 1.01
+    "highest5Day": 3.8333,
+    "highest5DayPercent": -2.95
   },
   {
     "ticker": "FAT",
@@ -442,8 +442,8 @@
     "recordId": "CNL-1769515570279",
     "expiresAt": "2026-02-01T12:06:10.279Z",
     "direction": "LONG",
-    "highest5Day": 18.86,
-    "highest5DayPercent": 12.4
+    "highest5Day": 18.3341,
+    "highest5DayPercent": 9.26
   },
   {
     "ticker": "NTLA",
@@ -630,8 +630,8 @@
     "recordId": "CBU-1769523512145",
     "expiresAt": "2026-02-01T14:18:32.145Z",
     "direction": "LONG",
-    "highest5Day": 61.46,
-    "highest5DayPercent": -0.5
+    "highest5Day": 62.4,
+    "highest5DayPercent": 1.02
   },
   {
     "ticker": "ANEB",
@@ -759,8 +759,8 @@
     "recordId": "OSRH-1769524047644",
     "expiresAt": "2026-02-01T14:27:27.644Z",
     "direction": "SHORT",
-    "highest5Day": 0.692,
-    "highest5DayPercent": -3.89
+    "highest5Day": 0.6189,
+    "highest5DayPercent": -14.04
   },
   {
     "ticker": "HLEO",
@@ -914,7 +914,7 @@
     "recordId": "ONDS-1769551367444",
     "expiresAt": "2026-02-01T22:02:47.444Z",
     "direction": "SHORT",
-    "highest5Day": 12.26,
-    "highest5DayPercent": 0
+    "highest5Day": 11.2662,
+    "highest5DayPercent": -8.11
   }
 ]

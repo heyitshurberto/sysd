@@ -54,7 +54,7 @@ const CONFIG = {
   // Telegram settings
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '', // Telegram bot token
   TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID || '', // Telegram chat ID for alerts
-  TELEGRAM_ENABLED: process.env.TELEGRAM_ENABLED !== 'false' && process.env.TELEGRAM_ENABLED !== '0', // Enable/disable Telegram alerts (default: true)
+  TELEGRAM_ENABLED: process.env.TELEGRAM_ENABLED !== 'true' && process.env.TELEGRAM_ENABLED !== '0', // Enable/disable Telegram alerts (default: true)
   // Domain settings
   GITHUB_PAGES_ENABLED: process.env.GITHUB_PAGES_ENABLED !== 'false' && process.env.GITHUB_PAGES_ENABLED !== '0', // Enable/disable GitHub Pages domain push (default: true)
   // 2FA settings
@@ -417,39 +417,39 @@ const getSOBonus = (float, sharesOutstanding) => {
 // Signal Score Calculator - Probabilistic weighted model
 // Volume (50%) + Float (25%) + S/O (25%) with signal multipliers
 const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signalCategories = [], incorporated = null, located = null, filingText = '', companyName = '', itemCode = null, financingType = null, maClosureData = null, foundForms = new Set()) => {
-  // Float Score - micro-cap advantage but tempered (smaller is slightly better)
-  let floatScore = 0.3;
+  // Float Score - micro-cap advantage but tempered (smaller is slightly better) - TIGHTENED BASE SCORES
+  let floatScore = 0.18;
   const floatMillion = float / 1000000;
-  if (floatMillion < 1) floatScore = 0.45;
-  else if (floatMillion < 2.5) floatScore = 0.42;
-  else if (floatMillion < 5) floatScore = 0.40;
-  else if (floatMillion < 10) floatScore = 0.38;
-  else if (floatMillion < 25) floatScore = 0.35;
-  else if (floatMillion < 50) floatScore = 0.32;
-  else if (floatMillion < 100) floatScore = 0.30;
-  else floatScore = 0.25;
+  if (floatMillion < 1) floatScore = 0.24;
+  else if (floatMillion < 2.5) floatScore = 0.23;
+  else if (floatMillion < 5) floatScore = 0.22;
+  else if (floatMillion < 10) floatScore = 0.21;
+  else if (floatMillion < 25) floatScore = 0.20;
+  else if (floatMillion < 50) floatScore = 0.19;
+  else if (floatMillion < 100) floatScore = 0.18;
+  else floatScore = 0.16;
   
   // S/O Score - neutral scoring (both tight and diluted floats are tradeable, just different signals)
-  let soScore = 0.35;
+  let soScore = 0.20;
   const numFloat = parseFloat(float) || 1;
   const numShares = parseFloat(sharesOutstanding) || 1;
   const soPercent = numShares > 0 ? (numFloat / numShares) * 100 : 50;
 
-  if (soPercent < 5) soScore = 0.50;        // Tight float
-  else if (soPercent < 25) soScore = 0.48;  // Very tight
-  else if (soPercent < 50) soScore = 0.45;  // Tight
-  else if (soPercent < 0) soScore = 0.42;  // Moderate
-  else if (soPercent < 80) soScore = 0.50;  // Diluted
-  else soScore = 0.38;                      // Heavily diluted (still tradeable)
+  if (soPercent < 5) soScore = 0.28;        // Tight float
+  else if (soPercent < 25) soScore = 0.27;  // Very tight
+  else if (soPercent < 50) soScore = 0.26;  // Tight
+  else if (soPercent < 0) soScore = 0.24;  // Moderate
+  else if (soPercent < 80) soScore = 0.28;  // Diluted
+  else soScore = 0.22;                      // Heavily diluted (still tradeable)
 
-  let volumeScore = 0.25;
+  let volumeScore = 0.15;
   const volumeRatio = avgVolume > 0 ? volume / avgVolume : 0.5;
-  if (volumeRatio >= 3.0) volumeScore = 0.65;  // Major spike (3x+)
-  else if (volumeRatio >= 2.0) volumeScore = 0.55;  // Significant (2x+)
-  else if (volumeRatio >= 1.5) volumeScore = 0.45;  // Moderate
-  else if (volumeRatio >= 1.0) volumeScore = 0.35;  // Slight increase
-  else if (volumeRatio >= 0.8) volumeScore = 0.25;  // Below average
-  else volumeScore = 0.15;
+  if (volumeRatio >= 3.0) volumeScore = 0.38;  // Major spike (3x+)
+  else if (volumeRatio >= 2.0) volumeScore = 0.32;  // Significant (2x+)
+  else if (volumeRatio >= 1.5) volumeScore = 0.26;  // Moderate
+  else if (volumeRatio >= 1.0) volumeScore = 0.20;  // Slight increase
+  else if (volumeRatio >= 0.8) volumeScore = 0.15;  // Below average
+  else volumeScore = 0.10;
 
   let signalMultiplier = 1.0;
   const structuralMovers = ['Credit Default', 'Going Dark', 'Warrant Redemption', 'Asset Disposition', 'Share Consolidation', 'Deal Termination', 'Auditor Change', 'Preferred Call', 'DTC Eligible Restored'];
@@ -468,15 +468,15 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   }
   
   if (hasFinancialCrisis && financialRatios.severity > 0.85) {
-    signalMultiplier = 1.40;  // Critical bankruptcy risk (current ratio <0.2, negative BVPS, etc.)
+    signalMultiplier = 1.20;  // Critical bankruptcy risk (current ratio <0.2, negative BVPS, etc.)
   } else if (hasStructuralMover) {
-    signalMultiplier = 1.30;  // Structural events with mechanical execution
+    signalMultiplier = 1.15;  // Structural events with mechanical execution
   } else if (hasFinancialCrisis) {
-    signalMultiplier = 1.25;  // High financial distress multiplier
+    signalMultiplier = 1.12;  // High financial distress multiplier
   } else if (hasDeathSpiral) {
-    signalMultiplier = 1.15;    // Death spirals force selling
+    signalMultiplier = 1.08;    // Death spirals force selling
   } else if (hasSqueeze) {
-    signalMultiplier = 1.10;        // Supply shocks
+    signalMultiplier = 1.05;        // Supply shocks
   } else {
     signalMultiplier = 1.0;
   }
@@ -489,7 +489,7 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   
   // Red flag: "Not Applicable" indicates shell company with no legitimate origin
   if ((incorporated && incorporated.includes('Not Applicable')) || (located && located.includes('Not Applicable')) || (companyName && companyName.includes('Not Applicable'))) {
-    adrMultiplier = 1.15;  // Shell company multiplier boost
+    adrMultiplier = 1.08;  // Shell company multiplier boost (tightened)
     isCustodianVerified = false;
     custodianName = 'Ghost Company (N/A)';
   }
@@ -497,7 +497,7 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   else {
     const custodianResult = detectCustodianBanks(filingText);
     if (custodianResult && custodianResult.verified) {
-      adrMultiplier = 1.2;  // Boost ONLY for verified custodian-controlled ADRs
+      adrMultiplier = 1.10;  // Boost ONLY for verified custodian-controlled ADRs (tightened)
       isCustodianVerified = true;
       custodianName = custodianResult.custodian;
     }
@@ -512,17 +512,17 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
     // ADR (custodian-controlled): tight float = suppressed supply = structural constraint
     // Higher float ratio = tighter float = better for ADR
     if (isADRStructure) {
-      if (soPercent >= 100) soBonus = 1.2;   // Extreme tight (100%+)
-      else if (soPercent >= 50) soBonus = 1.15; // Very tight (50-100%)
-      else if (soPercent >= 30) soBonus = 1.1;  // Tight (30-50%)
-      else if (soPercent >= 15) soBonus = 1.05; // Moderate (15-30%)
+      if (soPercent >= 100) soBonus = 1.10;   // Extreme tight (100%+) - tightened
+      else if (soPercent >= 50) soBonus = 1.08; // Very tight (50-100%) - tightened
+      else if (soPercent >= 30) soBonus = 1.06;  // Tight (30-50%) - tightened
+      else if (soPercent >= 15) soBonus = 1.03; // Moderate (15-30%) - tightened
     } else {
       // Non-ADR: loose float = better momentum without custodian control
       // Lower float ratio = looser float = better for regular stocks
-      if (soPercent < 5) soBonus = 1.2;      // Extremely loose (<5%)
-      else if (soPercent < 15) soBonus = 1.15; // Very loose (5-15%)
-      else if (soPercent < 30) soBonus = 1.1;  // Loose (15-30%)
-      else if (soPercent < 50) soBonus = 1.05; // Moderate (30-50%)
+      if (soPercent < 5) soBonus = 1.10;      // Extremely loose (<5%) - tightened
+      else if (soPercent < 15) soBonus = 1.08; // Very loose (5-15%) - tightened
+      else if (soPercent < 30) soBonus = 1.06;  // Loose (15-30%) - tightened
+      else if (soPercent < 50) soBonus = 1.03; // Moderate (30-50%) - tightened
     }
   }
 
@@ -545,7 +545,7 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
     if (item801Context === 'Patent Loss' || item801Context === 'Material Lawsuit') {
       // Boost "Material Lawsuit" signal if detected in Item 8.01 context
       if (signalCategories?.includes('Material Lawsuit')) {
-        item801Multiplier = 1.10; // 10% boost for Item 8.01 buried lawsuit
+        item801Multiplier = 1.05; // 5% boost for Item 8.01 buried lawsuit (tightened)
       }
     }
   }
@@ -560,7 +560,7 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   );
   
   if (floatUnderThreshold && hasCleanCatalyst && hasNoClumsyDeathFlag) {
-    lowFloatPumpBonus = 1.25; // 25% bonus for <5M float + clean news
+    lowFloatPumpBonus = 1.12; // 12% bonus for <5M float + clean news (tightened)
   }
 
   // Layer 6: FORM TYPE MULTIPLIER - 6-K + 20-F combo proves winners
@@ -570,16 +570,16 @@ const calculatesignalScore = (float, sharesOutstanding, volume, avgVolume, signa
   const has8K = foundForms.has('8-K') || foundForms.has('8-K/A');
   
   if (has6K && has20F && !has8K) {
-    formTypeMultiplier = 1.15; // 15% boost: 6-K + 20-F (proven winner combo) - clean catalysts only
+    formTypeMultiplier = 1.08; // 8% boost: 6-K + 20-F (proven winner combo) - clean catalysts only (tightened)
   } else if ((has6K && has8K) || (has8K && !has6K)) {
-    formTypeMultiplier = 0.90; // 10% penalty: 6-K + 8-K or 8-K alone (structure/toxic plays)
+    formTypeMultiplier = 0.95; // 5% penalty: 6-K + 8-K or 8-K alone (structure/toxic plays) (tightened)
   }
 
-  // Weighted calculation (volume 50%, float 25%, S/O 25%) - but with lower base scores
+  // Weighted calculation (volume 50%, float 25%, S/O 25%) - but with lower base scores and tighter ceiling
   const signalScore = (floatScore * 0.25 + soScore * 0.25 + volumeScore * 0.5) * signalMultiplier * adrMultiplier * soBonus * financingMultiplier * maMultiplier * item801Multiplier * lowFloatPumpBonus * formTypeMultiplier;
   
   return {
-    score: parseFloat(Math.min(1.0, signalScore).toFixed(2)),
+    score: parseFloat(Math.min(0.85, signalScore).toFixed(2)),
     floatScore: parseFloat(floatScore.toFixed(2)),
     soScore: parseFloat(soScore.toFixed(2)),
     volumeScore: parseFloat(volumeScore.toFixed(2)),
@@ -2614,20 +2614,12 @@ const sendPersonalWebhook = (alertData) => {
     const waLog = wa !== 'N/A' ? `$${wa.toFixed(2)}` : 'N/A';
     log('INFO', `Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}`);
     
-    // Non-blocking fetch with timeout
-    Promise.race([
-      fetch(CONFIG.PERSONAL_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(personalMsg)
-      }).then(res => {
-        if (!res.ok) {
-          throw new Error(`Webhook returned ${res.status}`);
-        }
-        return res;
-      }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Webhook timeout')), 6000))
-    ]).catch(err => {
+    // Send to Discord webhook
+    fetch(CONFIG.PERSONAL_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(personalMsg)
+    }).catch(err => {
       // Silently fail - don't block on webhook
     });
   } catch (err) {
@@ -2641,7 +2633,6 @@ const sendTelegramAlert = (alertData) => {
     if (!CONFIG.TELEGRAM_ENABLED || !CONFIG.TELEGRAM_BOT_TOKEN || !CONFIG.TELEGRAM_CHAT_ID) {
       return;
     }
-    
     const { ticker, price, intent, incorporated, located } = alertData;
     
     const combinedLocation = (incorporated || '').toLowerCase() + ' ' + (located || '').toLowerCase();
@@ -2753,36 +2744,24 @@ ${sideEmoji}  Entry: ${priceDisplay}  Volume: ${volumeNum}M${volumeMultiplierDis
    • Position Size: 5-10% of account balance per trade
    • Confirm volume above 1.5x average before entry
 
-📈 Chart: https://www.tradingview.com/chart/?symbol=${getExchangePrefix(ticker)}:${ticker}`;
+📈 Chart: https://www.tradingview.com/chart/?symbol=NASDAQ:${ticker}`;
     
     const waLog = wa !== 'N/A' ? `$${wa.toFixed(2)}` : 'N/A';
     log('INFO', `Telegram Alert: [${direction}] $${ticker} @ ${priceDisplay}, Score: ${signalScoreDisplay}`);
     
-    // Non-blocking fetch with timeout
     const telegramUrl = `https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage`;
     const telegramPayload = {
       chat_id: CONFIG.TELEGRAM_CHAT_ID,
-      text: telegramAlertContent,
-      parse_mode: 'HTML'
+      text: telegramAlertContent
     };
     
-    Promise.race([
-      fetch(telegramUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(telegramPayload)
-      }).then(res => {
-        if (!res.ok) {
-          throw new Error(`Telegram returned ${res.status}`);
-        }
-        return res;
-      }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Telegram timeout')), 6000))
-    ]).catch(err => {
-      // Silently fail - don't block on Telegram
-    });
+    fetch(telegramUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(telegramPayload)
+    }).catch(() => {});
   } catch (err) {
-    // Silently fail - don't block processing
+    // Fail silently
   }
 };
 
@@ -5184,48 +5163,41 @@ app.get('/api/performance-summary', (req, res) => {
       return res.json({ winRate: 0, totalTrades: 0, topPerformers: [], bestPerformer: null });
     }
     
-    // Get all trades with their PEAK performance data
+    // Get all trades with their CURRENT performance data
     const allTrades = alerts.map(alert => {
       const ticker = alert.ticker;
       const alertPrice = parseFloat(alert.price) || 0;
       const isShort = alert.isShort === true;
       
-      // Try to get highest/lowest from performance data, fallback to alert data
-      let highestPrice = alertPrice;
-      let lowestPrice = alertPrice;
+      // Get current performance from quote data
+      let peakPercent = 0;
       
       if (performanceData[ticker]) {
         const perfData = performanceData[ticker];
-        highestPrice = parseFloat(perfData.highest) || alertPrice;
-        lowestPrice = parseFloat(perfData.lowest) || alertPrice;
-      }
-      
-      // Calculate peak % based on position
-      let peakPercent;
-      if (isShort) {
-        // For shorts: peak profit is when price goes down to lowest
-        peakPercent = ((alertPrice - lowestPrice) / alertPrice) * 100;
-      } else {
-        // For longs: peak profit is when price goes up to highest
-        peakPercent = ((highestPrice - alertPrice) / alertPrice) * 100;
+        peakPercent = parseFloat(perfData.performance) || 0;
+        
+        // For shorts, flip the sign (if stock down 10%, short is up 10%)
+        if (isShort) {
+          peakPercent = peakPercent * -1;
+        }
       }
       
       return {
         ticker,
-        peakPercent: isNaN(peakPercent) || peakPercent < 0 ? 0 : peakPercent,
+        peakPercent: isNaN(peakPercent) ? 0 : peakPercent,
         isShort: isShort,
-        alert: alertPrice,
-        highest: highestPrice,
-        lowest: lowestPrice
+        alert: alertPrice
       };
     });
     
-    // Calculate win rate based on peak performance
-    const winningTrades = allTrades.filter(t => t.peakPercent > 0);
-    const winRate = allTrades.length > 0 ? Math.round((winningTrades.length / allTrades.length) * 100) : 0;
+    // Filter out 0% trades (no movement yet) - EXCLUDE from all calculations
+    const validTrades = allTrades.filter(t => t.peakPercent !== 0 && !isNaN(t.peakPercent));
+    const winningTrades = validTrades.filter(t => t.peakPercent > 0);
+    const losingTrades = validTrades.filter(t => t.peakPercent < 0);
+    const winRate = validTrades.length > 0 ? Math.round((winningTrades.length / validTrades.length) * 100) : 0;
     
-    // Get top 5 performers by peak %
-    const topPerformers = allTrades
+    // Get top 5 performers by peak % - from ALL valid trades (not just winners)
+    const topPerformers = validTrades
       .sort((a, b) => b.peakPercent - a.peakPercent)
       .slice(0, 5)
       .map(t => ({
@@ -5239,7 +5211,7 @@ app.get('/api/performance-summary', (req, res) => {
     
     res.json({
       winRate: winRate,
-      totalTrades: allTrades.length,
+      totalTrades: validTrades.length,
       winningTrades: winningTrades.length,
       topPerformers: topPerformers,
       bestPerformer: bestPerformer
@@ -7990,16 +7962,10 @@ if (process.stdin.isTTY) {
           } else if (highScoreOverride && signalCategories.length === 1) {
             // High score (>0.7) with single signal overrides time window IF it passes all other filters
             validSignals = true;
-          } else if (signalScoreData.score > 0.7 && signalCategories.length === 1) {
-            validSignals = true; // Threshold to 0.7 with single signal
-          } else if (signalScoreData.volumeScore >= 0.85 && signalCategories.length >= 1) {
-            validSignals = true; // Strong volume spike (2x+ average) with any signal
-          } else if (neutralSignals.length > 0 && signalCategories.length >= 2) {
-            validSignals = true; // Has neutral signal + at least 1 other signal
           } else if (nonNeutralSignals.length >= 4 && signalCategories.length >= 4) {
-            validSignals = true; // Has 4+ signals from 4+ different categories (ensures diversity, avoids signal clustering)
+            validSignals = true; // Has 4+ signals from 4+ different categories (STRICT - requires diversity)
           } else if (nonNeutralSignals.length >= 5) {
-            validSignals = true; // Has 5+ non-neutral signals (original strength maintained)
+            validSignals = true; // Has 5+ non-neutral signals (STRICT - requires strength)
           }
           
           if (!validSignals) {

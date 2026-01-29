@@ -23,7 +23,7 @@ table {
 }
 </style>
 <div style="position: absolute; top: 6px; left: 6px; display: flex; gap: 4px; align-items: center;" class="eugene-tag-desktop">
-  <a href="#" onclick="customConfirm('Join the Telegram community?', 'https://t.me/+3rtL-9Cwr6Y2ZmM0'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/tele.png" alt="Telegram" style="height: 20px; width: 20px; filter: brightness(0) saturate(100%);" id="tele-logo" class="social-icon"></a>
+  <a href="#" onclick="customConfirm('Join the Telegram community?', 'https://t.me/+WUZOdEr8X4UwYTk0'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/tele.png" alt="Telegram" style="height: 20px; width: 20px; filter: brightness(0) saturate(100%);" id="tele-logo" class="social-icon"></a>
   <a href="#" onclick="customConfirm('Visit @cartelwrld on X?', 'https://x.com/cartelwrld'); return false;" style="text-decoration: none; display: inline-flex; align-items: center; padding: 4px 4px; border-radius: 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.6'" onmouseout="this.style.opacity='1'"><img src="/docs/twit.png" alt="X" style="height: 15px; width: 15px; filter: brightness(0) saturate(100%);" id="x-logo" class="social-icon"></a></div>
 <script>
 function updateLogoDarkMode() {
@@ -2981,6 +2981,53 @@ observer.observe(document.body, { attributes: true, attributeFilter: ['class'] }
                         list.appendChild(emptyState);
                         return;
                     }
+                    
+                    // Calculate all-time performance
+                    let totalPL = 0;
+                    let totalTrades = 0;
+                    let winningTrades = 0;
+                    
+                    stocks.forEach(stock => {
+                        const alertPrice = parseFloat(stock.price);
+                        const highestPrice = parseFloat(stock.highest5Day || stock.price);
+                        const isShort = stock.isShort;
+                        
+                        let peakPercent = 0;
+                        if (alertPrice > 0) {
+                            if (isShort) {
+                                peakPercent = ((alertPrice - highestPrice) / alertPrice) * 100;
+                            } else {
+                                peakPercent = ((highestPrice - alertPrice) / alertPrice) * 100;
+                            }
+                        }
+                        
+                        if (!isNaN(peakPercent) && peakPercent !== 0) {
+                            totalTrades++;
+                            totalPL += peakPercent;
+                            if (peakPercent > 0) winningTrades++;
+                        }
+                    });
+                    
+                    const avgPerformance = totalTrades > 0 ? (totalPL / totalTrades).toFixed(2) : '0.00';
+                    const winRate = totalTrades > 0 ? Math.round((winningTrades / totalTrades) * 100) : 0;
+                    
+                    // Add all-time calc stats header
+                    const statsDiv = document.createElement('div');
+                    const perfSign = parseFloat(avgPerformance) >= 0 ? '+' : '';
+                    const perfColor = parseFloat(avgPerformance) > 0 ? '#00dd00' : parseFloat(avgPerformance) < 0 ? '#ff3333' : '#888';
+                    const bgColor = document.body.classList.contains('dark-mode') ? 'rgba(60,60,60,0.4)' : 'rgba(240,240,240,0.8)';
+                    const borderColor = document.body.classList.contains('dark-mode') ? '#555' : '#ddd';
+                    const textColor = document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#333';
+                    statsDiv.style.cssText = `padding: 14px 16px; background: ${bgColor}; border-radius: 8px; margin-bottom: 14px; border: 1px solid ${borderColor}; border-left: 3px solid #00aa00;`;
+                    statsDiv.innerHTML = `
+                        <div style="font-size: 14px; font-weight: 700; margin-bottom: 6px; letter-spacing: 0.3px;">
+                            All-Time Return: <span style="color: ${perfColor}; font-style: italic;">${perfSign}${avgPerformance}%</span>
+                        </div>
+                        <div style="font-size: 11px; color: ${textColor}; opacity: 0.75; letter-spacing: 0.2px;">
+                            Win Rate: <b style="color: ${perfColor}; font-style: italic;">${winRate}%</b> • Trades: <b style="color: ${textColor};">${winningTrades}W / ${totalTrades - winningTrades}L</b>
+                        </div>
+                    `;
+                    list.appendChild(statsDiv);
                     
                     stocks.slice().reverse().forEach(stock => {
                         const item = document.createElement('div');

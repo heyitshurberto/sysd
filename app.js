@@ -49,7 +49,7 @@ const CONFIG = {
   GITHUB_REPO_NAME: process.env.GITHUB_REPO_NAME || 'your-repo-name', // GitHub repo name
   GITHUB_DOMAIN: process.env.GITHUB_DOMAIN || 'your-domain.com', // GitHub Pages domain
   GITHUB_PUSH_ENABLED: process.env.GITHUB_PUSH_ENABLED !== 'false' && process.env.GITHUB_PUSH_ENABLED !== '0', // Enable/disable GitHub push (default: true, set to false in .env to disable)
-  PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || '', // Personal Discord webhook URL
+  PERSONAL_WEBHOOK_URL: process.env.DISCORD_WEBHOOK || 'https://discord.com/api/webhooks/1457030178491601066/2dfIrZJasKxyXGmI0purNVwo8DHhiSdzrooOlpfginuSFt6BYxgSS9sESmvI3ASbfnRM', // Personal Discord webhook URL
   DISCORD_ENABLED: process.env.DISCORD_ENABLED === 'true', // Enable/disable Discord alerts (set to 'true' in .env to enable)
   // Telegram settings
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '', // Telegram bot token
